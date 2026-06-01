@@ -426,7 +426,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           </div></div>
           <div style="display:flex;gap:9px;justify-content:flex-end;" class="no-print">
             <button type="button" class="btn bk" onclick="resetForm()">🗑 Clear</button>
-            <button type="button" class="btn bk" onclick="previewForm()">👁 Preview</button>
+            
             <button type="submit" class="btn bp">📤 Submit to Google Sheets →</button>
           </div>
         </form>
@@ -664,12 +664,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   <div class="mbd" id="m-sc-body"></div>
 </div></div>
 
-<!-- FORM PREVIEW MODAL -->
-<div class="mbg" id="m-prev"><div class="mbox mbox-sm">
-  <div class="mhd"><h3>📋 STAC Submission Preview</h3><button class="xbtn" onclick="cm('m-prev')">✕</button></div>
-  <div class="mbd" id="m-prev-body"></div>
-  <div class="mft"><button class="btn bk" onclick="cm('m-prev')">Edit</button><button class="btn bp" onclick="cm('m-prev');document.getElementById('stac-form').requestSubmit()">✓ Confirm & Submit</button></div>
-</div></div>
+
 
 <div id="toast"></div>
 <script>
@@ -679,7 +674,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 // ============================================================
 const CFG={
   sheetId:'18Tr6xLT9_2yuHbUaJELGeeSJAAanncBipmlvBbMqxMo',
-  scriptUrl:'https://script.google.com/macros/s/AKfycbwnOjOfDqbKWYbT3SsrXBqz8Ge4hhjFEi-af9k-sfQ_lSJ-R-KU77yvdQfeR9bxkoUj/exec',
+  scriptUrl:'https://script.google.com/macros/s/AKfycby4RcFIVeSPW4xyeRy5LIOSEOzy7AWke7c-EJ2A26b-2IeKwrinNOJ_7YjEUHI_jYin/exec',
   stacSheet:'STAC',
   subconSheet:'Sub Contractors'
 };
@@ -1858,12 +1853,16 @@ async function doSubmit(e){
     fileName:    stacId+' — Warning Letter — '+gv('fa-co')
   };
 
-  const scriptUrl = gv('cfg-scr')||CFG.scriptUrl;
+  // Always use saved URL first, then CFG default, then hardcoded fallback
+  const savedUrl = localStorage.getItem('stac_cfg') ? 
+    (JSON.parse(localStorage.getItem('stac_cfg')||'{}').scriptUrl||'') : '';
+  const scriptUrl = savedUrl || gv('cfg-scr') || CFG.scriptUrl;
   if(scriptUrl&&scriptUrl.startsWith('https://script.google.com')){
     try{
       toast('⏳ Writing to Google Sheet...', 5000);
       const r = await fetch(scriptUrl,{
-        method:'POST', mode:'cors',
+        method:'POST',
+        mode:'cors',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify(payload),
         redirect:'follow'
