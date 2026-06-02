@@ -1144,6 +1144,7 @@ async function loadData(){
   // Check admin access from Users List sheet (runs async, doesn't block data display)
   checkAdminAccess();
   dataLoaded=true;
+  normalizePenalties();
   const el=document.getElementById('lu');if(el)el.textContent='Synced: '+new Date().toLocaleTimeString();
   showStatus(live?'connected':'sample');
   populateDDs();
@@ -1505,7 +1506,15 @@ function getTrData(){
 // ============================================================
 function renderFines(){
   if(!dataLoaded)return;
-  const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
+  // Normalise penalty — handle "OMR 75", "75", 75, "TBD", 0
+  const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY))).map(d=>{
+    if(typeof d.penalty==='string'){
+      const p=parseFloat(d.penalty.replace(/[^0-9.]/g,''));
+      d.penalty=isNaN(p)?0:p;
+    }
+    if(!d.penalty)d.penalty=0;
+    return d;
+  });
   const tot=ytd.reduce((s,d)=>s+(d.penalty||0),0);
   const penCases=ytd.filter(d=>d.penalty>0);
   const maxD=ytd.reduce((m,d)=>d.penalty>m.penalty?d:m,{penalty:0,company:'—'});
@@ -1958,6 +1967,16 @@ function showManualPaste(payload,stacId){
     window.open(sheetUrl,'_blank');
   });
 }
+function normalizePenalties(){
+  stacData.forEach(function(d){
+    if(typeof d.penalty==='string'){
+      var p=parseFloat(d.penalty.replace(/[^0-9.]/g,''));
+      d.penalty=isNaN(p)?0:p;
+    }
+    if(!d.penalty)d.penalty=0;
+  });
+}
+
 function addLocal(p){
   const pen=parseInt(p.penalty)||0;
   stacData.unshift({
@@ -2070,25 +2089,36 @@ function downloadWordLetter(){
 }
 
 async function markWLIssued(){
-  const id=gv('wl-sel');if(!id){toast('Select a STAC case',2000,'warn');return;}
+  const id=gv('wl-sel');
+  if(!id){toast('⚠️ Select a STAC case first',2000,'warn');return;}
   const d=stacData.find(s=>s.id===id);
-  if(d){d.wlIssued='Yes';}else{toast('⚠️ STAC record not found locally',2000,'warn');return;}
-  const su=gv('cfg-scr')||CFG.scriptUrl;
-  if(su&&su.startsWith('https://script.google.com')){
-    toast('⏳ Updating Google Sheet...',4000);
-    try{
-      const r=await fetch(su,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'markIssued',stacId:id})});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const res=await r.json();
-      if(res.ok){toast('✅ Warning Letter marked as ISSUED in sheet: '+id,4000);}
-      else{toast('⚠️ Sheet update failed: '+(res.error||'Unknown')+'  — updated locally only',5000,'warn');}
-    }catch(err){toast('⚠️ Sheet update error: '+err.message+' — marked locally only',5000,'warn');}
-  }else{
-    toast('✅ Warning Letter marked as issued locally ('+id+') — configure Apps Script to sync to sheet',4000);
-  }
-  // Refresh the WL selector to show updated status
+  if(!d){toast('⚠️ STAC record not found',2000,'warn');return;}
+
+  // Mark locally immediately
+  d.wlIssued='Yes';
+  toast('✅ '+id+' — Warning Letter marked as ISSUED',4000);
   populateWLSel();
   renderAll();
+
+  // Try sheet update — use no-cors (fire and forget, no response)
+  const su=gv('cfg-scr')||CFG.scriptUrl;
+  if(su&&su.startsWith('https://script.google.com')){
+    try{
+      // no-cors: cannot read response but sheet still gets updated
+      fetch(su,{
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'markIssued',stacId:id})
+      });
+      // Show instructions in case no-cors silently fails
+      setTimeout(()=>{
+        toast('📋 Also update col AF in sheet manually if needed: '+id,5000);
+      },4500);
+    }catch(err){
+      console.warn('markWLIssued sheet sync error (non-fatal):',err);
+    }
+  }
 }
 
 // ============================================================
