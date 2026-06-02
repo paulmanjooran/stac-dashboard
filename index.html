@@ -1023,15 +1023,26 @@ function parseGVizSubcon(data){
     if(!row||!row.c)return;
     const o={};
     cols.forEach((col,i)=>{const cell=row.c&&row.c[i];o[col]=cell?(cell.f!=null?String(cell.f):(cell.v!=null?String(cell.v):'')):'';});
-    const co=o['Sub-Contractors']||o['Subcontractor Company Name']||'';
-    if(!co)return;
-    const rl=String(o['Work Activity Risk Level']||'Medium-High').trim();
-    const ac=parseInt(String(o['Annual Ceiling Score']||'').replace(/[^0-9]/g,''))||
+    const co=o['Sub-Contractors']||o['Subcontractor Company Name']||
+             o['Subcontractor']||o['Company Name']||o['Hired / SubContrcator Company Name']||'';
+    if(!co||co.trim().length<2)return;
+    const rl=String(o['Work Activity Risk Level']||o['HSE Risk']||'Medium-High').trim();
+    const ac=parseInt(String(o['Annual Ceiling Score']||o['Annual  Ceiling  Score']||'').replace(/[^0-9]/g,''))||
       (rl.includes('Critical')?95:rl.includes('Medium-High')?92:90);
-    rows.push({company:co,cluster:o['Clusters']||'',owner:o['Owner Name']||'',
-      ownerEmail:o['Owner Email Trigger']||'',focal:o['Focal Point Email Trigger']||'',
-      coord:o['ATNM Subcontractor Coordinator']||'',qs:o['ATNM QS']||'',
-      riskLevel:rl,annualCeiling:ac});
+    // Support both scoring tab and full directory tab column names
+    const ownerEmail=o['Owner Email Trigger']||o['Subcontract Owner Email ID']||o['Owner Email']||'';
+    const focalEmail=o['Focal Point Email Trigger']||o['Subcontract focal point/ manager Email ID']||
+                     o['Subcontract focal point/ manager/Subcontract focal point/ manager Email ID']||'';
+    const coordEmail=o['ATNM Subcontractor Coordinator']||o['Subcontract Coordinator Email ID']||
+                     o['Subcontract Coordinator/Subcontract Coordinator Email ID']||'';
+    rows.push({company:co.trim(),cluster:o['Clusters']||o['Cluster']||o['Cluster/Cluster']||'',
+      owner:o['Owner Name']||o['Subcontract Owner/Subcontract Owner Name']||o['Subcontractor Owner']||'',
+      ownerEmail:ownerEmail,focal:focalEmail,focalEmail:focalEmail,
+      coord:coordEmail,coordEmail:coordEmail,
+      qs:o['ATNM QS']||o['Site QS/Site QS Email ID']||'',
+      riskLevel:rl,annualCeiling:ac,
+      contractType:o['Primary Contract Type']||o['Contract Type']||'',
+      discipline:o['Primary Discipline']||o['Work Activity Discipline']||''});
   });
   return rows;
 }
@@ -1186,7 +1197,15 @@ function populateCategoryDropdown(){
 // DROPDOWNS & IDs
 // ============================================================
 function populateDDs(){
-  const companies=[...new Set([...subconData.map(s=>s.company),...stacData.map(d=>d.company)].filter(Boolean))].sort();
+  // Merge: live subconData + static RAW_SC + stacData history — deduplicate cleanly
+  const _allCos=[...subconData,...RAW_SC].map(s=>s.company).concat(stacData.map(d=>d.company));
+  const _seenCos=new Set();
+  const companies=_allCos.filter(c=>{
+    if(!c||!c.trim())return false;
+    const k=c.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(_seenCos.has(k))return false;
+    _seenCos.add(k);return true;
+  }).sort();
   const validClusters=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
   const cats=[...new Set(stacData.map(d=>d.category).filter(Boolean))].sort();
   [
@@ -1727,14 +1746,24 @@ function onCategory(){
 
 function onCompany(){
   const co=gv('fa-co');
-  const sub=subconData.find(s=>s.company===co);
+  // Use fuzzy match to handle case/punctuation differences
+  const sub=findSubcon(co);
   if(sub){
-    sv('fa-own',sub.owner||'');sv('fa-fe',sub.focal||'');sv('fa-ce',sub.coord||'');
+    sv('fa-own',sub.owner||'');
+    sv('fa-fe',sub.focal||sub.focalEmail||'');
+    sv('fa-ce',sub.coord||sub.coordEmail||'');
     const rl=sub.riskLevel||'Medium-High';
     const ac=sub.annualCeiling||(rl.includes('Critical')?95:rl.includes('Medium-High')?92:90);
-    sv('fa-rl',rl);sv('fa-ac',ac+' pts (Annual Ceiling)');
-    if(sub.coord)toast(`📧 Part B alert will go to: ${sub.coord} | Risk: ${rl} | Ceiling: ${ac}pts`,3500,'warn');
-  }else{sv('fa-rl','Medium-High (default)');sv('fa-ac','92 pts (default)');}
+    sv('fa-rl',rl);
+    sv('fa-ac',ac+' pts (Annual Ceiling)');
+    if(sub.coord||sub.coordEmail){
+      const ce=sub.coord||sub.coordEmail;
+      toast('Part B alert will go to: '+ce+' | Risk: '+rl+' | Ceiling: '+ac+'pts',3500,'warn');
+    }
+  }else{
+    sv('fa-rl','Medium-High (default)');
+    sv('fa-ac','92 pts (default)');
+  }
   const cat=gv('fa-cat');
   if(cat)calcYTDInst(co,cat,lookupRule(cat));
   else updateComplianceDisplay(co);
