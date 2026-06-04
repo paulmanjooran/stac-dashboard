@@ -267,8 +267,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   box-shadow: 0 2px 12px rgba(0,0,0,.2);
 }
 #view-hse-form .topbar-inner {
-  max-width: 860px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   padding: 14px 20px;
   display: flex;
   align-items: center;
@@ -308,7 +308,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 }
 
 /* ── LAYOUT ─────────────────────────────────────────────────────── */
-#view-hse-form .wrap { max-width: 860px; margin: 0; padding: 0 16px; }
+#view-hse-form .wrap { max-width: 100%; margin: 0; padding: 0 16px; }
 
 /* ── LOADING SCREEN ─────────────────────────────────────────────── */
 #view-hse-form #loadingScreen {
@@ -352,7 +352,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   z-index: 90;
 }
 #view-hse-form .steps-inner {
-  max-width: 860px; margin: 0 auto;
+  max-width: 100%; margin: 0;
   display: flex; padding: 0 20px;
 }
 #view-hse-form .step-item {
@@ -637,6 +637,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 }
 #view-hse-form .btn-new:hover { background: var(--blue-d); }
 
+
+#view-hse-form { padding: 0; margin: 0; }
+#cnt:has(#view-hse-form.active) { padding: 0; }
+#view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 16px; }
+#view-hse-form .submit-area { margin: 16px 0 0 0; border-radius: 0; }
 </style>
 </head><body>
 <nav id="sb">
@@ -1073,7 +1078,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div style="width:30px;height:30px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
         <div id="scLoaderStatus" style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px;font-family:monospace;">Connecting…</div>
       </div>
-      <div id="sc-form-wrap" style="max-width:900px;margin:0;padding-bottom:40px;">
+      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding-bottom:40px;">
       <!-- Progress bar for HSE form -->
       <div style="height:3px;background:rgba(0,0,0,.08);margin-bottom:0;">
         <div style="height:3px;background:var(--orange);transition:width .4s ease;" id="progressFill"></div>
