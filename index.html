@@ -662,8 +662,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sbi" onclick="nav('warning-letter')"><span class="ic">✉️</span>Warning Letters</div>
     <div class="sbi" onclick="nav('setup')"><span class="ic">⚙️</span>Setup</div>
     <div class="sb-sec">HSE Stats</div>
-    <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>HSE Stats Form</div>
-    <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>HSE Stats Dashboard</div>
+    <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
+    <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Stats Dashboard</div>
   </div>
   <div class="sb-foot">STAC v4.0 | GID 342483107<br>Next ID: <span id="sb-nid">—</span><br>Ref: STAC ID#</div>
 </nav>
@@ -788,7 +788,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
               <div class="fg"><label>Initiator <span class="req">*</span></label><input type="text" id="fa-init" required placeholder="Name / email"></div>
               <div class="fg"><label>Recommendation<span class="atag">Auto</span></label><select id="fa-rec"><option>Issue 1st Warning Letter</option><option>Issue 2nd Warning Letter</option><option>Issue Final Warning / Escalate</option><option>Commercial Hold</option><option>Work Suspension</option></select></div>
             </div>
-            <div class="fr fr1"><div class="fg"><label>ATNM HSE Default Notice</label><input type="file" id="fa-ev" accept=".pdf,.jpg,.png,.docx" multiple><div class="hint">Upload signed HSE Default Notice. PDF, JPG, PNG, DOCX. Ref recorded in register.</div></div></div>
+            <div class="fr fr1"><div class="fg"><label>ATNM HSE Default Notice <span class="req">*</span></label><input type="file" id="fa-ev" accept=".pdf,.jpg,.png,.docx" multiple required><div class="hint">Upload signed HSE Default Notice. PDF, JPG, PNG, DOCX. Ref recorded in register.</div></div></div>
             <div class="fr fr3">
               <div class="fg"><label>HSE Manager Email<span class="atag">Auto</span></label><input type="email" id="fa-hm" readonly value="abubakar.rahi@altasnim.com"></div>
               <div class="fg"><label>Commercial Mgr Email<span class="atag">Auto</span></label><input type="email" id="fa-cm" readonly value="arnab.mukherjee@altasnim.com"></div>
@@ -1074,7 +1074,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div id="view-hse-form" class="view">
       <div id="sc-loading-screen" style="display:none;position:fixed;inset:0;background:var(--blue);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
         <div style="width:56px;height:56px;background:var(--orange);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;margin-bottom:20px;animation:sc-pulse 1.5s ease infinite;">AT</div>
-        <div style="color:rgba(255,255,255,.8);font-size:14px;margin-bottom:16px;">Loading HSE Stats Form…</div>
+        <div style="color:rgba(255,255,255,.8);font-size:14px;margin-bottom:16px;">Loading Subcontractor HSE Data Entry Form…</div>
         <div style="width:30px;height:30px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
         <div id="scLoaderStatus" style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px;font-family:monospace;">Connecting…</div>
       </div>
@@ -1498,7 +1498,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
               <th>Fatalities</th><th>MTC</th><th>RWC</th><th>SQ Obs</th><th>IVMS Red</th>
             </tr></thead>
             <tbody id="hse-drill-body">
-              <tr><td colspan="13" style="text-align:center;padding:24px;color:var(--t3);">Submit records via the HSE Stats Form tab to populate this dashboard.</td></tr>
+              <tr><td colspan="13" style="text-align:center;padding:24px;color:var(--t3);">Submit records via the Subcontractor HSE Data Entry Form tab to populate this dashboard.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1876,8 +1876,12 @@ function parseGVizSubcon(data){
     if(!row||!row.c)return;
     const o={};
     cols.forEach((col,i)=>{const cell=row.c&&row.c[i];o[col]=cell?(cell.f!=null?String(cell.f):(cell.v!=null?String(cell.v):'')):'';});
+    // Col B of Sub Contractors sheet = 'Sub-Contractors' header (index 1 fallback)
     const co=o['Sub-Contractors']||o['Subcontractor Company Name']||
-             o['Subcontractor']||o['Company Name']||o['Hired / SubContrcator Company Name']||'';
+             o['Subcontractor']||o['Company Name']||o['Hired / SubContrcator Company Name']||
+             (data.table.cols.length>1&&row.c&&row.c[1]?(row.c[1].v||''):'');
+    // Skip header row repetition and blank entries
+    if(co==='Sub-Contractors'||co==='Sub Contractors')return;
     if(!co||co.trim().length<2)return;
     const rl=String(o['Work Activity Risk Level']||o['HSE Risk']||'Medium-High').trim();
     const ac=parseInt(String(o['Annual Ceiling Score']||o['Annual  Ceiling  Score']||'').replace(/[^0-9]/g,''))||
@@ -2050,15 +2054,21 @@ function populateCategoryDropdown(){
 // DROPDOWNS & IDs
 // ============================================================
 function populateDDs(){
-  // Merge: live subconData + static RAW_SC + stacData history — deduplicate cleanly
-  const _allCos=[...subconData,...RAW_SC].map(s=>s.company).concat(stacData.map(d=>d.company));
-  const _seenCos=new Set();
-  const companies=_allCos.filter(c=>{
-    if(!c||!c.trim())return false;
-    const k=c.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-    if(_seenCos.has(k))return false;
-    _seenCos.add(k);return true;
-  }).sort();
+  // Source of truth: subconData from Sub Contractors sheet col B ONLY.
+  // RAW_SC fallback used only when live sheet not available.
+  // stacData history excluded — causes duplicates with name variants.
+  const _src = subconData.length > 0 ? subconData : RAW_SC;
+  const _seenCos = new Set();
+  const companies = _src
+    .map(s => s.company)
+    .filter(co => {
+      if (!co || !co.trim() || co.trim().length < 2) return false;
+      const k = co.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (_seenCos.has(k)) return false;
+      _seenCos.add(k);
+      return true;
+    })
+    .sort((a, b) => a.localeCompare(b));
   const validClusters=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
   const cats=[...new Set(stacData.map(d=>d.category).filter(Boolean))].sort();
   [
@@ -2637,7 +2647,7 @@ function onCluster(){
   const cur = fc.value;
   fc.innerHTML = '<option value="">-- Select Company --</option>';
   // Build list from subconData (live) + RAW_SC (fallback)
-  const all = [...subconData, ...RAW_SC];
+  const all = subconData.length > 0 ? subconData : RAW_SC;
   const seen = new Set();
   const filtered = all.filter(s => {
     if(!s.company || !s.company.trim()) return false;
@@ -3146,8 +3156,8 @@ const PAGES={
   'warning-letter':{t:'Warning Letters',s:'Generate, preview, download and issue warning letters'},
   'analytics':{t:'Analytics & Trends',s:'YTD performance data and 3-instance breakdown'},
   'setup':{t:'Setup',s:'Google Sheets connection and Apps Script deployment'},
-  'hse-form':{t:'HSE Stats Form',s:'Monthly subcontractor HSE statistics submission — MTC, RWC, IVMS, Safety Qube'},
-  'hse-stats':{t:'HSE Stats Dashboard',s:'Manhour, incident and compliance analytics — all filter permutations'}
+  'hse-form':{t:'Subcontractor HSE Data Entry Form',s:'Monthly subcontractor HSE statistics submission — MTC, RWC, IVMS, Safety Qube'},
+  'hse-stats':{t:'Subcontractor HSE Stats Dashboard',s:'Manhour, incident and compliance analytics — all filter permutations'}
 };
 function nav(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
@@ -3831,7 +3841,16 @@ async function scLoadMasterData() {
 function scLoadFallbackMasters() {
   // First try to inherit from dashboard's loaded subconData
   if(typeof subconData !== 'undefined' && subconData.length > 0) {
-    SC_MASTERS.subcontractors = subconData.map(s => ({ name: s.company })).filter(s => s.name);
+    // Strictly from subconData (Sub Contractors sheet col B) — deduplicated
+    const _seen = new Set();
+    SC_MASTERS.subcontractors = subconData
+      .filter(s => {
+        if(!s.company||!s.company.trim()) return false;
+        const k = s.company.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+        if(_seen.has(k)) return false;
+        _seen.add(k); return true;
+      })
+      .map(s => ({ name: s.company.trim() }));
     SC_MASTERS.clusters = ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].map(n=>({name:n}));
     SC_MASTERS.disciplines = ['Civil','Mechanical','Electrical','Inspection/Testing','Plant & Logistics','Third Party Inspection'].map(n=>({name:n}));
     // Pull contracts from stacData history
@@ -3919,10 +3938,20 @@ function scLoadFallbackMasters() {
 //  POPULATE DROPDOWNS
 // ═══════════════════════════════════════════════════════════════════
 function scPopulateAllDropdowns() {
-  // Subcontractors
+  // Subcontractors — strictly from Sub Contractors sheet (subconData) via SC_MASTERS.
+  // Deduplicate by normalised key to ensure unique display values.
   const scSel = document.getElementById('sc_name');
   scSel.innerHTML = '<option value="">— Select Subcontractor —</option>';
-  const scList = SC_MASTERS.subcontractors.map(s => typeof s === 'string' ? s : s.name).sort();
+  const scSeen = new Set();
+  const scList = SC_MASTERS.subcontractors
+    .map(s => typeof s === 'string' ? s : s.name)
+    .filter(n => {
+      if (!n || !n.trim()) return false;
+      const k = n.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+      if (scSeen.has(k)) return false;
+      scSeen.add(k); return true;
+    })
+    .sort((a,b) => a.localeCompare(b));
   scList.forEach(name => {
     const opt = document.createElement('option');
     opt.value = name; opt.textContent = name;
