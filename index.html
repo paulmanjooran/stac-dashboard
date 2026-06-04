@@ -2017,7 +2017,17 @@ async function loadData(){
   showStatus(live?'connected':'sample');
   populateDDs();
   updateIDs();
+  // Re-apply active filters against fresh data
   filteredData=getFiltered();
+  // Sync dropdown selected values to FS state (in case data reload changed options)
+  ['df-cl','df-co','df-cat'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=el.value;
+    if(cur&&!Array.from(el.options).some(o=>o.value===cur)){
+      el.value=''; // reset if selected value no longer exists in new data
+    }
+  });
   renderAll();
   toast(live?'✅ Live — '+stacData.length+' records loaded':'⚠️ Using sample data — set sheet to "Anyone with link → Viewer"',4000,live?'':'warn');
 }
@@ -2057,18 +2067,32 @@ function populateDDs(){
   // Source of truth: subconData from Sub Contractors sheet col B ONLY.
   // RAW_SC fallback used only when live sheet not available.
   // stacData history excluded — causes duplicates with name variants.
-  const _src = subconData.length > 0 ? subconData : RAW_SC;
+  // Build company list from stacData ACTUAL values first (ensures filter match),
+  // then supplement with subconData for companies not yet recorded in STAC.
   const _seenCos = new Set();
-  const companies = _src
-    .map(s => s.company)
+  const _normalise = s => s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  
+  // Primary: exact company names from stacData (what the filter compares against)
+  const stacCompanies = stacData
+    .map(d => d.company)
     .filter(co => {
-      if (!co || !co.trim() || co.trim().length < 2) return false;
-      const k = co.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (_seenCos.has(k)) return false;
-      _seenCos.add(k);
-      return true;
-    })
-    .sort((a, b) => a.localeCompare(b));
+      if(!co||co.trim().length<2) return false;
+      const k = _normalise(co);
+      if(_seenCos.has(k)) return false;
+      _seenCos.add(k); return true;
+    });
+
+  // Supplement: subconData companies not already in stacData
+  const subSrc = subconData.length > 0 ? subconData : RAW_SC;
+  subSrc.forEach(s => {
+    if(!s.company||s.company.trim().length<2) return;
+    const k = _normalise(s.company);
+    if(_seenCos.has(k)) return;
+    _seenCos.add(k);
+    stacCompanies.push(s.company.trim());
+  });
+
+  const companies = stacCompanies.sort((a,b)=>a.localeCompare(b));
   const validClusters=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
   const cats=[...new Set(stacData.map(d=>d.category).filter(Boolean))].sort();
   [
@@ -2113,7 +2137,8 @@ function getNextWL(){
 // ============================================================
 function getFiltered(){
   return stacData.filter(d=>{
-    if(FS.cl&&!d.cluster.includes(FS.cl))return false;
+    // All string comparisons: trimmed + lowercase for consistency
+    if(FS.cl&&d.cluster.trim().toLowerCase()!==FS.cl.trim().toLowerCase())return false;
     if(FS.co&&d.company.trim().toLowerCase()!==FS.co.trim().toLowerCase())return false;
     if(FS.cat&&!d.category.toLowerCase().includes(FS.cat.toLowerCase().substring(0,40)))return false;
     if(FS.inst){const n=getYTDInst(d);if(FS.inst==='1'&&n!==1)return false;if(FS.inst==='2'&&n!==2)return false;if(FS.inst==='3'&&n<3)return false;}
@@ -2127,16 +2152,18 @@ function applyF(){
   FS.cl=gv('df-cl');FS.co=gv('df-co');FS.cat=gv('df-cat');
   FS.inst=gv('df-inst');FS.fr=gv('df-fr');FS.to=gv('df-to');
   filteredData=getFiltered();
-  const el=document.getElementById('fcnt');if(el)el.textContent=filteredData.length+' cases';
-  renderDash();
+  const el=document.getElementById('fcnt');if(el)el.textContent=filteredData.length+' case'+(filteredData.length!==1?'s':'');
+  // Re-render all active views so Tracker, Fines etc. also reflect the filter
+  renderAll();
 }
 
 function resetF(){
   FS={cl:'',co:'',cat:'',inst:'',fr:'',to:''};
   ['df-cl','df-co','df-cat','df-inst','df-fr','df-to'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  FS={cl:'',co:'',cat:'',inst:'',fr:'',to:''};
   filteredData=[...stacData];
-  const el=document.getElementById('fcnt');if(el)el.textContent=filteredData.length+' cases';
-  renderDash();
+  const el=document.getElementById('fcnt');if(el)el.textContent=filteredData.length+' case'+(filteredData.length!==1?'s':'');
+  renderAll();
 }
 
 // ============================================================
@@ -2196,7 +2223,11 @@ function renderDash(){
   // YTD scope: if date filter active use filtered range; else current year only
   var ytd=data.filter(function(d){
     if(!d.date)return false;
-    if(FS.fr||FS.to)return true; // date filter already applied in filteredData
+    // If a date filter is active, filteredData already scoped it
+    if(FS.fr||FS.to)return true;
+    // If only company/cluster filter active (no date), show ALL years for that entity
+    if(FS.co||FS.cl)return true;
+    // Default: current year only
     return d.date.startsWith(String(CY));
   });
 
@@ -2224,7 +2255,11 @@ function renderDash(){
 
   // Charts
   mkClusterChart(data);mkCatChart(data);mkTrendChart(data);
-  renderTopViol(data);renderI3Monitor(ytd);renderRecent(data);
+  renderTopViol(data);
+  // 3-Instance Monitor: use full filtered data when company/cluster filter active
+  // (so cross-year repeat violations are visible), else YTD only
+  renderI3Monitor(hasFilter?data:ytd);
+  renderRecent(data);
 }
 
 function mkChart(id,type,labels,vals,colors,isDoughnut,onClick,borderColor){
@@ -2336,8 +2371,8 @@ function renderTracker(){
   const inst=gv('tf-in'),fr=gv('tf-fr'),to=gv('tf-to');
   const s=(document.getElementById('tf-s')||{value:''}).value.toLowerCase();
   const fd2=stacData.filter(d=>{
-    if(cl&&!d.cluster.includes(cl))return false;
-    if(co&&d.company!==co)return false;
+    if(cl&&d.cluster.trim().toLowerCase()!==cl.trim().toLowerCase())return false;
+    if(co&&d.company.trim().toLowerCase()!==co.trim().toLowerCase())return false;
     if(cat&&!d.category.toLowerCase().includes(cat.toLowerCase().substring(0,40)))return false;
     const n=getYTDInst(d);
     if(inst==='1'&&n!==1)return false;if(inst==='2'&&n!==2)return false;if(inst==='3'&&n<3)return false;
