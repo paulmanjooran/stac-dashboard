@@ -1527,7 +1527,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 // ============================================================
 const CFG={
   sheetId:'18Tr6xLT9_2yuHbUaJELGeeSJAAanncBipmlvBbMqxMo',
-  scriptUrl:'https://script.google.com/macros/s/AKfycbzNfdJEWK6_g00p94dtVYhEHqjq9cX80im5dw6MflAUXL9YTo82x_KBW2NqJhq68ogN/exec',
+  scriptUrl:'https://script.google.com/macros/s/AKfycbxEa16xEFeGi4kcy5_oQU-CvSxUITn7nQ-ZKk3EdLRYeEh7Dc6i_FlBDElaGur2bCeJ/exec',
   stacSheet:'STAC',
   subconSheet:'Sub Contractors'
 };
@@ -3738,7 +3738,7 @@ function exportHseStatsPDF(){
 // ════════ SUBCON HSE FORM MODULE ════════
 // All module-level vars and functions declared at top level (not inside scInit)
 
-const SUBMIT_URL = (typeof CFG !== 'undefined' && CFG.scriptUrl && CFG.scriptUrl.startsWith('https://script.google.com')) ? CFG.scriptUrl : 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const SUBMIT_URL = (typeof CFG !== 'undefined' && CFG.scriptUrl && CFG.scriptUrl.startsWith('https://script.google.com')) ? CFG.scriptUrl : 'https://script.google.com/macros/s/AKfycbxEa16xEFeGi4kcy5_oQU-CvSxUITn7nQ-ZKk3EdLRYeEh7Dc6i_FlBDElaGur2bCeJ/exec';
 // Also used to fetch master data (GET with ?action=getMasters)
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3815,7 +3815,7 @@ async function scLoadMasterData() {
   scSetLoaderStatus('Connecting to ATNM STAC Backend…');
 
   try {
-    if (SUBMIT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+    if (SUBMIT_URL === 'https://script.google.com/macros/s/AKfycbxEa16xEFeGi4kcy5_oQU-CvSxUITn7nQ-ZKk3EdLRYeEh7Dc6i_FlBDElaGur2bCeJ/exec') {
       throw new Error('URL not configured');
     }
     const url = `${SUBMIT_URL}?action=getMasters&t=${Date.now()}`;
@@ -4156,7 +4156,7 @@ async function scHandleSubmit(e) {
   }
 
   try {
-    if (SUBMIT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+    if (SUBMIT_URL === 'https://script.google.com/macros/s/AKfycbxEa16xEFeGi4kcy5_oQU-CvSxUITn7nQ-ZKk3EdLRYeEh7Dc6i_FlBDElaGur2bCeJ/exec') {
       // Demo mode — simulate success
       await new Promise(r => setTimeout(r, 1200));
       scShowSuccess('TXN-DEMO-0001');
