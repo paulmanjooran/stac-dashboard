@@ -760,7 +760,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           <div class="fbd">
             <div class="fr fr2">
               <div class="fg"><label>Cluster / Location <span class="req">*</span></label><select id="fa-cl" required onchange="onCluster()"><option value="">-- Select --</option>
-                <option>Marmul WD</option><option>Marmul Projects</option><option>Nimr</option><option>Amal</option><option>Greater Birba</option>
               </select></div>
               <div class="fg"><label>Instance Date <span class="req">*</span></label><input type="date" id="fa-dt" required></div>
             </div>
@@ -1437,14 +1436,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <span class="fl">Cluster</span>
         <select id="hse-cl" onchange="renderHseStats()">
           <option value="">All Clusters</option>
-          <option>Marmul WD</option><option>Marmul Projects</option>
-          <option>Nimr</option><option>Amal</option><option>Greater Birba</option>
         </select>
         <span class="fl">Discipline</span>
         <select id="hse-di" onchange="renderHseStats()">
           <option value="">All Disciplines</option>
-          <option>Civil</option><option>Mechanical</option><option>Electrical</option>
-          <option>Inspection/Testing</option><option>Plant &amp; Logistics</option>
         </select>
         <span class="fl">Subcontractor</span>
         <select id="hse-sc" onchange="renderHseStats()">
@@ -2093,22 +2088,44 @@ function populateDDs(){
   });
 
   const companies = stacCompanies.sort((a,b)=>a.localeCompare(b));
-  const validClusters=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
+  // Clusters: from stacData actual values + subconData — live and deduplicated
+  const _seenCls = new Set();
+  const liveClusters = [
+    ...stacData.map(d=>d.cluster),
+    ...(subconData.length>0?subconData:RAW_SC).map(s=>s.cluster||'')
+  ].filter(cl=>{
+    if(!cl||cl.trim().length<2)return false;
+    const k=cl.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(_seenCls.has(k))return false;
+    _seenCls.add(k);return true;
+  }).sort((a,b)=>a.localeCompare(b));
+  // Ensure standard clusters always present even if no data yet
+  ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(cl=>{
+    const k=cl.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(!_seenCls.has(k)){_seenCls.add(k);liveClusters.push(cl);}
+  });
+  liveClusters.sort((a,b)=>a.localeCompare(b));
   const cats=[...new Set(stacData.map(d=>d.category).filter(Boolean))].sort();
   [
-    {ids:['df-cl','tf-cl','sc-cl'],opts:validClusters,ph:'All Clusters'},
+    {ids:['df-cl','tf-cl','sc-cl','fa-cl'],opts:liveClusters,ph:'All Clusters',phForm:'-- Select --'},
     {ids:['df-co','tf-co'],opts:companies,ph:'All Subcontractors'},
     {ids:['df-cat','tf-cat'],opts:cats,ph:'All Categories'}
-  ].forEach(({ids,opts,ph})=>ids.forEach(id=>{
+  ].forEach(({ids,opts,ph,phForm})=>ids.forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const cur=el.value;
-    el.innerHTML=`<option value="">${ph}</option>`;
+    const usePh=phForm&&id==='fa-cl'?phForm:ph;
+    el.innerHTML=`<option value="">${usePh}</option>`;
     opts.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;el.appendChild(op);});
-    if(cur)el.value=cur;
+    if(cur&&Array.from(el.options).some(o=>o.value===cur))el.value=cur;
   }));
   const fc=document.getElementById('fa-co');
-  if(fc){fc.innerHTML='<option value="">-- Select Company --</option>';
-    companies.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;fc.appendChild(o);});}
+  if(fc){
+    const curCo=fc.value;
+    fc.innerHTML='<option value="">-- Select Company --</option>';
+    companies.forEach(co=>{const o=document.createElement('option');o.value=co;o.textContent=co;fc.appendChild(o);});
+    // Restore selection if still valid
+    if(curCo&&Array.from(fc.options).some(o=>o.value===curCo))fc.value=curCo;
+  }
   const wlSel=document.getElementById('wl-sel');
   if(wlSel){
     wlSel.innerHTML='<option value="">-- Select STAC ID --</option>';
@@ -3210,7 +3227,7 @@ function nav(v){
   else if(v==='new-stac'){initForm();}
   else if(v==='setup'){const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;}
   else if(v==='hse-form'){scInit();}
-  else if(v==='hse-stats'){scInit();renderHseStats();}
+  else if(v==='hse-stats'){scInit();populateHseStatsSCDropdown();renderHseStats();}
 }
 function renderAll(){
   filteredData=getFiltered();
@@ -3628,17 +3645,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>loadData(),100);
   setTimeout(()=>{
     loadHseStatsData();
-    // Also populate SC dropdown from dashboard's live subconData
-    setTimeout(()=>{
-      const sel = document.getElementById('hse-sc');
-      if(sel && typeof subconData !== 'undefined' && subconData.length > 0) {
-        const cur = sel.value;
-        sel.innerHTML = '<option value="">All Subcontractors</option>';
-        const cos = [...new Set(subconData.map(s=>s.company).filter(Boolean))].sort();
-        cos.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
-        if(cur) sel.value = cur;
-      }
-    }, 1500);
+    // Populate all HSE Stats dropdowns from subconData (available after loadData)
+    setTimeout(()=>populateHseStatsSCDropdown(), 1200);
   }, 600);
 });
 
@@ -3648,14 +3656,36 @@ window.addEventListener('DOMContentLoaded',()=>{
 let scTxnData = [];
 
 function populateHseStatsSCDropdown() {
-  const sel = document.getElementById('hse-sc'); if(!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">All Subcontractors</option>';
-  const cos = [...new Set(scTxnData.map(r=>r.sc).filter(Boolean))].sort();
-  cos.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
-  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value=cur;
+  function fillSel(id, opts, ph) {
+    const el = document.getElementById(id); if(!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">' + ph + '</option>';
+    opts.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});
+    if(cur && Array.from(el.options).some(function(o){return o.value===cur;})) el.value=cur;
+  }
+  function dedup(arr) {
+    var seen=new Set();
+    return arr.filter(function(v){
+      if(!v||v.trim().length<2)return false;
+      var k=v.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+      if(seen.has(k))return false; seen.add(k); return true;
+    }).sort(function(a,b){return a.localeCompare(b);});
+  }
+  var subSrc = (typeof subconData!=='undefined'&&subconData.length>0) ? subconData :
+               (typeof SC_MASTERS!=='undefined'&&SC_MASTERS.subcontractors.length>0) ?
+               SC_MASTERS.subcontractors.map(function(s){return {company:s.name||s,cluster:''};}) : [];
+  fillSel('hse-sc',
+    dedup([].concat(scTxnData.map(function(r){return r.sc;}),subSrc.map(function(s){return s.company;}))),
+    'All Subcontractors');
+  var clBase=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
+  fillSel('hse-cl',
+    dedup([].concat(scTxnData.map(function(r){return r.cluster;}),subSrc.map(function(s){return s.cluster||'';}),clBase)),
+    'All Clusters');
+  var diBase=['Civil','Mechanical','Electrical','Inspection/Testing','Plant & Logistics'];
+  fillSel('hse-di',
+    dedup([].concat(scTxnData.map(function(r){return r.discipline;}),diBase)),
+    'All Disciplines');
 }
-
 function getHseFiltered() {
   const fr=gv2('hse-fr'), to=gv2('hse-to'), cl=gv2('hse-cl'), di=gv2('hse-di'), sc=gv2('hse-sc');
   return scTxnData.filter(r=>{
