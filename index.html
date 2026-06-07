@@ -657,6 +657,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sb-sec">Analysis</div>
     <div class="sbi" onclick="nav('fines')"><span class="ic">💰</span>Fines & Penalties</div>
     <div class="sbi" onclick="nav('scorecards')"><span class="ic">🏅</span>Subcon Scorecards</div>
+    <div class="sbi" onclick="nav('performance')"><span class="ic">📋</span>Performance Report</div>
     <div class="sbi" onclick="nav('analytics')"><span class="ic">📈</span>Analytics</div>
     <div class="sb-sec">Tools</div>
     <div class="sbi" onclick="nav('warning-letter')"><span class="ic">✉️</span>Warning Letters</div>
@@ -927,6 +928,61 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div id="wl-content"><div class="card" style="padding:40px;text-align:center;color:var(--t3);">
           <div style="font-size:30px;margin-bottom:8px;">📄</div><p>Select a STAC case to generate the warning letter.</p>
         </div></div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE REPORT -->
+    <div id="view-performance" class="view">
+      <div class="fbar" style="margin-bottom:14px;">
+        <span class="fl">Cluster</span>
+        <select id="pf-cl" onchange="renderPerformance()"><option value="">All Clusters</option></select>
+        <span class="fl">Band</span>
+        <select id="pf-band" onchange="renderPerformance()">
+          <option value="">All Bands</option>
+          <option value="green">Compliant</option>
+          <option value="amber">At Risk</option>
+          <option value="red">Non-Compliant</option>
+          <option value="black">Blacklist Review</option>
+        </select>
+        <span class="fl">Year</span>
+        <select id="pf-yr" onchange="renderPerformance()"><option value="">Current Year</option></select>
+        <div class="fdiv"></div>
+        <input type="text" id="pf-s" placeholder="Search..." oninput="renderPerformance()"
+          style="border:1px solid var(--bdr);border-radius:var(--r);padding:5px 10px;font-size:12px;width:180px;">
+        <button class="btn bk bsm" onclick="clearPF()">Reset</button>
+        <div class="fdiv"></div>
+        <button class="btn bg bsm" onclick="exportPerfXL()">&#x2B07; Excel</button>
+        <button class="btn bk bsm" onclick="exportPerfPDF()">PDF</button>
+        <span id="pf-cnt" style="font-size:11px;color:var(--t3);margin-left:6px;"></span>
+      </div>
+      <div class="kgrid k4" style="margin-bottom:14px;">
+        <div class="kpi kgr"><div class="klbl">Compliant</div><div class="kval" id="pf-k-green">—</div><div class="ksub">Score &ge; 80%</div></div>
+        <div class="kpi kam"><div class="klbl">At Risk</div><div class="kval" id="pf-k-amber">—</div><div class="ksub">Score 60-79%</div></div>
+        <div class="kpi krd"><div class="klbl">Non-Compliant</div><div class="kval" id="pf-k-red">—</div><div class="ksub">Score &lt; 60%</div></div>
+        <div class="kpi" style="background:#1a1d24;"><div class="klbl" style="color:#aaa;">Blacklist Review</div><div class="kval" id="pf-k-black" style="color:#fff;">—</div><div class="ksub" style="color:#666;">Score &lt; 0</div></div>
+      </div>
+      <div class="card">
+        <div class="chd" style="border-bottom:1px solid var(--bdr);padding-bottom:12px;">
+          <h3>Subcontractor Performance Report &mdash; <span id="pf-yr-label" style="color:var(--blue);">YTD</span></h3>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px;">Score = Annual Ceiling &minus; (Full Demerit Cases &times; 10 pts). Click row to view detail.</div>
+        </div>
+        <div class="tw"><table class="tbl" id="pf-table">
+          <thead><tr>
+            <th style="width:32px;text-align:center;">#</th>
+            <th>Subcontractor</th><th>Cluster</th><th>Risk Level</th>
+            <th style="text-align:center;">YTD Cases</th>
+            <th style="text-align:center;">Full Demerit</th>
+            <th style="text-align:right;">Demerit Pts</th>
+            <th style="text-align:right;">Penalty (OMR)</th>
+            <th style="text-align:center;">Score</th>
+            <th style="text-align:center;">Ceiling</th>
+            <th style="min-width:130px;">Compliance %</th>
+            <th style="text-align:center;">Band</th>
+          </tr></thead>
+          <tbody id="pf-body">
+            <tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3);">Loading...</td></tr>
+          </tbody>
+        </table></div>
       </div>
     </div>
 
@@ -3283,6 +3339,7 @@ const PAGES={
   'new-stac':{t:'New STAC Form',s:'Raise a new subcontractor HSE non-compliance case'},
   'tracker':{t:'Case Tracker',s:'Filter, manage and export all STAC cases'},
   'fines':{t:'Fines & Penalties',s:'YTD penalty register, demerit matrix and financial analysis'},
+  'performance':{t:'Performance Report',s:'Full subcontractor HSE compliance ranking — score out of 100'},
   'scorecards':{t:'Subcontractor Scorecards',s:'YTD compliance score per subcontractor'},
   'warning-letter':{t:'Warning Letters',s:'Generate, preview, download and issue warning letters'},
   'analytics':{t:'Analytics & Trends',s:'YTD performance data and 3-instance breakdown'},
@@ -3300,6 +3357,8 @@ function nav(v){
   if(v==='dashboard'){filteredData=getFiltered();renderDash();}
   else if(v==='tracker')renderTracker();
   else if(v==='fines')renderFines();
+  else if(v==='performance')renderPerformance();
+  else if(v==='performance')renderPerformance();
   else if(v==='scorecards')renderScores();
   else if(v==='analytics')renderAnalytics();
   else if(v==='warning-letter')populateWLSel();
@@ -3314,6 +3373,7 @@ function renderAll(){
   if(document.querySelector('#view-dashboard.active'))renderDash();
   else if(document.querySelector('#view-tracker.active'))renderTracker();
   else if(document.querySelector('#view-fines.active'))renderFines();
+  else if(document.querySelector('#view-performance.active'))renderPerformance();
   else if(document.querySelector('#view-scorecards.active'))renderScores();
   else if(document.querySelector('#view-analytics.active'))renderAnalytics();
   else if(document.querySelector('#view-warning-letter.active'))populateWLSel();
@@ -4386,6 +4446,197 @@ async function scInit() {
     console.error('scInit error:', err);
   }
   if(screen) screen.style.display = 'none';
+}
+
+
+// ================================================================
+// PERFORMANCE REPORT — full league table with scores out of ceiling
+// ================================================================
+function renderPerformance(){
+  if(!dataLoaded)return;
+  const cl   = gv('pf-cl');
+  const band = gv('pf-band');
+  const yr   = gv('pf-yr')||String(CY);
+  const srch = ((document.getElementById('pf-s')||{}).value||'').trim().toLowerCase();
+  const _norm=v=>(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+
+  // Populate year dropdown once
+  var yrSel=document.getElementById('pf-yr');
+  if(yrSel&&yrSel.options.length<=1){
+    var years=[...new Set(stacData.map(function(d){return d.date?d.date.substring(0,4):null;}).filter(Boolean))].sort().reverse();
+    years.forEach(function(y){var o=document.createElement('option');o.value=y;o.textContent=y;yrSel.appendChild(o);});
+  }
+
+  // Populate cluster dropdown once
+  var clSel=document.getElementById('pf-cl');
+  if(clSel&&clSel.options.length<=1){
+    var cls=[...new Set(stacData.map(function(d){return d.cluster;}).filter(Boolean))].sort();
+    ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(function(v){if(cls.indexOf(v)<0)cls.push(v);});
+    cls.sort().forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;clSel.appendChild(o);});
+  }
+
+  var lbl=document.getElementById('pf-yr-label');
+  if(lbl)lbl.textContent=yr===String(CY)?'YTD '+yr:yr;
+
+  // Build all-company list
+  var _seen=new Set(), allCo=[];
+  subconData.forEach(function(x){
+    if(!x.company||x.company.trim().length<2)return;
+    var k=_norm(x.company);
+    if(!_seen.has(k)){_seen.add(k);allCo.push({name:x.company.trim(),srcCluster:x.cluster||''});}
+  });
+  stacData.forEach(function(d){
+    if(!d.company||d.company.trim().length<2)return;
+    var k=_norm(d.company);
+    if(!_seen.has(k)){_seen.add(k);allCo.push({name:d.company.trim(),srcCluster:d.cluster||''});}
+  });
+
+  var ytdAll=stacData.filter(function(d){return d.date&&d.date.startsWith(yr);});
+
+  // Score each company
+  var scored=allCo.map(function(item){
+    var coL=item.name.toLowerCase();
+    var sub=subconData.find(function(s){return s.company&&_norm(s.company)===_norm(item.name);});
+    var clDisplay=sub?normCluster(sub.cluster||''):normCluster(item.srcCluster)||'—';
+    var cases=ytdAll.filter(function(d){return d.company.trim().toLowerCase()===coL;});
+    var pen=cases.reduce(function(s,d){return s+(d.penalty!=null?d.penalty:0);},0);
+    var cs=calcComplianceScore(item.name);
+    return{name:item.name,cluster:clDisplay,cases:cases,pen:pen,cs:cs};
+  });
+
+  // Apply filters
+  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  var filtered=scored.filter(function(x){
+    if(cl&&x.cluster.trim().toLowerCase()!==cl.trim().toLowerCase())return false;
+    if(band&&x.cs.band!==band)return false;
+    if(srch&&x.name.toLowerCase().indexOf(srch)<0)return false;
+    return true;
+  }).sort(function(a,b){
+    return b.cs.actualScore-a.cs.actualScore||(a.name.localeCompare(b.name));
+  });
+
+  // KPI tiles
+  function cnt(b){return filtered.filter(function(x){return x.cs.band===b;}).length;}
+  function sv2(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+  sv2('pf-k-green',cnt('green')); sv2('pf-k-amber',cnt('amber'));
+  sv2('pf-k-red',cnt('red'));     sv2('pf-k-black',cnt('black'));
+  var cntEl=document.getElementById('pf-cnt');
+  if(cntEl)cntEl.textContent=filtered.length+' subcontractor'+(filtered.length!==1?'s':'');
+
+  var tbody=document.getElementById('pf-body');
+  if(!tbody)return;
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3);">No subcontractors match the filters.</td></tr>';
+    return;
+  }
+
+  var html='';
+  filtered.forEach(function(x,i){
+    var cs=x.cs;
+    var bc=bCol[cs.band]||'#1b7a3e';
+    var pct=Math.min(100,Math.max(0,cs.pct||0));
+    var rowBg=cs.band==='black'?'#f0f0f0':cs.band==='red'?'#fdecea':i%2===0?'#fff':'#f9fafb';
+    var scoreColor=cs.band==='green'?'var(--green)':cs.band==='amber'?'var(--orange)':cs.band==='red'?'var(--red)':'#1a1d24';
+    var bar='<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:8px;background:var(--bdr);border-radius:4px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+bc+';border-radius:4px;"></div></div><span style="font-size:10px;font-weight:700;color:'+bc+';min-width:28px;text-align:right;">'+Math.round(pct)+'%</span></div>';
+    var demColor=cs.deductedPts>0?'var(--red)':'var(--t3)';
+    html+='<tr style="background:'+rowBg+';cursor:pointer;" onclick="openSC(''+esc(x.name)+'')">'
+      +'<td style="text-align:center;font-size:11px;color:var(--t3);font-weight:600;">'+(i+1)+'</td>'
+      +'<td style="font-weight:600;" title="'+esc(x.name)+'">'+(x.name.length>34?x.name.substring(0,34)+'...':x.name)+'</td>'
+      +'<td style="font-size:11px;">'+x.cluster+'</td>'
+      +'<td><span class="bdg bbl" style="font-size:9px;">'+cs.profile.label+'</span></td>'
+      +'<td style="text-align:center;font-weight:600;">'+x.cases.length+'</td>'
+      +'<td style="text-align:center;color:'+(cs.fullDemerits>0?'var(--red)':'var(--t3)')+';font-weight:'+(cs.fullDemerits>0?700:400)+';">'+cs.fullDemerits+'</td>'
+      +'<td style="text-align:right;color:'+demColor+';">'+(cs.deductedPts>0?'-'+cs.deductedPts:'0')+' pts</td>'
+      +'<td style="text-align:right;">'+(x.pen>0?'OMR '+x.pen.toLocaleString():'—')+'</td>'
+      +'<td style="text-align:center;font-size:17px;font-weight:800;color:'+scoreColor+';">'+Math.max(0,cs.actualScore)+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--t3);">/ '+cs.profile.annualCeiling+'</td>'
+      +'<td>'+bar+'</td>'
+      +'<td style="text-align:center;"><span style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;background:'+bc+';color:#fff;">'+cs.bandLabel+'</span></td>'
+      +'</tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+function clearPF(){
+  ['pf-cl','pf-band','pf-yr'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var s=document.getElementById('pf-s');if(s)s.value='';
+  renderPerformance();
+}
+
+function exportPerfXL(){
+  if(!dataLoaded){toast('Data not loaded',2000,'warn');return;}
+  var yr=gv('pf-yr')||String(CY);
+  var ytdAll=stacData.filter(function(d){return d.date&&d.date.startsWith(yr);});
+  var _seen=new Set(),allCo=[];
+  var _norm=function(v){return(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
+  subconData.forEach(function(x){if(x.company&&x.company.trim().length>1){var k=_norm(x.company);if(!_seen.has(k)){_seen.add(k);allCo.push(x.company.trim());}}});
+  stacData.forEach(function(d){if(d.company&&d.company.trim().length>1){var k=_norm(d.company);if(!_seen.has(k)){_seen.add(k);allCo.push(d.company.trim());}}});
+  var hdrs=['Rank','Subcontractor','Cluster','Risk Level','Annual Ceiling','YTD Cases','Full Demerit Cases','Demerit Points','Penalty (OMR)','Score','% Compliance','Band','Status'];
+  var rows=allCo.map(function(co){
+    var coL=co.toLowerCase();
+    var cs=calcComplianceScore(co);
+    var sub=subconData.find(function(s){return s.company&&_norm(s.company)===_norm(co);});
+    var cases=ytdAll.filter(function(d){return d.company.trim().toLowerCase()===coL;});
+    var pen=cases.reduce(function(s,d){return s+(d.penalty!=null?d.penalty:0);},0);
+    var cl=sub?normCluster(sub.cluster||''):'—';
+    return{co:co,cluster:cl,cs:cs,cases:cases,pen:pen};
+  }).sort(function(a,b){return b.cs.actualScore-a.cs.actualScore;});
+  var data=rows.map(function(r,i){return[
+    i+1,r.co,r.cluster,r.cs.profile.label,r.cs.profile.annualCeiling,
+    r.cases.length,r.cs.fullDemerits,r.cs.deductedPts*-1,
+    r.pen,Math.max(0,r.cs.actualScore),
+    Math.round(r.cs.pct||0)+'%',r.cs.bandLabel,
+    r.cs.band==='green'?'Compliant':r.cs.band==='amber'?'At Risk':r.cs.band==='red'?'Non-Compliant':'BLACKLIST REVIEW'
+  ];});
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet([hdrs].concat(data));
+  ws['!cols']=[{wch:6},{wch:34},{wch:16},{wch:14},{wch:10},{wch:10},{wch:14},{wch:12},{wch:12},{wch:8},{wch:12},{wch:16},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws,'Performance Report');
+  XLSX.writeFile(wb,'ATNM-Performance-Report-'+yr+'-'+new Date().toISOString().split('T')[0]+'.xlsx');
+  toast('Performance Report exported');
+}
+
+function exportPerfPDF(){
+  if(!dataLoaded){toast('Data not loaded',2000,'warn');return;}
+  var yr=gv('pf-yr')||String(CY);
+  var ytdAll=stacData.filter(function(d){return d.date&&d.date.startsWith(yr);});
+  var _seen=new Set(),allCo=[];
+  var _norm=function(v){return(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
+  subconData.forEach(function(x){if(x.company&&x.company.trim().length>1){var k=_norm(x.company);if(!_seen.has(k)){_seen.add(k);allCo.push(x.company.trim());}}});
+  stacData.forEach(function(d){if(d.company&&d.company.trim().length>1){var k=_norm(d.company);if(!_seen.has(k)){_seen.add(k);allCo.push(d.company.trim());}}});
+  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  var rows=allCo.map(function(co){
+    var coL=co.toLowerCase();
+    var cs=calcComplianceScore(co);
+    var sub=subconData.find(function(s){return s.company&&_norm(s.company)===_norm(co);});
+    var cases=ytdAll.filter(function(d){return d.company.trim().toLowerCase()===coL;});
+    var pen=cases.reduce(function(s,d){return s+(d.penalty!=null?d.penalty:0);},0);
+    return{co:co,cluster:sub?normCluster(sub.cluster||''):'—',cs:cs,cases:cases,pen:pen};
+  }).sort(function(a,b){return b.cs.actualScore-a.cs.actualScore;});
+  var h='<h2 style="color:#21409a;margin-bottom:4px;">Subcontractor Performance Report</h2>';
+  h+='<p style="font-size:11px;color:#666;margin-bottom:14px;">Al Tasnim Enterprises LLC | PDO ODC | Period: '+yr+' | Generated: '+new Date().toLocaleDateString()+' | '+rows.length+' subcontractors</p>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:9px;"><thead><tr style="background:#21409a;color:#fff;">';
+  ['#','Subcontractor','Cluster','Ceiling','Cases','Full Dem.','Demerit Pts','Penalty','Score','%','Band'].forEach(function(col){h+='<th style="padding:5px 6px;text-align:left;">'+col+'</th>';});
+  h+='</tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    var bc=bCol[r.cs.band]||'#1b7a3e';
+    var rowBg=r.cs.band==='black'?'#f0f0f0':i%2===0?'#fff':'#f7f7f7';
+    h+='<tr style="background:'+rowBg+';">'
+      +'<td style="padding:4px 6px;color:#666;">'+(i+1)+'</td>'
+      +'<td style="padding:4px 6px;font-weight:600;">'+r.co+'</td>'
+      +'<td style="padding:4px 6px;font-size:8px;">'+r.cluster+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;">'+r.cs.profile.annualCeiling+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;">'+r.cases.length+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;color:'+(r.cs.fullDemerits>0?'red':'#333')+';font-weight:'+(r.cs.fullDemerits>0?700:400)+';">'+r.cs.fullDemerits+'</td>'
+      +'<td style="padding:4px 6px;text-align:right;color:'+(r.cs.deductedPts>0?'red':'#333')+';">'+(r.cs.deductedPts>0?'-'+r.cs.deductedPts:0)+'</td>'
+      +'<td style="padding:4px 6px;text-align:right;">'+(r.pen>0?'OMR '+r.pen:'')+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;font-weight:800;font-size:12px;color:'+bc+';">'+Math.max(0,r.cs.actualScore)+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;font-weight:600;color:'+bc+';">'+Math.round(r.cs.pct||0)+'%</td>'
+      +'<td style="padding:4px 6px;"><span style="padding:2px 6px;border-radius:3px;background:'+bc+';color:#fff;font-size:8px;">'+r.cs.bandLabel+'</span></td>'
+      +'</tr>';
+  });
+  h+='</tbody></table><p style="font-size:9px;color:#999;margin-top:12px;">Score = Annual Ceiling - (Full Demerit Cases x 10 pts) | Compliant 80%+ | At Risk 60-79% | Non-Compliant &lt;60%</p>';
+  openPW('Subcontractor Performance Report',h);
 }
 
 </script>
