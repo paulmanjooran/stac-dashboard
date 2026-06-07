@@ -4539,7 +4539,7 @@ function renderPerformance(){
     var scoreColor=cs.band==='green'?'var(--green)':cs.band==='amber'?'var(--orange)':cs.band==='red'?'var(--red)':'#1a1d24';
     var bar='<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:8px;background:var(--bdr);border-radius:4px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+bc+';border-radius:4px;"></div></div><span style="font-size:10px;font-weight:700;color:'+bc+';min-width:28px;text-align:right;">'+Math.round(pct)+'%</span></div>';
     var demColor=cs.deductedPts>0?'var(--red)':'var(--t3)';
-    html+='<tr style="background:'+rowBg+';cursor:pointer;" onclick="openSC(''+esc(x.name)+'')">'
+    html+='<tr style="background:'+rowBg+';cursor:pointer;" onclick="openSC(\"'+esc(x.name)+'\")">'
       +'<td style="text-align:center;font-size:11px;color:var(--t3);font-weight:600;">'+(i+1)+'</td>'
       +'<td style="font-weight:600;" title="'+esc(x.name)+'">'+(x.name.length>34?x.name.substring(0,34)+'...':x.name)+'</td>'
       +'<td style="font-size:11px;">'+x.cluster+'</td>'
