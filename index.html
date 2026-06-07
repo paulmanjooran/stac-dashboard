@@ -2426,7 +2426,7 @@ function getTrData(){
   const cl=gv('tf-cl'),co=gv('tf-co'),cat=gv('tf-cat');
   const inst=gv('tf-in'),fr=gv('tf-fr'),to=gv('tf-to');
   return stacData.filter(d=>{
-    if(cl&&!d.cluster.includes(cl))return false;if(co&&d.company!==co)return false;
+    if(cl&&d.cluster.trim().toLowerCase()!==cl.trim().toLowerCase())return false;if(co&&d.company.trim().toLowerCase()!==co.trim().toLowerCase())return false;
     if(cat&&!d.category.toLowerCase().includes(cat.toLowerCase().substring(0,40)))return false;
     const n=getYTDInst(d);
     if(inst==='1'&&n!==1)return false;if(inst==='2'&&n!==2)return false;if(inst==='3'&&n<3)return false;
@@ -2529,22 +2529,40 @@ function renderScores(){
   if(!dataLoaded)return;
   const cl=gv('sc-cl'),band=gv('sc-band'),s=(document.getElementById('sc-s')||{value:''}).value.toLowerCase();
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  const allCo=[...new Set([...subconData.map(x=>x.company),...ytd.map(d=>d.company)].filter(Boolean))];
+  // Primary source: subconData (canonical Sub Contractors list) 
+  // + any companies from stacData not already in subconData
+  const _coSeen=new Set();
+  const _normalise=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  const allCo=[];
+  // Add all subconData companies first (ensures clean names appear)
+  subconData.forEach(x=>{
+    if(!x.company||x.company.trim().length<2)return;
+    const k=_normalise(x.company);
+    if(!_coSeen.has(k)){_coSeen.add(k);allCo.push(x.company.trim());}
+  });
+  // Supplement with stacData companies not in subconData
+  stacData.forEach(d=>{
+    if(!d.company||d.company.trim().length<2)return;
+    const k=_normalise(d.company);
+    if(!_coSeen.has(k)){_coSeen.add(k);allCo.push(d.company.trim());}
+  });
   const scores=allCo.map(co=>{
-    const cases=ytd.filter(d=>d.company===co);
+    // Match cases using trim+lowercase to handle name variants between sheets
+    const coL=co.trim().toLowerCase();
+    const cases=ytd.filter(d=>d.company.trim().toLowerCase()===coL);
     const pen=cases.reduce((s,d)=>s+(d.penalty||0),0);
     const instMax=cases.length?Math.max(...cases.map(d=>getYTDInst(d))):0;
-    const sub=subconData.find(s=>s.company===co);
-    const cs=calcComplianceScore(co);
+    const sub=subconData.find(s=>s.company&&s.company.trim().toLowerCase()===coL);
+    const cs=calcComplianceScore(co); // uses co (canonical name) or coL internally
     return{co,cluster:sub?normCluster(sub.cluster):'—',cases,pen,instMax,
       demerit:cs.deductedPts*-1,score:Math.max(0,cs.actualScore),
       riskLevel:cs.profile.label,annualCeiling:cs.profile.annualCeiling,
       scoreDisplay:cs.actualScore+'/'+cs.profile.annualCeiling,
       pct:cs.pct,bandLabel:cs.bandLabel,band:cs.band};
-  }).filter(x=>x.cases.length>0||subconData.find(s=>s.company===x.co));
+  }); // Show ALL subcontractors — no violations still gets a scorecard
 
   const filt=scores.filter(x=>{
-    if(cl&&x.cluster&&!x.cluster.toLowerCase().includes(cl.toLowerCase()))return false;
+    if(cl&&x.cluster&&x.cluster.trim().toLowerCase()!==cl.trim().toLowerCase())return false;
     if(band&&x.band!==band)return false;
     if(s&&!x.co.toLowerCase().includes(s))return false;
     return true;
@@ -3180,17 +3198,70 @@ function exportFinesXL(){
 function exportFinesPDF(){doPDF(stacData.filter(d=>d.date&&d.date.startsWith(String(CY))),'Fines & Penalties '+CY);}
 function exportScoresXL(){
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  const allCo=[...new Set([...subconData.map(x=>x.company),...ytd.map(d=>d.company)].filter(Boolean))];
+  // Primary source: subconData (canonical Sub Contractors list) 
+  // + any companies from stacData not already in subconData
+  const _coSeen=new Set();
+  const _normalise=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  const allCo=[];
+  // Add all subconData companies first (ensures clean names appear)
+  subconData.forEach(x=>{
+    if(!x.company||x.company.trim().length<2)return;
+    const k=_normalise(x.company);
+    if(!_coSeen.has(k)){_coSeen.add(k);allCo.push(x.company.trim());}
+  });
+  // Supplement with stacData companies not in subconData
+  stacData.forEach(d=>{
+    if(!d.company||d.company.trim().length<2)return;
+    const k=_normalise(d.company);
+    if(!_coSeen.has(k)){_coSeen.add(k);allCo.push(d.company.trim());}
+  });
   const hdr=['Company','Cluster','Risk Level','Annual Ceiling','YTD Cases','YTD Penalty','YTD Demerit','YTD Score','Band'];
-  const rows=allCo.map(co=>{const cs=calcComplianceScore(co);const sub=subconData.find(s=>s.company===co);const cases=ytd.filter(d=>d.company===co);const pen=cases.reduce((s,d)=>s+(d.penalty||0),0);return[co,sub?normCluster(sub.cluster):'—',cs.profile.label,cs.profile.annualCeiling,cases.length,pen,cs.deductedPts*-1,cs.actualScore,cs.bandLabel];}).filter(r=>r[4]>0);
-  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);XLSX.utils.book_append_sheet(wb,ws,'Scorecards');
+  const hdrNew=['Subcontractor','Cluster','Risk Level','Ceiling','YTD Cases','YTD Penalty (OMR)','Demerit Pts','Score','% Compliance','Band'];
+  const rows=allCo.map(co=>{
+    const coL=co.trim().toLowerCase();
+    const cs=calcComplianceScore(co);
+    const sub=subconData.find(s=>s.company&&s.company.trim().toLowerCase()===coL);
+    const cases=ytd.filter(d=>d.company.trim().toLowerCase()===coL);
+    const pen=cases.reduce((s,d)=>s+(d.penalty||0),0);
+    // All SCs shown — no violations = green 100% compliance
+    return[co,sub?normCluster(sub.cluster):'—',cs.profile.label,cs.profile.annualCeiling,
+           cases.length,pen,cs.deductedPts*-1,Math.max(0,cs.actualScore),
+           (cs.pct||100)+'%',cs.bandLabel];
+  }); // No filter — ALL subcontractors shown regardless of violations
+  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([hdrNew,...rows]);XLSX.utils.book_append_sheet(wb,ws,'Scorecards');
   XLSX.writeFile(wb,`ATNM-STAC-Scorecards-${CY}.xlsx`);toast('✅ Scorecards exported');
 }
 function exportScoresPDF(){
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  const allCo=[...new Set([...subconData.map(x=>x.company),...ytd.map(d=>d.company)].filter(Boolean))];
-  let h=`<h2 style="color:#21409a;">ATNM Subcontractor Compliance Scorecards — YTD ${CY}</h2><p style="font-size:11px;color:#666;">${new Date().toLocaleDateString()}</p><table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:10px;"><thead><tr style="background:#21409a;color:#fff;"><th style="padding:6px 8px;">Company</th><th>Cluster</th><th>Risk Level</th><th>Ceiling</th><th>Cases</th><th>Penalty</th><th>Score</th><th>Band</th></tr></thead><tbody>`;
-  allCo.forEach((co,i)=>{const cs=calcComplianceScore(co);const sub=subconData.find(s=>s.company===co);const cases=ytd.filter(d=>d.company===co);if(!cases.length)return;const pen=cases.reduce((s,d)=>s+(d.penalty||0),0);h+=`<tr style="background:${i%2===0?'#f9f9f9':'#fff'};"><td style="padding:5px 8px;">${co}</td><td>${sub?normCluster(sub.cluster):'—'}</td><td>${cs.profile.label}</td><td>${cs.profile.annualCeiling}</td><td style="text-align:center;">${cases.length}</td><td>OMR ${pen}</td><td style="font-weight:700;">${cs.actualScore}/${cs.profile.annualCeiling}</td><td style="font-weight:700;">${cs.bandLabel}</td></tr>`;});
+  const _coSeen2=new Set(),allPCo=[];
+  const _norm=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  subconData.forEach(x=>{if(x.company&&x.company.trim().length>1){const k=_norm(x.company);if(!_coSeen2.has(k)){_coSeen2.add(k);allPCo.push(x.company.trim());}}});
+  stacData.forEach(d=>{if(d.company&&d.company.trim().length>1){const k=_norm(d.company);if(!_coSeen2.has(k)){_coSeen2.add(k);allPCo.push(d.company.trim());}}});
+  const bc2={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  let h='<h2 style="color:#21409a;">Subcontractor Scorecards '+CY+'</h2>';
+  h+='<p style="font-size:11px;color:#666;margin-bottom:10px;">Al Tasnim Enterprises LLC | PDO ODC | '+new Date().toLocaleDateString()+' | '+allPCo.length+' subcontractors</p>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#21409a;color:#fff;">';
+  ['Subcontractor','Cluster','Risk Level','Score / Ceiling','% Compliance','YTD Cases','Penalty (OMR)','Demerit Pts','Band'].forEach(col=>h+=`<th style="padding:5px 7px;text-align:left;">${col}</th>`);
+  h+='</tr></thead><tbody>';
+  allPCo.forEach((co,i)=>{
+    const coL=co.toLowerCase();
+    const cs=calcComplianceScore(co);
+    const cases=ytd.filter(d=>d.company.trim().toLowerCase()===coL);
+    const sub=subconData.find(s=>s.company&&s.company.trim().toLowerCase()===coL);
+    const pen=cases.reduce((s,d)=>s+(d.penalty||0),0);
+    const bc=bc2[cs.band]||'#1b7a3e';
+    h+=`<tr style="background:${i%2===0?'#f9f9f9':'#fff'};">
+      <td style="padding:4px 7px;font-weight:600;">${co}</td>
+      <td>${sub?normCluster(sub.cluster):'—'}</td>
+      <td style="font-size:9px;">${cs.profile.label}</td>
+      <td style="font-weight:700;">${Math.max(0,cs.actualScore)} / ${cs.profile.annualCeiling}</td>
+      <td style="text-align:center;">${cs.pct||100}%</td>
+      <td style="text-align:center;">${cases.length}</td>
+      <td style="text-align:right;">OMR ${pen}</td>
+      <td style="text-align:center;color:${cs.deductedPts>0?'red':'#333'};">${cs.deductedPts*-1} pts</td>
+      <td><span style="padding:2px 6px;border-radius:3px;font-size:9px;background:${bc};color:#fff;">${cs.bandLabel}</span></td>
+    </tr>`;
+  });
   h+='</tbody></table>';openPW('Subcontractor Scorecards',h);
 }
 function exportSCXL(){if(activeSCData){const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY))&&d.company===activeSCData);doXL(ytd,'Scorecard-'+activeSCData.substring(0,20));}}
