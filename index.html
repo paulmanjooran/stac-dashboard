@@ -1826,14 +1826,20 @@ function parseGVizTable(data){
     const o={};
     cols.forEach((col,i)=>{
       const cell=row.c&&row.c[i];
-      const val=cell?(cell.f!=null?String(cell.f):(cell.v!=null?String(cell.v):'')):'';
+      // Prefer raw value (cell.v) for numbers; formatted (cell.f) for text/dates
+      const val=cell?(typeof cell.v==='number'?cell.v:(cell.f!=null?String(cell.f):(cell.v!=null?String(cell.v):''))):''; 
       o[col]=val;
     });
     // Accept both new clean headers and legacy headers
     const id=o['STAC ID #']||o['STAC Vendor #']||'';
     if(!id||id==='DONOTDELETE'||id.toLowerCase().includes('stac id')||!id.includes('ATNM'))return;
-    const pr=String(o['Penalty (OMR)']||o['Penalty']||'').replace(/[^0-9.]/g,'');
-    const p=parseInt(pr)||0;
+    // Penalty: may be numeric (from cell.v) or string like 'OMR 500.00' or 'TBD'
+    const _rawPen=o['Penalty (OMR)']||o['Penalty']||'';
+    // null = TBD/blank, 0 = confirmed zero, >0 = actual amount
+    const _penStr=String(_rawPen).trim();
+    const p=typeof _rawPen==='number'?_rawPen:
+              (_penStr===''||_penStr.toUpperCase()==='TBD'?null:
+               (()=>{const pr=_penStr.replace(/[^0-9.]/g,'');return parseFloat(pr)||0;})());
     // Category: new header = 'HSE Violation Category', old = 'HSE Key Requirements'
     // M: Handle both old header 'HSE Key Requirements' and new 'HSE Violation Category'
     const rawCat=o['HSE Violation Category']||o['HSE Key Requirements']||
@@ -2442,16 +2448,18 @@ function renderFines(){
   if(!dataLoaded)return;
   // Normalise penalty — handle "OMR 75", "75", 75, "TBD", 0
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY))).map(d=>{
-    if(typeof d.penalty==='string'){
-      const p=parseFloat(d.penalty.replace(/[^0-9.]/g,''));
-      d.penalty=isNaN(p)?0:p;
+    // Normalise: null/undefined/TBD → null (pending), string number → number
+    if(d.penalty===null||d.penalty===undefined){d.penalty=null;}
+    else if(typeof d.penalty==='string'){
+      const s=d.penalty.trim();
+      if(s===''||s.toUpperCase()==='TBD'){d.penalty=null;}
+      else{const p=parseFloat(s.replace(/[^0-9.]/g,''));d.penalty=isNaN(p)?null:p;}
     }
-    if(!d.penalty)d.penalty=0;
     return d;
   });
-  const tot=ytd.reduce((s,d)=>s+(d.penalty||0),0);
-  const penCases=ytd.filter(d=>d.penalty>0);
-  const maxD=ytd.reduce((m,d)=>d.penalty>m.penalty?d:m,{penalty:0,company:'—'});
+  const tot=ytd.reduce((s,d)=>s+(d.penalty!=null?d.penalty:0),0);
+  const penCases=ytd.filter(d=>d.penalty!=null&&d.penalty>0);
+  const maxD=ytd.filter(d=>d.penalty!=null).reduce((m,d)=>d.penalty>m.penalty?d:m,{penalty:0,company:'—'});
   const avg=penCases.length?Math.round(tot/penCases.length):0;
   const fullDemCount=ytd.filter(d=>d.wlType&&d.wlType.toLowerCase().includes('full demerit')).length;
   const dem=fullDemCount*-10;
@@ -2464,14 +2472,14 @@ function renderFines(){
   const fcs=document.getElementById('fp-cas-s');if(fcs)fcs.textContent=penCases.length+' with penalty';
 
   // Charts
-  const byCo={};ytd.forEach(d=>{if(d.penalty>0)byCo[d.company]=(byCo[d.company]||0)+d.penalty;});
+  const byCo={};ytd.forEach(d=>{if(d.penalty!=null&&d.penalty>0)byCo[d.company]=(byCo[d.company]||0)+d.penalty;});
   const sCo=Object.entries(byCo).sort((a,b)=>b[1]-a[1]).slice(0,8);
   mkChart('ch-pen-co','bar',sCo.map(([k])=>k.length>22?k.substring(0,22)+'…':k),sCo.map(([,v])=>v),Array(sCo.length).fill('#c0392b88'),false,(label,idx)=>{
     const co=sCo[idx]?sCo[idx][0]:'';
     showDrill('Fines: '+label,ytd.filter(x=>x.company===co&&x.penalty>0));
   },'#c0392b');
 
-  const byCat={};ytd.forEach(d=>{if(d.penalty>0){const k=d.category.length>28?d.category.substring(0,28)+'…':d.category;byCat[k]=(byCat[k]||0)+d.penalty;}});
+  const byCat={};ytd.forEach(d=>{if(d.penalty!=null&&d.penalty>0){const k=d.category.length>28?d.category.substring(0,28)+'…':d.category;byCat[k]=(byCat[k]||0)+d.penalty;}});
   const sCat=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   mkChart('ch-pen-cat','doughnut',sCat.map(([k])=>k),sCat.map(([,v])=>v),['#c0392b','#e67e22','#d68910','#21409a','#1b7a3e','#8e44ad','#4d555b'],true,(label)=>{
     const cat=label.replace('…','');
@@ -2489,7 +2497,7 @@ function renderFines(){
       <td class="tdc">${d.company}</td>
       <td class="tdc" title="${esc(d.category)}">${d.category.length>35?d.category.substring(0,35)+'…':d.category}</td>
       <td>${idots(getYTDInst(d),true)}</td>
-      <td>${d.penalty>0?`<span class="${getPB(d.penalty)}">OMR ${d.penalty}</span>`:'<span class="bdg bgy">TBD</span>'}</td>
+      <td>${d.penalty===null?'<span class="bdg bgy" style="font-size:9px;">TBD</span>':d.penalty===0?'<span class="bdg bgy" style="font-size:9px;">—</span>':`<span class="${getPB(d.penalty)}">OMR ${d.penalty.toLocaleString()}</span>`}</td>
       <td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.wlType||''}">${d.wlType||'—'}</td>
       <td style="text-align:center;">${isFullDem?'<span class="bdg brd" style="font-size:9px;">-10 pts</span>':'<span class="bdg bgr" style="font-size:9px;">0</span>'}</td>
     </tr>`;
