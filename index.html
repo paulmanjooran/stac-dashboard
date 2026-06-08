@@ -257,6 +257,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sb-sec">Analysis</div>
     <div class="sbi" onclick="nav('fines')"><span class="ic">💰</span>Fines & Penalties</div>
     <div class="sbi" onclick="nav('scorecards')"><span class="ic">🏅</span>Subcon Scorecards</div>
+    <div class="sbi" onclick="nav('performance')"><span class="ic">📋</span>Performance Report</div>
     <div class="sbi" onclick="nav('analytics')"><span class="ic">📈</span>Analytics</div>
     <div class="sb-sec">Tools</div>
     <div class="sbi" onclick="nav('warning-letter')"><span class="ic">✉️</span>Warning Letters</div>
@@ -275,6 +276,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div id="pg-sub">STAC — Subcontractor Tracking & Assurance for Compliance</div>
     </div>
     <div class="tb-r">
+      <div style="display:flex;align-items:center;gap:5px;margin-right:10px;font-size:11px;"><span id="health-dot" style="width:8px;height:8px;border-radius:50%;background:#1b7a3e;display:inline-block;"></span><span id="health-lbl" style="color:#1b7a3e;font-weight:600;">Live</span><span id="health-ts" style="color:var(--t3);font-size:10px;margin-left:4px;"></span></div><span id="draft-badge" onclick="retryDrafts()" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;cursor:pointer;margin-right:8px;"></span>
       <span id="dsrc" class="bdg bgy" style="font-size:10px;">⏳ Loading...</span>
       <button class="btn bk bsm" onclick="loadData()">🔄 Refresh</button>
       <button class="btn bk bsm" onclick="exportFilteredExcel()">⬇ Excel</button>
@@ -939,6 +941,48 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
       </div>
     </div>
+    <div id="view-performance" class="view">
+      <div class="fbar" style="margin-bottom:14px;">
+        <span class="fl">Cluster</span><select id="pf-cl" onchange="renderPerformance()"><option value="">All Clusters</option></select>
+        <span class="fl">Band</span>
+        <select id="pf-band" onchange="renderPerformance()">
+          <option value="">All Bands</option><option value="green">Compliant</option>
+          <option value="amber">At Risk</option><option value="red">Non-Compliant</option>
+          <option value="black">Blacklist Review</option>
+        </select>
+        <span class="fl">Year</span><select id="pf-yr" onchange="renderPerformance()"><option value="">Current Year</option></select>
+        <div class="fdiv"></div>
+        <input type="text" id="pf-s" placeholder="Search..." oninput="renderPerformance()"
+          style="border:1px solid var(--bdr);border-radius:var(--r);padding:5px 10px;font-size:12px;width:180px;">
+        <button class="btn bk bsm" onclick="clearPF()">Reset</button>
+        <div class="fdiv"></div>
+        <button class="btn bg bsm" onclick="exportPerfXL()">Excel</button>
+        <button class="btn bk bsm" onclick="exportPerfPDF()">PDF</button>
+        <span id="pf-cnt" style="font-size:11px;color:var(--t3);margin-left:6px;"></span>
+      </div>
+      <div class="kgrid k4" style="margin-bottom:14px;">
+        <div class="kpi kgr"><div class="klbl">Compliant</div><div class="kval" id="pf-k-green">-</div><div class="ksub">Score &ge;80%</div></div>
+        <div class="kpi kam"><div class="klbl">At Risk</div><div class="kval" id="pf-k-amber">-</div><div class="ksub">60-79%</div></div>
+        <div class="kpi krd"><div class="klbl">Non-Compliant</div><div class="kval" id="pf-k-red">-</div><div class="ksub">&lt;60%</div></div>
+        <div class="kpi" style="background:#1a1d24;"><div class="klbl" style="color:#aaa;">Blacklist</div><div class="kval" id="pf-k-black" style="color:#fff;">-</div><div class="ksub" style="color:#666;">Score &lt;0</div></div>
+      </div>
+      <div class="card">
+        <div class="chd"><h3>Performance Report &mdash; <span id="pf-yr-label" style="color:var(--blue);">YTD</span></h3>
+          <div style="font-size:11px;color:var(--t3);">Score = Ceiling &minus; (Full Demerit Cases &times; 10 pts). Click row to view detail.</div>
+        </div>
+        <div class="tw"><table class="tbl" id="pf-table">
+          <thead><tr>
+            <th style="width:32px;text-align:center;">#</th><th>Subcontractor</th><th>Cluster</th><th>Risk Level</th>
+            <th style="text-align:center;">Cases</th><th style="text-align:center;">Demerit</th>
+            <th style="text-align:right;">Pts</th><th style="text-align:right;">Penalty</th>
+            <th style="text-align:center;">Score</th><th style="text-align:center;">Ceiling</th>
+            <th style="min-width:120px;">Compliance</th><th style="text-align:center;">Band</th>
+          </tr></thead>
+          <tbody id="pf-body"><tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3);">Loading...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
     <!-- ANALYTICS -->
     <div id="view-analytics" class="view">
       <div class="ch2">
@@ -1094,6 +1138,13 @@ let charts={},dataLoaded=false,_toastTimer=null;
 let CY=new Date().getFullYear();
 let FS={cl:'',co:'',cat:'',inst:'',fr:'',to:''};
 let liveCategories=[];
+const MASTERS={companies:[],clusters:[],disciplines:[],contracts:[],_loadedAt:0,
+  _ttl:60*60*1000,isStale(){return Date.now()-this._loadedAt>this._ttl;},
+  markLoaded(){this._loadedAt=Date.now();}};
+const CACHE_TTL_STAC=15*60*1000,CACHE_TTL_MASTERS=60*60*1000;
+const CACHE_KEY_STAC='stac_cache_v3',CACHE_KEY_MASTERS='stac_masters_v3';
+const CACHE_KEY_TS_STAC='stac_cache_ts_v3',CACHE_KEY_TS_MST='stac_masters_ts_v3';
+let _lastSuccessfulSync=0,_consecutiveFailures=0,_healthInterval=null;
 
 const RAW=[
   // 2025 Records — actual IDs from live Google Sheet (ATNM-STAC-2025-001 to 049)
@@ -1525,55 +1576,6 @@ function updateAdminUI(){
   const badge = document.getElementById('admin-badge');
   if(badge) badge.style.display = isAdmin ? 'inline-flex' : 'none';
   if(dataLoaded) refreshCurrentView();
-}
-
-function deleteSTAC(stacId){
-  if(!isAdmin){ toast('⛔ Admin access required to delete records', 3000, 'err'); return; }
-  if(!confirm('Delete STAC case '+stacId+' from this session?\n\nAlso removes from Google Sheet if Apps Script is configured.\n\nThis cannot be undone.')){ return; }
-  stacData = stacData.filter(d => d.id !== stacId);
-  filteredData = filteredData.filter(d => d.id !== stacId);
-  toast('🗑 '+stacId+' removed from view', 3000);
-  const su = gv('cfg-scr') || CFG.scriptUrl;
-  if(su && su.startsWith('https://script.google.com')){
-    fetch(su, {method:'POST', mode:'cors',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({action:'deleteSTAC', stacId, deletedBy: adminEmail})
-    }).then(r=>r.json()).then(res=>{
-      toast(res.ok ? ('✅ '+stacId+' deleted from Google Sheet') : ('⚠️ Sheet delete: '+res.error), 4000, res.ok?'':'warn');
-    }).catch(()=>toast('⚠️ Apps Script delete failed — row still in sheet', 4000, 'warn'));
-  }
-  updateIDs(); filteredData = getFiltered(); renderAll();
-}
-
-async function loadData(){
-  showStatus('connecting');
-  const sid=gv('cfg-sid')||CFG.sheetId;
-  const su=gv('cfg-sub')||CFG.subconSheet;
-  let live=false;
-  try{
-    const [stacRaw,subconRaw,matrixRaw]=await Promise.all([
-      fetchGvizData(sid,'342483107',null),
-      fetchGvizData(sid,null,su),
-      fetchGvizData(sid,null,'Vendor HSE Scoring Matrix')
-    ]);
-    if(stacRaw){const p=parseGVizTable(stacRaw);if(p.length>0){stacData=p;live=true;}}
-    if(subconRaw){const p=parseGVizSubcon(subconRaw);if(p.length>0)subconData=p;}
-    if(matrixRaw)parseScoringMatrixSheet(matrixRaw);
-  }catch(e){console.error('loadData error:',e);}
-  if(!live)stacData=[...RAW];
-  if(!subconData.length)subconData=[...RAW_SC];
-  populateCategoryDropdown();
-  // Check admin access from Users List sheet (runs async, doesn't block data display)
-  checkAdminAccess();
-  dataLoaded=true;
-  normalizePenalties();
-  const el=document.getElementById('lu');if(el)el.textContent='Synced: '+new Date().toLocaleTimeString();
-  showStatus(live?'connected':'sample');
-  populateDDs();
-  updateIDs();
-  filteredData=getFiltered();
-  renderAll();
-  toast(live?'✅ Live — '+stacData.length+' records loaded':'⚠️ Using sample data — set sheet to "Anyone with link → Viewer"',4000,live?'':'warn');
 }
 
 function showStatus(state){
@@ -2377,7 +2379,7 @@ async function doSubmit(e){
   const scriptUrl = savedUrl || gv('cfg-scr') || CFG.scriptUrl;
   if(scriptUrl&&scriptUrl.startsWith('https://script.google.com')){
     try{
-      toast('⏳ Writing to Google Sheet...', 5000);
+      toast('Submitting...',6000);addLocal(payload);saveDraft(payload);
       const r = await fetch(scriptUrl,{
         method:'POST',
         mode:'cors',
@@ -2389,11 +2391,9 @@ async function doSubmit(e){
       const text = await r.text();
       let res;
       try{ res = JSON.parse(text); }catch(pe){ throw new Error('Script response not JSON — check deployment. Response: '+text.substring(0,100)); }
-      if(res.ok){
-        toast(`✅ ${stacId} → Google Sheet row ${res.row} | ${res.cols} columns written`,5000);
-        addLocal(payload); resetForm(); nav('tracker'); return;
-      }
-      throw new Error(res.error||'Script returned error');
+      clearDraft(stacId);
+      toast(stacId+' submitted',4000);
+      setTimeout(function(){loadData(true);},4000);
     }catch(err){
       console.error('doSubmit error:',err);
       toast('⚠️ Sheet write failed: '+err.message+' — using clipboard fallback',5000,'warn');
@@ -2487,18 +2487,27 @@ function normalizePenalties(){
 }
 
 function addLocal(p){
-  const pen=parseInt(p.penalty)||0;
-  stacData.unshift({
-    id:p.stacId, date:p.instanceDate, cluster:p.cluster,
-    company:p.company, owner:p.owner||'',
-    category:p.category,  // M: HSE Key Requirements
-    description:p.description||'',
-    wlType:p.wlType||'', penalty:pen,
+  var pen=typeof p.penalty==='number'?p.penalty:(parseInt(p.penalty)||0);
+  stacData.unshift({id:p.stacId,date:p.instanceDate||'',cluster:p.cluster||'',
+    company:p.company||'',owner:p.owner||'',category:p.category||'',
+    description:p.description||'',wlType:p.wlType||'',penalty:pen,
     instances:parseInt(p.ytdInstanceCount)||1,
-    wlIssued:'No', contractNo:p.contractNo||'',
-    closeoutDate:p.closeoutDate||''
-  });
+    wlIssued:'No',contractNo:p.contractNo||'',closeoutDate:p.closeoutDate||'',_local:true});
   filteredData=getFiltered();updateIDs();renderAll();
+}
+function saveDraft(p){try{var d=JSON.parse(localStorage.getItem('stac_drafts')||'[]');d.unshift(Object.assign({},p,{_savedAt:Date.now()}));localStorage.setItem('stac_drafts',JSON.stringify(d.slice(0,10)));}catch(e){}}
+function clearDraft(id){try{var d=JSON.parse(localStorage.getItem('stac_drafts')||'[]');localStorage.setItem('stac_drafts',JSON.stringify(d.filter(function(x){return x.stacId!==id;})));}catch(e){}}
+function getDrafts(){try{return JSON.parse(localStorage.getItem('stac_drafts')||'[]');}catch(e){return[];}}
+function retryDrafts(){
+  var d=getDrafts();if(!d.length){toast('No pending drafts',2000);return;}
+  var su=CFG.scriptUrl;if(!su||su.indexOf('https://script.google.com')<0){toast('Configure Apps Script URL in Setup',3000,'warn');return;}
+  toast('Retrying '+d.length+' draft(s)',4000);
+  d.forEach(function(p){fetch(su,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).then(function(){clearDraft(p.stacId);updateDraftBadge();}).catch(function(){});});
+  setTimeout(function(){loadData(true);updateDraftBadge();},3000);
+}
+function updateDraftBadge(){
+  var n=getDrafts().length,b=document.getElementById('draft-badge');
+  if(b){b.textContent=n>0?n+' pending':'';b.style.display=n>0?'inline-block':'none';}
 }
 
 // ============================================================
@@ -2567,6 +2576,8 @@ function loadWL(stacId){
     <div class="wl-sig">
       <div><p style="margin-top:0;font-weight:600;">For Al Tasnim Enterprises LLC:</p><div class="wl-sig-line">HSE Manager<br>Name: ______________________<br>Date: ______________________</div></div>
       <div><div class="wl-sig-line" style="margin-top:28px;">Contract Manager<br>Name: ______________________<br>Date: ______________________</div></div>
+          <div class="card" style="margin-top:14px;"><div class="chd"><h3>Master Data Management</h3><div style="display:flex;gap:6px;"><button class="btn bg bsm" onclick="loadMasters(true)">Refresh Masters</button><button class="btn bk bsm" onclick="clearMastersCache()">Clear Cache</button><button class="btn bk bsm" onclick="clearAllCache()" style="color:var(--red);">Clear All</button></div></div><div class="cbd" id="master-panel-body" style="font-size:12px;color:var(--t3);">Loading...</div></div>
+          <div class="card" style="margin-top:14px;"><div class="chd"><h3>System Diagnostics</h3><div style="display:flex;gap:6px;"><button class="btn bg bsm" onclick="runDiagnostics()">Run Diagnostics</button><button class="btn bk bsm" onclick="retryDrafts()">Retry Drafts</button></div></div><div class="cbd"><pre id="diag-output" style="font-size:11px;font-family:monospace;background:#f7f8fa;padding:12px;border-radius:6px;white-space:pre-wrap;border:1px solid var(--bdr);min-height:60px;">Click Run Diagnostics.</pre></div></div>
     </div>
     <hr style="margin:20px 0;border:none;border-top:1px solid var(--bdr);">
     <p style="font-size:10px;color:#999;">ATNM STAC Digital Ecosystem | STAC Ref: ${d.id} | Official HSE Record</p>
@@ -2700,6 +2711,7 @@ const PAGES={
   'new-stac':{t:'New STAC Form',s:'Raise a new subcontractor HSE non-compliance case'},
   'tracker':{t:'Case Tracker',s:'Filter, manage and export all STAC cases'},
   'fines':{t:'Fines & Penalties',s:'YTD penalty register, demerit matrix and financial analysis'},
+  'performance':{t:'Performance Report',s:'Full ranking — score out of ceiling'},
   'scorecards':{t:'Subcontractor Scorecards',s:'YTD compliance score per subcontractor'},
   'warning-letter':{t:'Warning Letters',s:'Generate, preview, download and issue warning letters'},
   'analytics':{t:'Analytics & Trends',s:'YTD performance data and 3-instance breakdown'},
@@ -2715,6 +2727,7 @@ function nav(v){
   if(v==='dashboard'){filteredData=getFiltered();renderDash();}
   else if(v==='tracker')renderTracker();
   else if(v==='fines')renderFines();
+  else if(v==='performance')renderPerformance();
   else if(v==='scorecards')renderScores();
   else if(v==='analytics')renderAnalytics();
   else if(v==='warning-letter')populateWLSel();
@@ -2728,6 +2741,7 @@ function renderAll(){
   if(document.querySelector('#view-dashboard.active'))renderDash();
   else if(document.querySelector('#view-tracker.active'))renderTracker();
   else if(document.querySelector('#view-fines.active'))renderFines();
+  else if(document.querySelector('#view-performance.active'))renderPerformance();
   else if(document.querySelector('#view-scorecards.active'))renderScores();
   else if(document.querySelector('#view-analytics.active'))renderAnalytics();
   else if(document.querySelector('#view-warning-letter.active'))populateWLSel();
@@ -2870,11 +2884,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   populateCategoryDropdown();
   populateDDs();
   updateIDs();
+  if(typeof updateHealthUI==='function')updateHealthUI();
   filteredData=getFiltered();
   renderDash();
   initForm();
   // Async live sync — 100ms delay to let DOM render first
-  setTimeout(()=>loadData(),100);
+  setTimeout(async()=>{
+    await loadMasters();
+    await loadData(false);
+    updateDraftBadge();
+    startHealthCheck();
+  },100);
   setTimeout(()=>loadHseStatsData(),800);
 });
 
@@ -3495,6 +3515,307 @@ function scShowToast(msg, isError = false) {
   t.textContent = msg;
   t.className = 'toast show' + (isError ? ' error' : '');
   setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+
+async function loadData(force){
+  if(!force){try{
+    var _ts=parseInt(localStorage.getItem(CACHE_KEY_TS_STAC)||'0');
+    if(Date.now()-_ts<CACHE_TTL_STAC){
+      var _cd=JSON.parse(localStorage.getItem(CACHE_KEY_STAC)||'null');
+      if(_cd&&_cd.length>0){stacData=[].concat(_cd);dataLoaded=true;normalizePenalties();
+        populateDDs();updateIDs();filteredData=getFiltered();renderAll();
+        var _lu=document.getElementById('lu');if(_lu)_lu.textContent='Cache: '+new Date(_ts).toLocaleTimeString();
+        showStatus('connected');if(typeof updateHealthUI==='function')updateHealthUI();return;
+      }
+    }
+  }catch(e){console.warn('cache:',e);}}
+  showStatus('connecting');
+  const sid=gv('cfg-sid')||CFG.sheetId;
+  const su=gv('cfg-sub')||CFG.subconSheet;
+  let live=false;
+  try{
+    const [stacRaw,subconRaw,matrixRaw]=await Promise.all([
+      fetchGvizData(sid,'342483107',null),
+      fetchGvizData(sid,null,su),
+      fetchGvizData(sid,null,'Vendor HSE Scoring Matrix')
+    ]);
+    if(stacRaw){const p=parseGVizTable(stacRaw);if(p.length>0){stacData=p;live=true;
+      try{localStorage.setItem(CACHE_KEY_STAC,JSON.stringify(stacData));localStorage.setItem(CACHE_KEY_TS_STAC,String(Date.now()));}catch(e){}
+      _lastSuccessfulSync=Date.now();_consecutiveFailures=0;
+    }}
+    if(subconRaw){const p=parseGVizSubcon(subconRaw);if(p.length>0)subconData=p;}
+    if(matrixRaw)parseScoringMatrixSheet(matrixRaw);
+  }catch(e){console.error('loadData error:',e);}
+  if(!live)stacData=[...RAW];
+  if(!subconData.length)subconData=[...RAW_SC];
+  populateCategoryDropdown();
+  // Check admin access from Users List sheet (runs async, doesn't block data display)
+  checkAdminAccess();
+  dataLoaded=true;
+  normalizePenalties();
+  const el=document.getElementById('lu');if(el)el.textContent='Synced: '+new Date().toLocaleTimeString();
+  showStatus(live?'connected':'sample');
+  populateDDs();
+  updateIDs();
+  if(typeof updateHealthUI==='function')updateHealthUI();
+  filteredData=getFiltered();
+  renderAll();
+  toast(live?'✅ Live — '+stacData.length+' records loaded':'⚠️ Using sample data — set sheet to "Anyone with link → Viewer"',4000,live?'':'warn');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// MASTERS + HEALTH + CACHE SYSTEM
+// ════════════════════════════════════════════════════════════════
+async function loadMasters(force){
+  if(!force){try{
+    var ts=parseInt(localStorage.getItem(CACHE_KEY_TS_MST)||'0');
+    if(Date.now()-ts<CACHE_TTL_MASTERS){
+      var cd=JSON.parse(localStorage.getItem(CACHE_KEY_MASTERS)||'null');
+      if(cd&&cd.companies&&cd.companies.length>0){
+        Object.assign(MASTERS,cd,{_loadedAt:ts});
+        subconData=MASTERS.companies.map(function(n){return{company:n,cluster:'',ownerEmail:'',focalEmail:''};});
+        populateDDs();
+        console.log('Masters from cache: '+MASTERS.companies.length);return;
+      }
+    }
+  }catch(e){}}
+  var url=CFG.scriptUrl+'?action=getMasters';
+  try{
+    var res=await fetch(url,{mode:'cors',cache:'no-store'});
+    var data=await res.json();
+    if(data.subcontractors&&data.subcontractors.length){
+      var seen=new Set();
+      var norm=function(s){return s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
+      MASTERS.companies=data.subcontractors.map(function(s){return(s.name||s||'').trim();})
+        .filter(function(n){if(!n||n.length<2)return false;var k=norm(n);if(seen.has(k))return false;seen.add(k);return true;})
+        .sort(function(a,b){return a.localeCompare(b);});
+      var cSeen=new Set();
+      MASTERS.clusters=(data.clusters||[]).map(function(s){return(s.name||s||'').trim();})
+        .filter(function(n){if(!n||n.length<2)return false;var k=norm(n);if(cSeen.has(k))return false;cSeen.add(k);return true;});
+      ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(function(cl){
+        if(!MASTERS.clusters.find(function(c){return norm(c)===norm(cl);}))MASTERS.clusters.push(cl);
+      });
+      MASTERS.clusters.sort(function(a,b){return a.localeCompare(b);});
+      var dSeen=new Set();
+      MASTERS.disciplines=(data.disciplines||[]).map(function(s){return(s.name||s||'').trim();})
+        .filter(function(n){if(!n||n.length<2)return false;var k=norm(n);if(dSeen.has(k))return false;dSeen.add(k);return true;});
+      MASTERS.contracts=(data.contracts||[]);
+      MASTERS.markLoaded();
+      try{localStorage.setItem(CACHE_KEY_MASTERS,JSON.stringify({companies:MASTERS.companies,clusters:MASTERS.clusters,disciplines:MASTERS.disciplines,contracts:MASTERS.contracts}));localStorage.setItem(CACHE_KEY_TS_MST,String(MASTERS._loadedAt));}catch(e){}
+      subconData=MASTERS.companies.map(function(n){return{company:n,cluster:'',ownerEmail:'',focalEmail:''}; });
+      populateDDs();
+      setHealthStatus('online');updateMasterPanel();
+      console.log('Masters live: '+MASTERS.companies.length);
+    }
+  }catch(err){
+    console.warn('loadMasters failed:',err);setHealthStatus('warn');
+    if(stacData.length>0&&MASTERS.companies.length===0){
+      var seen2=new Set();
+      MASTERS.companies=stacData.map(function(d){return d.company;})
+        .filter(function(n){if(!n||n.length<2)return false;var k=n.toLowerCase().replace(/[^a-z0-9]/g,'');if(seen2.has(k))return false;seen2.add(k);return true;})
+        .sort(function(a,b){return a.localeCompare(b);});
+      subconData=MASTERS.companies.map(function(n){return{company:n,cluster:'',ownerEmail:'',focalEmail:''};});
+      populateDDs();
+    }
+  }
+}
+
+function clearMastersCache(){
+  localStorage.removeItem(CACHE_KEY_MASTERS);localStorage.removeItem(CACHE_KEY_TS_MST);
+  MASTERS._loadedAt=0;MASTERS.companies=[];MASTERS.clusters=[];MASTERS.disciplines=[];MASTERS.contracts=[];
+  toast('Masters cache cleared',2000);setTimeout(function(){loadMasters(true);},400);
+}
+function clearAllCache(){
+  [CACHE_KEY_STAC,CACHE_KEY_MASTERS,CACHE_KEY_TS_STAC,CACHE_KEY_TS_MST,'stac_cfg','stac_drafts'].forEach(function(k){localStorage.removeItem(k);});
+  MASTERS._loadedAt=0;toast('All cache cleared',2000);setTimeout(function(){loadMasters(true);loadData(true);},600);
+}
+
+function startHealthCheck(){
+  if(_healthInterval)clearInterval(_healthInterval);
+  _healthInterval=setInterval(function(){runHealthCheck();},5*60*1000);
+  runHealthCheck();
+}
+async function runHealthCheck(){
+  try{
+    var res=await Promise.race([
+      fetch(CFG.scriptUrl+'?action=health',{mode:'cors',cache:'no-store'}),
+      new Promise(function(_,r){setTimeout(function(){r(new Error('timeout'));},8000);})
+    ]);
+    if(res.ok){_consecutiveFailures=0;_lastSuccessfulSync=Date.now();setHealthStatus('online');
+      var ts=parseInt(localStorage.getItem(CACHE_KEY_TS_STAC)||'0');
+      if(Date.now()-ts>CACHE_TTL_STAC)loadData(false);
+      if(MASTERS.isStale())loadMasters(false);
+    }else{throw new Error('HTTP '+res.status);}
+  }catch(e){_consecutiveFailures++;if(_consecutiveFailures>=2)setHealthStatus('offline');else setHealthStatus('warn');}
+  updateHealthUI();
+}
+function setHealthStatus(status){
+  var dot=document.getElementById('health-dot'),lbl=document.getElementById('health-lbl');if(!dot||!lbl)return;
+  var map={online:{color:'#1b7a3e',text:'Connected'},warn:{color:'#d68910',text:'Intermittent'},offline:{color:'#c0392b',text:'Offline'}};
+  var s=map[status]||map.offline;dot.style.background=s.color;lbl.textContent=s.text;lbl.style.color=s.color;
+}
+function updateHealthUI(){
+  var ts=document.getElementById('health-ts');
+  if(ts&&_lastSuccessfulSync>0)ts.textContent='Synced: '+new Date(_lastSuccessfulSync).toLocaleTimeString();
+  updateDraftBadge();
+}
+function updateMasterPanel(){
+  var mp=document.getElementById('master-panel-body');if(!mp)return;
+  var age=MASTERS._loadedAt>0?Math.round((Date.now()-MASTERS._loadedAt)/60000)+' min ago':'Not loaded';
+  mp.innerHTML='<table class="tbl" style="font-size:11px;">'
+    +'<tr><td>Subcontractors</td><td style="font-weight:700;color:var(--blue);">'+MASTERS.companies.length+'</td><td>Sub Contractors sheet col B</td></tr>'
+    +'<tr style="background:#f9f9f9"><td>Clusters</td><td style="font-weight:700;">'+MASTERS.clusters.length+'</td><td>Sub Contractors sheet col A</td></tr>'
+    +'<tr><td>Disciplines</td><td style="font-weight:700;">'+MASTERS.disciplines.length+'</td><td>MST_Disciplines</td></tr>'
+    +'<tr style="background:#f9f9f9"><td>Contracts</td><td style="font-weight:700;">'+MASTERS.contracts.length+'</td><td>Sheet4 + MST_Contracts</td></tr>'
+    +'<tr><td>Last refreshed</td><td colspan="2" style="color:var(--t3);">'+age+'</td></tr>'
+    +'<tr style="background:#f9f9f9"><td>Pending drafts</td><td style="font-weight:700;color:'+(getDrafts().length>0?'var(--orange)':'var(--green)')+';">'+getDrafts().length+'</td>'
+    +'<td>'+(getDrafts().length>0?'<button class="btn bsm bk" onclick="retryDrafts()">Retry</button>':'All submitted')+'</td></tr>'
+    +'</table>';
+}
+function runDiagnostics(){
+  var out=document.getElementById('diag-output');if(!out)return;
+  var lines=['ATNM STAC Diagnostics — '+new Date().toLocaleString()];
+  lines.push('Sheet ID:     '+CFG.sheetId);
+  lines.push('Script URL:   '+(CFG.scriptUrl?CFG.scriptUrl.slice(0,60)+'...':'NOT SET'));
+  lines.push('Data loaded:  '+dataLoaded+' | STAC records: '+stacData.length);
+  lines.push('Companies:    '+MASTERS.companies.length+' | Clusters: '+MASTERS.clusters.length);
+  lines.push('Pending drafts: '+getDrafts().length);
+  var ts=parseInt(localStorage.getItem(CACHE_KEY_TS_STAC)||'0');
+  lines.push('Data cache:   '+(ts>0?Math.round((Date.now()-ts)/60000)+'min old':'none'));
+  lines.push('Health:       '+(document.getElementById('health-lbl')||{}).textContent);
+  out.textContent=lines.join('\n');runHealthCheck();
+}
+
+// ════════════════════════════════════════════════════════════════
+// PERFORMANCE REPORT
+// ════════════════════════════════════════════════════════════════
+function renderPerformance(){
+  if(!dataLoaded)return;
+  var cl=gv('pf-cl'),band=gv('pf-band'),yr=gv('pf-yr')||String(CY);
+  var srch=((document.getElementById('pf-s')||{}).value||'').trim().toLowerCase();
+  var _norm=function(v){return(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
+  var yrSel=document.getElementById('pf-yr');
+  if(yrSel&&yrSel.options.length<=1){
+    var yrs=[].concat.apply([],[...new Set(stacData.map(function(d){return d.date?d.date.substring(0,4):null;}).filter(Boolean))]).sort().reverse();
+    yrs.forEach(function(y){var o=document.createElement('option');o.value=y;o.textContent=y;yrSel.appendChild(o);});
+  }
+  var clSel=document.getElementById('pf-cl');
+  if(clSel&&clSel.options.length<=1){
+    var cls=[...new Set(stacData.map(function(d){return d.cluster;}).filter(Boolean))].concat(['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba']).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+    cls.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;clSel.appendChild(o);});
+  }
+  var lbl=document.getElementById('pf-yr-label');if(lbl)lbl.textContent=yr===String(CY)?'YTD '+yr:yr;
+  var seen=new Set(),allCo=[];
+  subconData.forEach(function(x){if(x.company&&x.company.trim().length>1){var k=_norm(x.company);if(!seen.has(k)){seen.add(k);allCo.push(x.company.trim());}}});
+  stacData.forEach(function(d){if(d.company&&d.company.trim().length>1){var k=_norm(d.company);if(!seen.has(k)){seen.add(k);allCo.push(d.company.trim());}}});
+  var ytdAll=stacData.filter(function(d){return d.date&&d.date.startsWith(yr);});
+  var scored=allCo.map(function(name){
+    var coL=name.toLowerCase();
+    var sub=subconData.find(function(s){return s.company&&_norm(s.company)===_norm(name);});
+    var cases=ytdAll.filter(function(d){return d.company.trim().toLowerCase()===coL;});
+    var pen=cases.reduce(function(s,d){return s+(d.penalty!=null?d.penalty:0);},0);
+    var cs=calcComplianceScore(name);
+    return{name:name,cluster:sub?normCluster(sub.cluster||''):'—',cases:cases,pen:pen,cs:cs};
+  });
+  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  var filtered=scored.filter(function(x){
+    if(cl&&x.cluster.trim().toLowerCase()!==cl.trim().toLowerCase())return false;
+    if(band&&x.cs.band!==band)return false;
+    if(srch&&x.name.toLowerCase().indexOf(srch)<0)return false;
+    return true;
+  }).sort(function(a,b){return b.cs.actualScore-a.cs.actualScore||(a.name.localeCompare(b.name));});
+  function cnt(b){return filtered.filter(function(x){return x.cs.band===b;}).length;}
+  function sv2(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+  sv2('pf-k-green',cnt('green'));sv2('pf-k-amber',cnt('amber'));sv2('pf-k-red',cnt('red'));sv2('pf-k-black',cnt('black'));
+  var cntEl=document.getElementById('pf-cnt');if(cntEl)cntEl.textContent=filtered.length+' subcontractor'+(filtered.length!==1?'s':'');
+  var tbody=document.getElementById('pf-body');if(!tbody)return;
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3);">No results.</td></tr>';return;}
+  var html='';
+  filtered.forEach(function(x,i){
+    var cs=x.cs,bc=bCol[cs.band]||'#1b7a3e';
+    var pct=Math.min(100,Math.max(0,cs.pct||0));
+    var rowBg=cs.band==='black'?'#f0f0f0':cs.band==='red'?'#fdecea':i%2===0?'#fff':'#f9fafb';
+    var scoreColor=cs.band==='green'?'var(--green)':cs.band==='amber'?'var(--orange)':cs.band==='red'?'var(--red)':'#1a1d24';
+    var bar='<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:8px;background:var(--bdr);border-radius:4px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+bc+';border-radius:4px;"></div></div><span style="font-size:10px;font-weight:700;color:'+bc+';min-width:28px;text-align:right;">'+Math.round(pct)+'%</span></div>';
+    html+='<tr style="background:'+rowBg+';cursor:pointer;" data-co="'+esc(x.name)+'" onclick="openSC(this.dataset.co)">' 
+      +'<td style="font-weight:600;" title="'+esc(x.name)+'">'+(x.name.length>34?x.name.substring(0,34)+'...':x.name)+'</td>'
+      +'<td style="font-size:11px;">'+x.cluster+'</td>'
+      +'<td><span class="bdg bbl" style="font-size:9px;">'+cs.profile.label+'</span></td>'
+      +'<td style="text-align:center;font-weight:600;">'+x.cases.length+'</td>'
+      +'<td style="text-align:center;color:'+(cs.fullDemerits>0?'var(--red)':'var(--t3)')+';">'+cs.fullDemerits+'</td>'
+      +'<td style="text-align:right;color:'+(cs.deductedPts>0?'var(--red)':'var(--t3)')+';">'+(cs.deductedPts>0?'-'+cs.deductedPts:'0')+' pts</td>'
+      +'<td style="text-align:right;">'+(x.pen>0?'OMR '+x.pen.toLocaleString():'&mdash;')+'</td>'
+      +'<td style="text-align:center;font-size:17px;font-weight:800;color:'+scoreColor+';">'+Math.max(0,cs.actualScore)+'</td>'
+      +'<td style="text-align:center;font-size:11px;color:var(--t3);">/ '+cs.profile.annualCeiling+'</td>'
+      +'<td>'+bar+'</td>'
+      +'<td style="text-align:center;"><span style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;background:'+bc+';color:#fff;">'+cs.bandLabel+'</span></td></tr>';
+  });
+  tbody.innerHTML=html;
+}
+function clearPF(){
+  ['pf-cl','pf-band','pf-yr'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var s=document.getElementById('pf-s');if(s)s.value='';renderPerformance();
+}
+function exportPerfXL(){
+  if(!dataLoaded){toast('No data',2000,'warn');return;}
+  var yr=gv('pf-yr')||String(CY),seen=new Set(),allCo=[];
+  var _norm=function(v){return(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
+  subconData.forEach(function(x){if(x.company&&x.company.trim().length>1){var k=_norm(x.company);if(!seen.has(k)){seen.add(k);allCo.push(x.company.trim());}}});
+  stacData.forEach(function(d){if(d.company&&d.company.trim().length>1){var k=_norm(d.company);if(!seen.has(k)){seen.add(k);allCo.push(d.company.trim());}}});
+  var ytdAll=stacData.filter(function(d){return d.date&&d.date.startsWith(yr);});
+  var hdrs=['Rank','Subcontractor','Cluster','Risk Level','Ceiling','Cases','Full Demerit','Pts','Penalty','Score','% Compliance','Band'];
+  var rows=allCo.map(function(co){
+    var coL=co.toLowerCase(),cs=calcComplianceScore(co);
+    var sub=subconData.find(function(s){return s.company&&_norm(s.company)===_norm(co);});
+    var cases=ytdAll.filter(function(d){return d.company.trim().toLowerCase()===coL;});
+    var pen=cases.reduce(function(s,d){return s+(d.penalty!=null?d.penalty:0);},0);
+    return{co:co,cluster:sub?normCluster(sub.cluster||''):'—',cs:cs,cases:cases,pen:pen};
+  }).sort(function(a,b){return b.cs.actualScore-a.cs.actualScore;});
+  var data=rows.map(function(r,i){return[i+1,r.co,r.cluster,r.cs.profile.label,r.cs.profile.annualCeiling,r.cases.length,r.cs.fullDemerits,r.cs.deductedPts*-1,r.pen,Math.max(0,r.cs.actualScore),Math.round(r.cs.pct||0)+'%',r.cs.bandLabel];});
+  var wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([hdrs].concat(data));
+  ws['!cols']=[{wch:6},{wch:34},{wch:16},{wch:14},{wch:10},{wch:10},{wch:12},{wch:10},{wch:12},{wch:8},{wch:12},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws,'Performance');
+  XLSX.writeFile(wb,'ATNM-Performance-'+yr+'-'+new Date().toISOString().split('T')[0]+'.xlsx');
+  toast('Performance Report exported');
+}
+function exportPerfPDF(){
+  if(!dataLoaded){toast('No data',2000,'warn');return;}
+  var yr=gv('pf-yr')||String(CY),seen=new Set(),allCo=[];
+  var _norm=function(v){return(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
+  subconData.forEach(function(x){if(x.company&&x.company.trim().length>1){var k=_norm(x.company);if(!seen.has(k)){seen.add(k);allCo.push(x.company.trim());}}});
+  stacData.forEach(function(d){if(d.company&&d.company.trim().length>1){var k=_norm(d.company);if(!seen.has(k)){seen.add(k);allCo.push(d.company.trim());}}});
+  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  var ytdAll=stacData.filter(function(d){return d.date&&d.date.startsWith(yr);});
+  var rows=allCo.map(function(co){
+    var coL=co.toLowerCase(),cs=calcComplianceScore(co);
+    var sub=subconData.find(function(s){return s.company&&_norm(s.company)===_norm(co);});
+    var cases=ytdAll.filter(function(d){return d.company.trim().toLowerCase()===coL;});
+    var pen=cases.reduce(function(s,d){return s+(d.penalty!=null?d.penalty:0);},0);
+    return{co:co,cluster:sub?normCluster(sub.cluster||''):'—',cs:cs,cases:cases,pen:pen};
+  }).sort(function(a,b){return b.cs.actualScore-a.cs.actualScore;});
+  var h='<h2 style="color:#21409a;">Subcontractor Performance Report</h2>';
+  h+='<p style="font-size:11px;color:#666;margin-bottom:14px;">ATNM | PDO ODC | '+yr+' | Generated: '+new Date().toLocaleDateString()+' | '+rows.length+' SCs</p>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:9px;"><thead><tr style="background:#21409a;color:#fff;">';
+  ['#','Subcontractor','Cluster','Ceiling','Cases','Demerit Pts','Penalty','Score','%','Band'].forEach(function(col){h+='<th style="padding:5px 6px;text-align:left;">'+col+'</th>';});
+  h+='</tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    var bc=bCol[r.cs.band]||'#1b7a3e',rowBg=i%2===0?'#fff':'#f7f7f7';
+    h+='<tr style="background:'+rowBg+';"><td style="padding:4px 6px;">'+(i+1)+'</td>'
+      +'<td style="padding:4px 6px;font-weight:600;">'+r.co+'</td>'
+      +'<td style="padding:4px 6px;font-size:8px;">'+r.cluster+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;">'+r.cs.profile.annualCeiling+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;">'+r.cases.length+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;color:'+(r.cs.deductedPts>0?'red':'#333')+';">'+(r.cs.deductedPts>0?'-'+r.cs.deductedPts:0)+'</td>'
+      +'<td style="padding:4px 6px;text-align:right;">'+(r.pen>0?'OMR '+r.pen:'')+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;font-weight:800;font-size:12px;color:'+bc+';">'+Math.max(0,r.cs.actualScore)+'</td>'
+      +'<td style="padding:4px 6px;text-align:center;color:'+bc+';">'+Math.round(r.cs.pct||0)+'%</td>'
+      +'<td style="padding:4px 6px;"><span style="padding:2px 6px;border-radius:3px;background:'+bc+';color:#fff;font-size:8px;">'+r.cs.bandLabel+'</span></td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  openPW('Performance Report',h);
 }
 
 </script>
