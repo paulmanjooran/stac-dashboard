@@ -1535,7 +1535,7 @@ let liveCategories=[];
 const MASTERS={companies:[],clusters:[],disciplines:[],contracts:[],_loadedAt:0,
   _ttl:60*60*1000,isStale(){return Date.now()-this._loadedAt>this._ttl;},
   markLoaded(){this._loadedAt=Date.now();}};
-const CACHE_TTL_STAC=15*60*1000,CACHE_TTL_MASTERS=60*60*1000;
+const CACHE_TTL_STAC=5*60*1000,CACHE_TTL_MASTERS=60*60*1000;
 const CACHE_KEY_STAC='stac_cache_v3',CACHE_KEY_MASTERS='stac_masters_v3';
 const CACHE_KEY_TS_STAC='stac_cache_ts_v3',CACHE_KEY_TS_MST='stac_masters_ts_v3';
 let _lastSuccessfulSync=0,_consecutiveFailures=0,_healthInterval=null;
@@ -1840,7 +1840,7 @@ function parseGVizTable(data){
     });
     // Accept both new clean headers and legacy headers
     const id=o['STAC ID #']||o['STAC Vendor #']||'';
-    if(!id||id==='DONOTDELETE'||id.toLowerCase().includes('stac id')||!id.includes('ATNM'))return;
+    if(!id||id==='DONOTDELETE'||id.toLowerCase().includes('stac id')||id.toLowerCase().includes('stac vendor'))return;
     // Penalty: may be numeric (from cell.v) or string like 'OMR 500.00' or 'TBD'
     const _rawPen=o['Penalty (OMR)']||o['Penalty']||'';
     // null = TBD/blank, 0 = confirmed zero, >0 = actual amount
@@ -1901,6 +1901,9 @@ function parseGVizSubcon(data){
                      o['Subcontract focal point/ manager/Subcontract focal point/ manager Email ID']||'';
     const coordEmail=o['ATNM Subcontractor Coordinator']||o['Subcontract Coordinator Email ID']||
                      o['Subcontract Coordinator/Subcontract Coordinator Email ID']||'';
+    const contractNo = o['Subcontract No']||o['Contract No']||o['Contract Number']||
+      o['Subcontract Number']||o['Agreement No']||o['Contract / Agreement #']||
+      o['Contract No.']||o['Subcontract No.']||'';
     rows.push({company:co.trim(),cluster:o['Clusters']||o['Cluster']||o['Cluster/Cluster']||'',
       owner:o['Owner Name']||o['Subcontract Owner/Subcontract Owner Name']||o['Subcontractor Owner']||'',
       ownerEmail:ownerEmail,focal:focalEmail,focalEmail:focalEmail,
@@ -1908,7 +1911,8 @@ function parseGVizSubcon(data){
       qs:o['ATNM QS']||o['Site QS/Site QS Email ID']||'',
       riskLevel:rl,annualCeiling:ac,
       contractType:o['Primary Contract Type']||o['Contract Type']||'',
-      discipline:o['Primary Discipline']||o['Work Activity Discipline']||''});
+      discipline:o['Primary Discipline']||o['Work Activity Discipline']||'',
+      contractNo:contractNo.trim()});
   });
   return rows;
 }
@@ -2099,22 +2103,26 @@ function populateDDs(){
 
   const companies = stacCompanies.sort((a,b)=>a.localeCompare(b));
   // Clusters: from stacData actual values + subconData — live and deduplicated
+  // FIX v6: Clusters from Sub Contractors sheet (subconData) ONLY — col A unique values
   const _seenCls = new Set();
-  const liveClusters = [
-    ...stacData.map(d=>d.cluster),
-    ...(subconData.length>0?subconData:RAW_SC).map(s=>s.cluster||'')
-  ].filter(cl=>{
-    if(!cl||cl.trim().length<2)return false;
-    const k=cl.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-    if(_seenCls.has(k))return false;
-    _seenCls.add(k);return true;
-  }).sort((a,b)=>a.localeCompare(b));
-  // Ensure standard clusters always present even if no data yet
-  ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(cl=>{
-    const k=cl.toLowerCase().replace(/[^a-z0-9]/g,'');
-    if(!_seenCls.has(k)){_seenCls.add(k);liveClusters.push(cl);}
-  });
-  liveClusters.sort((a,b)=>a.localeCompare(b));
+  const _clusterSource = subconData.length > 0 ? subconData : RAW_SC;
+  const liveClusters = _clusterSource
+    .map(s => (s.cluster || '').trim())
+    .filter(cl => {
+      if (!cl || cl.length < 2) return false;
+      const k = cl.toLowerCase().replace(/[^a-z0-9]/g,'');
+      if (_seenCls.has(k)) return false;
+      _seenCls.add(k); return true;
+    })
+    .sort((a,b) => a.localeCompare(b));
+  // Fallback: standard clusters if subconData empty
+  if (!liveClusters.length) {
+    ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(cl => {
+      const k = cl.toLowerCase().replace(/[^a-z0-9]/g,'');
+      if (!_seenCls.has(k)) { _seenCls.add(k); liveClusters.push(cl); }
+    });
+  }
+
   const cats=[...new Set(stacData.map(d=>d.category).filter(Boolean))].sort();
   [
     {ids:['df-cl','tf-cl','sc-cl','fa-cl'],opts:liveClusters,ph:'All Clusters',phForm:'-- Select --'},
@@ -4182,7 +4190,7 @@ function scUpdateContractDropdown() {
   // Helper: show SELECT, hide INPUT
   function showSelect(placeholder) {
     sel.style.display = 'block';
-    sel.required = true;
+    sel.required = false;
     txt.style.display = 'none';
     txt.required = false;
     txt.value = '';
@@ -4194,43 +4202,50 @@ function scUpdateContractDropdown() {
   // Helper: show INPUT (manual entry), hide SELECT
   function showInput() {
     txt.style.display = 'block';
-    txt.required = true;
+    txt.required = false;
     sel.style.display = 'none';
     sel.required = false;
     sel.innerHTML = '';
   }
 
-  // Guard: nothing selected yet
-  if (!sc || !cluster) {
-    showSelect('-- Select SC + Cluster first --');
-    info.innerHTML = 'Select Subcontractor + Cluster to load related contracts…';
+  // Guard: SC must be selected; cluster optional
+  if (!sc) {
+    showSelect('-- Select Subcontractor first --');
+    if (info) info.innerHTML = '📋 Select a Subcontractor to load related contracts…';
     return;
   }
 
-  // Filter contracts from master — check both SC_MASTERS and MASTERS (Sheet4 sourced)
+  // FIX v6: Contracts sourced from Sub Contractors sheet (subconData)
+  // subconData is parsed from Sub Contractors sheet — contains contractNo per SC
   const _scL = sc.trim().toLowerCase();
-  const _clL = cluster.trim().toLowerCase();
-  const _allContracts = [
-    ...(SC_MASTERS.contracts || []),
-    ...(MASTERS.contracts   || [])
-  ];
-  // Deduplicate by contractNo
   const _seen = new Set();
-  const matched = _allContracts.filter(c => {
-    if (!c.contractNo) return false;
-    const k = c.contractNo.trim();
-    if (_seen.has(k)) return false;
-    const nameMatch = c.scName && c.scName.trim().toLowerCase() === _scL;
-    const clMatch   = !c.cluster || c.cluster.trim().toLowerCase() === _clL ||
-                      c.cluster.trim() === '';
-    if (nameMatch && clMatch) { _seen.add(k); return true; }
-    return false;
+
+  // Build contract list from subconData (Sub Contractors sheet) for this SC
+  const matched = [];
+  subconData.forEach(s => {
+    if (!s.company || s.company.trim().toLowerCase() !== _scL) return;
+    // contractNo may be in s.contractNo, s.contract, or s.qs fields
+    const cno = (s.contractNo || s.contract || '').trim();
+    if (!cno || cno.length < 3) return;
+    if (_seen.has(cno.toLowerCase())) return;
+    _seen.add(cno.toLowerCase());
+    matched.push({ contractNo: cno, scName: s.company, cluster: s.cluster || '' });
+  });
+
+  // Supplement with MASTERS.contracts (from getMasters API — Sheet4 + MST_Contracts)
+  (MASTERS.contracts || []).forEach(c => {
+    if (!c.contractNo || !c.scName) return;
+    if (c.scName.trim().toLowerCase() !== _scL) return;
+    const k = c.contractNo.trim().toLowerCase();
+    if (_seen.has(k)) return;
+    _seen.add(k);
+    matched.push(c);
   });
 
   if (matched.length === 0) {
     // No pre-loaded contracts — switch to free-text input
     showInput();
-    info.innerHTML = '<strong>' + sc + '</strong> has no pre-loaded contracts for <strong>' + cluster + '</strong>. Type the contract number below.';
+    if (info) info.innerHTML = '✏️ No pre-loaded contracts for <strong>' + sc + '</strong>. Enter contract number manually.';
     return;
   }
 
