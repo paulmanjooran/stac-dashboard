@@ -675,7 +675,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div id="pg-title">Dashboard</div>
       <div id="pg-sub">STAC — Subcontractor Tracking & Assurance for Compliance</div>
     </div>
-    <div class="tb-r"><span id="admin-status" style="display:none;"></span><span id="admin-badge" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.4px;margin-right:4px;">ADMIN</span>
+    <div class="tb-r"><div style="display:flex;align-items:center;gap:5px;margin-right:10px;font-size:11px;"><span id="health-dot" style="width:8px;height:8px;border-radius:50%;background:#1b7a3e;display:inline-block;flex-shrink:0;"></span><span id="health-lbl" style="color:#1b7a3e;font-weight:600;">Live</span><span id="health-ts" style="color:var(--t3);font-size:10px;margin-left:4px;"></span></div><span id="draft-badge" onclick="retryDrafts()" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;cursor:pointer;margin-right:8px;" title="Pending drafts — click to retry"></span><span id="admin-status" style="display:none;"></span><span id="admin-badge" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.4px;margin-right:4px;">ADMIN</span>
       <span id="dsrc" class="bdg bgy" style="font-size:10px;">⏳ Loading...</span>
       <button class="btn bk bsm" onclick="loadData()">🔄 Refresh</button>
       <button class="btn bk bsm" onclick="exportFilteredExcel()">⬇ Excel</button>
@@ -1013,6 +1013,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div class="card" style="margin-bottom:14px;border-left:4px solid var(--orange);">
           <div class="chd"><h3>📋 STEP 1 — Add New Column Headers to Google Sheet</h3><span class="bdg bor">Do this first</span></div>
           <div class="cbd"><span id="cfg-nid" style="display:none;"></span><input id="cfg-usr" type="email" style="display:none;" autocomplete="off">
+          <div class="card" style="margin-top:14px;"><div class="chd"><h3>Master Data Management</h3><div style="display:flex;gap:6px;"><button class="btn bg bsm" onclick="loadMasters(true)">Refresh Masters</button><button class="btn bk bsm" onclick="clearMastersCache()">Clear Masters Cache</button><button class="btn bk bsm" onclick="clearAllCache()" style="color:var(--red);">Clear All Cache</button></div></div><div class="cbd" id="master-panel-body" style="font-size:12px;color:var(--t3);">Loading…</div></div>
+          <div class="card" style="margin-top:14px;"><div class="chd"><h3>System Diagnostics</h3><div style="display:flex;gap:6px;"><button class="btn bg bsm" onclick="runDiagnostics()">Run Diagnostics</button><button class="btn bk bsm" onclick="retryDrafts()">Retry Pending Drafts</button></div></div><div class="cbd"><pre id="diag-output" style="font-size:11px;font-family:monospace;background:#f7f8fa;padding:12px;border-radius:6px;white-space:pre-wrap;border:1px solid var(--bdr);min-height:60px;">Click Run Diagnostics.</pre></div></div>
           
             <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Your sheet currently has columns <strong>A–R</strong>. Add these headers in row 1, columns <strong>S to AF</strong>. Existing data in A–R is <strong>never touched</strong>.</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
@@ -1588,6 +1590,15 @@ let CY=new Date().getFullYear();
 let FS={cl:'',co:'',cat:'',inst:'',fr:'',to:''};
 let liveCategories=[];
 
+// ── MASTERS SINGLETON ─────────────────────────────────────────────
+const MASTERS={companies:[],clusters:[],disciplines:[],contracts:[],_loadedAt:0,
+  _ttl:60*60*1000,isStale(){return Date.now()-this._loadedAt>this._ttl;},
+  markLoaded(){this._loadedAt=Date.now();}};
+const CACHE_TTL_STAC=15*60*1000,CACHE_TTL_MASTERS=60*60*1000;
+const CACHE_KEY_STAC='stac_cache_v3',CACHE_KEY_MASTERS='stac_masters_v3';
+const CACHE_KEY_TS_STAC='stac_cache_ts_v3',CACHE_KEY_TS_MST='stac_masters_ts_v3';
+let _lastSuccessfulSync=0,_consecutiveFailures=0,_healthInterval=null;
+
 const RAW=[
   // 2025 Records — actual IDs from live Google Sheet (ATNM-STAC-2025-001 to 049)
   {id:'ATNM-STAC-2025-001',date:'2025-05-25',cluster:'Marmul WD',company:'Arab Friends Co LLC',owner:'MUBARAK MAKTOUB AL-MAHRY',category:'Plant & Equipment Compliance (Maintenance and Inspection)',wlType:'1st Warning Letter | Quarter Of Full Penalty | No Demerit',penalty:75,status:'Open',instances:1,wlIssued:'Yes',contractNo:'ATNM/O&G/QS/S034/2024',description:'Plant equipment non-compliance at Marmul WD.'},
@@ -1845,7 +1856,7 @@ async function fetchGvizData(sheetId,gid,sheetName){
   const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
   const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&${param}&_=${Date.now()}`;
   try{
-    const r=await fetch(url,{mode:'cors',cache:'no-store'});
+    const r=await fetch(url,{mode:'no-cors',  // Required: Apps Script cross-origincache:'no-store'});
     if(!r.ok)return null;
     const text=await r.text();
     const m=text.match(/setResponse\(([\s\S]+)\)\s*;?\s*$/);
@@ -1992,6 +2003,61 @@ function parseXD(v){
 // ============================================================
 // LOAD DATA — fetches all 3 sheets, falls back to sample data
 // ============================================================
+async function loadData(force){
+  // 15-min localStorage cache — skip on force reload
+  if(!force){try{
+    const _ts=parseInt(localStorage.getItem(CACHE_KEY_TS_STAC)||'0');
+    if(Date.now()-_ts<CACHE_TTL_STAC){
+      const _cd=JSON.parse(localStorage.getItem(CACHE_KEY_STAC)||'null');
+      if(_cd&&_cd.length>0){
+        stacData=[..._cd];dataLoaded=true;normalizePenalties();
+        if(MASTERS.companies.length>0)populateAllMasters();else populateDDs();
+        updateIDs();filteredData=getFiltered();renderAll();
+        const _lu=document.getElementById('lu');if(_lu)_lu.textContent='Cache: '+new Date(_ts).toLocaleTimeString();
+        showStatus('connected');
+        if(typeof updateHealthUI==='function')updateHealthUI();
+        console.log('STAC cache hit: '+stacData.length+' records');return;
+      }
+    }
+  }catch(e){console.warn('cache read:',e);}}
+  showStatus('connecting');
+  const sid=gv('cfg-sid')||CFG.sheetId;
+  const su=gv('cfg-sub')||CFG.subconSheet;
+  let live=false;
+  try{
+    const [stacRaw,subconRaw,matrixRaw]=await Promise.all([
+      fetchGvizData(sid,'342483107',null),
+      fetchGvizData(sid,null,su),
+      fetchGvizData(sid,null,'Vendor HSE Scoring Matrix')
+    ]);
+    if(stacRaw){const p=parseGVizTable(stacRaw);if(p.length>0){stacData=p;live=true;
+      try{localStorage.setItem(CACHE_KEY_STAC,JSON.stringify(stacData));localStorage.setItem(CACHE_KEY_TS_STAC,String(Date.now()));}catch(e){}
+      _lastSuccessfulSync=Date.now();_consecutiveFailures=0;
+    }}
+    if(subconRaw){const p=parseGVizSubcon(subconRaw);if(p.length>0)subconData=p;}
+    if(matrixRaw)parseScoringMatrixSheet(matrixRaw);
+  }catch(e){console.error('loadData error:',e);_consecutiveFailures++;}
+  if(!live)stacData=[...RAW];
+  if(!subconData.length)subconData=[...RAW_SC];
+  populateCategoryDropdown();
+  checkAdminAccess();
+  dataLoaded=true;
+  normalizePenalties();
+  const el=document.getElementById('lu');if(el)el.textContent='Synced: '+new Date().toLocaleTimeString();
+  showStatus(live?'connected':'sample');
+  if(MASTERS.companies.length>0)populateAllMasters();else populateDDs();
+  updateIDs();
+  if(typeof updateHealthUI==='function')updateHealthUI();
+  filteredData=getFiltered();
+  ['df-cl','df-co','df-cat'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    if(cur&&!Array.from(el.options).some(o=>o.value===cur))el.value='';
+  });
+  renderAll();
+  toast(live?'✅ Live — '+stacData.length+' records loaded':'⚠️ Using sample data — set sheet to "Anyone with link → Viewer"',4000,live?'':'warn');
+}
+
 
 // ================================================================
 // ADMIN ACCESS — reads Users List sheet, checks role column
@@ -2028,65 +2094,6 @@ function updateAdminUI(){
   const badge = document.getElementById('admin-badge');
   if(badge) badge.style.display = isAdmin ? 'inline-flex' : 'none';
   if(dataLoaded) refreshCurrentView();
-}
-
-function deleteSTAC(stacId){
-  if(!isAdmin){ toast('⛔ Admin access required to delete records', 3000, 'err'); return; }
-  if(!confirm('Delete STAC case '+stacId+' from this session?\n\nAlso removes from Google Sheet if Apps Script is configured.\n\nThis cannot be undone.')){ return; }
-  stacData = stacData.filter(d => d.id !== stacId);
-  filteredData = filteredData.filter(d => d.id !== stacId);
-  toast('🗑 '+stacId+' removed from view', 3000);
-  const su = gv('cfg-scr') || CFG.scriptUrl;
-  if(su && su.startsWith('https://script.google.com')){
-    fetch(su, {method:'POST', mode:'cors',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({action:'deleteSTAC', stacId, deletedBy: adminEmail})
-    }).then(r=>r.json()).then(res=>{
-      toast(res.ok ? ('✅ '+stacId+' deleted from Google Sheet') : ('⚠️ Sheet delete: '+res.error), 4000, res.ok?'':'warn');
-    }).catch(()=>toast('⚠️ Apps Script delete failed — row still in sheet', 4000, 'warn'));
-  }
-  updateIDs(); filteredData = getFiltered(); renderAll();
-}
-
-async function loadData(){
-  showStatus('connecting');
-  const sid=gv('cfg-sid')||CFG.sheetId;
-  const su=gv('cfg-sub')||CFG.subconSheet;
-  let live=false;
-  try{
-    const [stacRaw,subconRaw,matrixRaw]=await Promise.all([
-      fetchGvizData(sid,'342483107',null),
-      fetchGvizData(sid,null,su),
-      fetchGvizData(sid,null,'Vendor HSE Scoring Matrix')
-    ]);
-    if(stacRaw){const p=parseGVizTable(stacRaw);if(p.length>0){stacData=p;live=true;}}
-    if(subconRaw){const p=parseGVizSubcon(subconRaw);if(p.length>0)subconData=p;}
-    if(matrixRaw)parseScoringMatrixSheet(matrixRaw);
-  }catch(e){console.error('loadData error:',e);}
-  if(!live)stacData=[...RAW];
-  if(!subconData.length)subconData=[...RAW_SC];
-  populateCategoryDropdown();
-  // Check admin access from Users List sheet (runs async, doesn't block data display)
-  checkAdminAccess();
-  dataLoaded=true;
-  normalizePenalties();
-  const el=document.getElementById('lu');if(el)el.textContent='Synced: '+new Date().toLocaleTimeString();
-  showStatus(live?'connected':'sample');
-  populateDDs();
-  updateIDs();
-  // Re-apply active filters against fresh data
-  filteredData=getFiltered();
-  // Sync dropdown selected values to FS state (in case data reload changed options)
-  ['df-cl','df-co','df-cat'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    const cur=el.value;
-    if(cur&&!Array.from(el.options).some(o=>o.value===cur)){
-      el.value=''; // reset if selected value no longer exists in new data
-    }
-  });
-  renderAll();
-  toast(live?'✅ Live — '+stacData.length+' records loaded':'⚠️ Using sample data — set sheet to "Anyone with link → Viewer"',4000,live?'':'warn');
 }
 
 function showStatus(state){
@@ -2963,10 +2970,10 @@ async function doSubmit(e){
   const scriptUrl = savedUrl || gv('cfg-scr') || CFG.scriptUrl;
   if(scriptUrl&&scriptUrl.startsWith('https://script.google.com')){
     try{
-      toast('⏳ Writing to Google Sheet...', 5000);
+      toast('⏳ Submitting…',6000);addLocal(payload);saveDraft(payload);
       const r = await fetch(scriptUrl,{
         method:'POST',
-        mode:'cors',
+        mode:'no-cors',  // Required: Apps Script cross-origin
         headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify(payload),
         redirect:'follow'
@@ -2975,11 +2982,10 @@ async function doSubmit(e){
       const text = await r.text();
       let res;
       try{ res = JSON.parse(text); }catch(pe){ throw new Error('Script response not JSON — check deployment. Response: '+text.substring(0,100)); }
-      if(res.ok){
-        toast(`✅ ${stacId} → Google Sheet row ${res.row} | ${res.cols} columns written`,5000);
-        addLocal(payload); resetForm(); nav('tracker'); return;
-      }
-      throw new Error(res.error||'Script returned error');
+      // no-cors: can't read response — clear draft optimistically
+      clearDraft(stacId);
+      toast('✅ '+stacId+' submitted — syncing sheet…',4000);
+      setTimeout(()=>loadData(true),4000);
     }catch(err){
       console.error('doSubmit error:',err);
       toast('⚠️ Sheet write failed: '+err.message+' — using clipboard fallback',5000,'warn');
@@ -3073,18 +3079,31 @@ function normalizePenalties(){
 }
 
 function addLocal(p){
-  const pen=parseInt(p.penalty)||0;
+  const pen=typeof p.penalty==='number'?p.penalty:(parseInt(p.penalty)||0);
   stacData.unshift({
-    id:p.stacId, date:p.instanceDate, cluster:p.cluster,
-    company:p.company, owner:p.owner||'',
-    category:p.category,  // M: HSE Key Requirements
-    description:p.description||'',
-    wlType:p.wlType||'', penalty:pen,
+    id:p.stacId,date:p.instanceDate||'',cluster:p.cluster||'',
+    company:p.company||'',owner:p.owner||'',
+    category:p.category||'',description:p.description||'',
+    wlType:p.wlType||'',penalty:pen,
     instances:parseInt(p.ytdInstanceCount)||1,
-    wlIssued:'No', contractNo:p.contractNo||'',
-    closeoutDate:p.closeoutDate||''
+    wlIssued:'No',contractNo:p.contractNo||'',
+    closeoutDate:p.closeoutDate||'',_local:true
   });
   filteredData=getFiltered();updateIDs();renderAll();
+}
+function saveDraft(p){try{const d=JSON.parse(localStorage.getItem('stac_drafts')||'[]');d.unshift({...p,_savedAt:Date.now()});localStorage.setItem('stac_drafts',JSON.stringify(d.slice(0,10)));}catch(e){}}
+function clearDraft(id){try{const d=JSON.parse(localStorage.getItem('stac_drafts')||'[]');localStorage.setItem('stac_drafts',JSON.stringify(d.filter(x=>x.stacId!==id)));}catch(e){}}
+function getDrafts(){try{return JSON.parse(localStorage.getItem('stac_drafts')||'[]');}catch(e){return[];}}
+function retryDrafts(){
+  const d=getDrafts();if(!d.length){toast('No pending drafts',2000);return;}
+  const su=CFG.scriptUrl;if(!su||!su.startsWith('https://script.google.com')){toast('Configure Apps Script URL in Setup',3000,'warn');return;}
+  toast('Retrying '+d.length+' draft(s)…',4000);
+  d.forEach(p=>{fetch(su,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).then(()=>{clearDraft(p.stacId);updateDraftBadge();}).catch(()=>{});});
+  setTimeout(()=>{loadData(true);updateDraftBadge();},3000);
+}
+function updateDraftBadge(){
+  const n=getDrafts().length,b=document.getElementById('draft-badge');
+  if(b){b.textContent=n>0?n+' pending':'';b.style.display=n>0?'inline-block':'none';}
 }
 
 // ============================================================
@@ -3457,7 +3476,7 @@ async function autoAddHeaders(){
   if(!su||!su.startsWith('https://script.google.com')){toast('⚠️ Configure Apps Script URL first',3000,'warn');return;}
   toast('⏳ Calling setupHeaders() on Apps Script...',5000);
   try{
-    const r=await fetch(su,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'setupHeaders'})});
+    const r=await fetch(su,{method:'POST',mode:'no-cors',  // Required: Apps Script cross-originheaders:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'setupHeaders'})});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const res=await r.json();
     toast(res.ok?'✅ Headers S-AH added to sheet — columns A-R unchanged':'⚠️ '+( res.error||'Unknown error'),5000,res.ok?'':'warn');
@@ -3781,7 +3800,12 @@ window.addEventListener('DOMContentLoaded',()=>{
   renderDash();
   initForm();
   // Async live sync — 100ms delay to let DOM render first
-  setTimeout(()=>loadData(),100);
+  setTimeout(async()=>{
+    await loadMasters();
+    await loadData();
+    updateDraftBadge();
+    startHealthCheck();
+  },100);
   setTimeout(()=>{
     loadHseStatsData();
     // Populate all HSE Stats dropdowns from subconData (available after loadData)
@@ -4638,6 +4662,271 @@ function exportPerfPDF(){
   h+='</tbody></table><p style="font-size:9px;color:#999;margin-top:12px;">Score = Annual Ceiling - (Full Demerit Cases x 10 pts) | Compliant 80%+ | At Risk 60-79% | Non-Compliant &lt;60%</p>';
   openPW('Subcontractor Performance Report',h);
 }
+
+
+// ════════════════════════════════════════════════════════════════
+//  MASTERS — centralised load + cache + population
+// ════════════════════════════════════════════════════════════════
+
+async function loadMasters(force){
+  // Check localStorage cache first
+  if(!force){
+    try{
+      const ts  = parseInt(localStorage.getItem(CACHE_KEY_TS_MST)||'0');
+      const age = Date.now()-ts;
+      if(age < CACHE_TTL_MASTERS){
+        const cached=JSON.parse(localStorage.getItem(CACHE_KEY_MASTERS)||'null');
+        if(cached&&cached.companies&&cached.companies.length>0){
+          Object.assign(MASTERS,cached,{_loadedAt:ts});
+          subconData=MASTERS.companies.map(n=>({company:n,cluster:'',ownerEmail:'',focalEmail:''}));
+          populateAllMasters();
+          console.log('Masters from cache: '+MASTERS.companies.length+' companies');
+          return;
+        }
+      }
+    }catch(e){}
+  }
+  // Fetch live from Apps Script getMasters endpoint
+  const url = CFG.scriptUrl+'?action=getMasters';
+  try{
+    const res  = await fetch(url,{mode:'cors',cache:'no-store'});
+    const data = await res.json();
+    if(data.subcontractors&&data.subcontractors.length){
+      // Deduplicate using normalised key
+      const seen=new Set();
+      const norm=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+      MASTERS.companies = data.subcontractors
+        .map(s=>(s.name||s||'').trim()).filter(n=>{
+          if(!n||n.length<2)return false;
+          const k=norm(n); if(seen.has(k))return false;
+          seen.add(k); return true;
+        }).sort((a,b)=>a.localeCompare(b));
+      const cSeen=new Set();
+      MASTERS.clusters = (data.clusters||[])
+        .map(s=>(s.name||s||'').trim()).filter(n=>{
+          if(!n||n.length<2)return false;
+          const k=norm(n); if(cSeen.has(k))return false;
+          cSeen.add(k); return true;
+        }).sort((a,b)=>a.localeCompare(b));
+      // Ensure standard clusters always present
+      ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(cl=>{
+        if(!MASTERS.clusters.find(c=>norm(c)===norm(cl))) MASTERS.clusters.push(cl);
+      });
+      MASTERS.clusters.sort((a,b)=>a.localeCompare(b));
+      const dSeen=new Set();
+      MASTERS.disciplines = (data.disciplines||[])
+        .map(s=>(s.name||s||'').trim()).filter(n=>{
+          if(!n||n.length<2)return false;
+          const k=norm(n); if(dSeen.has(k))return false;
+          dSeen.add(k); return true;
+        }).sort((a,b)=>a.localeCompare(b));
+      MASTERS.contracts = (data.contracts||[]);
+      MASTERS.markLoaded();
+      // Persist to localStorage
+      localStorage.setItem(CACHE_KEY_MASTERS, JSON.stringify({
+        companies:MASTERS.companies, clusters:MASTERS.clusters,
+        disciplines:MASTERS.disciplines, contracts:MASTERS.contracts
+      }));
+      localStorage.setItem(CACHE_KEY_TS_MST, String(MASTERS._loadedAt));
+      // Sync subconData for backward-compat
+      subconData = MASTERS.companies.map(n=>({
+        company:n, cluster:'', ownerEmail:'', focalEmail:''
+      }));
+      populateAllMasters();
+      setHealthStatus('online');
+      updateMasterPanel();
+      console.log('Masters loaded live: '+MASTERS.companies.length+' companies');
+    }
+  }catch(err){
+    console.warn('loadMasters failed:',err);
+    // Fallback: populate from stacData history (no duplicates)
+    if(stacData.length>0&&MASTERS.companies.length===0){
+      const seen=new Set();
+      const norm=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+      MASTERS.companies=stacData.map(d=>d.company)
+        .filter(n=>{if(!n||n.length<2)return false;const k=norm(n);if(seen.has(k))return false;seen.add(k);return true;})
+        .sort((a,b)=>a.localeCompare(b));
+      subconData=MASTERS.companies.map(n=>({company:n,cluster:'',ownerEmail:'',focalEmail:''}));
+      populateAllMasters();
+    }
+    setHealthStatus('warn');
+  }
+}
+
+function populateAllMasters(){
+  // Single function populating ALL dropdowns from MASTERS
+  // STAC form cluster (fa-cl)
+  fillDDFromMasters('fa-cl', MASTERS.clusters, '-- Select Cluster --', false);
+  // Dashboard/Tracker/Scorecard/Performance cluster filters
+  ['df-cl','tf-cl','sc-cl','pf-cl'].forEach(id=>fillDDFromMasters(id, MASTERS.clusters,'All Clusters',true));
+  // STAC form company (fa-co)
+  fillDDFromMasters('fa-co', MASTERS.companies, '-- Select Company --', false);
+  // Dashboard/Tracker company filters
+  ['df-co','tf-co'].forEach(id=>fillDDFromMasters(id, MASTERS.companies,'All Companies',true));
+  // HSE Stats form SC + cluster + discipline
+  fillDDFromMasters('sc_name',     MASTERS.companies,   '— Select Subcontractor —', false);
+  fillDDFromMasters('cluster',     MASTERS.clusters,    '-- Select --', false);
+  fillDDFromMasters('discipline',  MASTERS.disciplines, '-- Select --', false);
+  // HSE Stats dashboard filters
+  fillDDFromMasters('hse-sc', MASTERS.companies,   'All Subcontractors', true);
+  fillDDFromMasters('hse-cl', MASTERS.clusters,    'All Clusters', true);
+  fillDDFromMasters('hse-di', MASTERS.disciplines, 'All Disciplines', true);
+  // Update category dropdown from live Scoring Matrix
+  if(liveCategories.length>0){
+    fillDDFromMasters('fa-cat', liveCategories, '-- Select HSE Category --', false);
+    ['df-cat','tf-cat'].forEach(id=>fillDDFromMasters(id,liveCategories,'All Categories',true));
+  }
+}
+
+function fillDDFromMasters(id, items, placeholder, allowAll){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const cur=el.value;
+  el.innerHTML='<option value="">'+placeholder+'</option>';
+  if(allowAll&&placeholder!=='All Companies'&&placeholder!=='All Clusters'){}
+  items.forEach(function(v){
+    const name = typeof v==='string' ? v : (v.name||v.company||'');
+    if(!name)return;
+    const o=document.createElement('option');
+    o.value=name; o.textContent=name;
+    el.appendChild(o);
+  });
+  // Restore prior selection if still valid
+  if(cur&&Array.from(el.options).some(function(o){return o.value===cur;})) el.value=cur;
+}
+
+function clearMastersCache(){
+  localStorage.removeItem(CACHE_KEY_MASTERS);
+  localStorage.removeItem(CACHE_KEY_TS_MST);
+  MASTERS._loadedAt=0;
+  MASTERS.companies=[];
+  MASTERS.clusters=[];
+  MASTERS.disciplines=[];
+  MASTERS.contracts=[];
+  toast('Masters cache cleared — reloading…',2000);
+  setTimeout(()=>loadMasters(true),400);
+}
+
+function clearAllCache(){
+  [CACHE_KEY_STAC,CACHE_KEY_MASTERS,CACHE_KEY_TS_STAC,CACHE_KEY_TS_MST,
+   'stac_cfg','stac_drafts'].forEach(k=>localStorage.removeItem(k));
+  MASTERS._loadedAt=0;
+  toast('All cache cleared — reloading…',2000);
+  setTimeout(()=>{ loadMasters(true); loadData(true); },600);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HEALTH CHECK SYSTEM
+// ════════════════════════════════════════════════════════════════
+let _healthInterval=null;
+let _lastSuccessfulSync=0;
+let _consecutiveFailures=0;
+
+function startHealthCheck(){
+  if(_healthInterval)clearInterval(_healthInterval);
+  // Check every 5 minutes
+  _healthInterval=setInterval(()=>runHealthCheck(),5*60*1000);
+  runHealthCheck(); // immediate first check
+}
+
+async function runHealthCheck(){
+  const url=CFG.scriptUrl+'?action=health';
+  try{
+    const res=await Promise.race([
+      fetch(url,{mode:'cors',cache:'no-store'}),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),8000))
+    ]);
+    if(res.ok){
+      _consecutiveFailures=0;
+      _lastSuccessfulSync=Date.now();
+      setHealthStatus('online');
+      // Check if stacData cache is stale
+      const ts=parseInt(localStorage.getItem(CACHE_KEY_TS_STAC)||'0');
+      if(Date.now()-ts>CACHE_TTL_STAC){ loadData(); }
+      // Check if masters cache is stale
+      if(MASTERS.isStale()){ loadMasters(); }
+    } else { throw new Error('HTTP '+res.status); }
+  }catch(err){
+    _consecutiveFailures++;
+    if(_consecutiveFailures>=2) setHealthStatus('offline');
+    else setHealthStatus('warn');
+    console.warn('Health check failed ('+_consecutiveFailures+'x):',err.message);
+  }
+  updateHealthUI();
+}
+
+function setHealthStatus(status){
+  const dot=document.getElementById('health-dot');
+  const lbl=document.getElementById('health-lbl');
+  if(!dot||!lbl)return;
+  const map={
+    online:  {color:'#1b7a3e', text:'Connected'},
+    warn:    {color:'#d68910', text:'Intermittent'},
+    offline: {color:'#c0392b', text:'Offline'},
+  };
+  const s=map[status]||map.offline;
+  dot.style.background=s.color;
+  lbl.textContent=s.text;
+  lbl.style.color=s.color;
+}
+
+function updateHealthUI(){
+  const ts=document.getElementById('health-ts');
+  if(ts&&_lastSuccessfulSync>0){
+    const d=new Date(_lastSuccessfulSync);
+    ts.textContent='Last sync: '+d.toLocaleTimeString();
+  }
+  const draftEl=document.getElementById('draft-badge');
+  if(draftEl){
+    const n=getDrafts().length;
+    draftEl.textContent=n>0?n+' pending':'';
+    draftEl.style.display=n>0?'inline-block':'none';
+  }
+}
+
+function updateMasterPanel(){
+  const mp=document.getElementById('master-panel-body');
+  if(!mp)return;
+  const age=MASTERS._loadedAt>0?Math.round((Date.now()-MASTERS._loadedAt)/60000)+' min ago':'Not loaded';
+  mp.innerHTML=
+    '<table class="tbl" style="font-size:11px;">'
+    +'<tr><td>Subcontractors</td><td style="font-weight:700;color:var(--blue);">'+MASTERS.companies.length+'</td><td>From Sub Contractors sheet col B</td></tr>'
+    +'<tr style="background:#f9f9f9;"><td>Clusters</td><td style="font-weight:700;">'+MASTERS.clusters.length+'</td><td>From Sub Contractors sheet col A</td></tr>'
+    +'<tr><td>Disciplines</td><td style="font-weight:700;">'+MASTERS.disciplines.length+'</td><td>From MST_Disciplines sheet</td></tr>'
+    +'<tr style="background:#f9f9f9;"><td>Contracts</td><td style="font-weight:700;">'+MASTERS.contracts.length+'</td><td>From Sheet4 + MST_Contracts</td></tr>'
+    +'<tr><td>HSE Categories</td><td style="font-weight:700;">'+liveCategories.length+'</td><td>From Vendor HSE Scoring Matrix</td></tr>'
+    +'<tr style="background:#f9f9f9;"><td>Last refreshed</td><td colspan="2" style="color:var(--t3);">'+age+'</td></tr>'
+    +'<tr><td>Pending drafts</td><td style="font-weight:700;color:'+(getDrafts().length>0?'var(--orange)':'var(--green)')+';">'+getDrafts().length+'</td>'
+    +'<td>'+(getDrafts().length>0?'<button class="btn bsm bk" onclick="retryDrafts()">Retry now</button>':'All submitted')+'</td></tr>'
+    +'</table>';
+}
+
+function runDiagnostics(){
+  const out=document.getElementById('diag-output');
+  if(!out)return;
+  const lines=[];
+  lines.push('ATNM STAC — System Diagnostics — '+new Date().toLocaleString());
+  lines.push('─'.repeat(50));
+  lines.push('Sheet ID:      '+CFG.sheetId);
+  lines.push('Script URL:    '+(CFG.scriptUrl?CFG.scriptUrl.substring(0,60)+'…':'NOT SET'));
+  lines.push('Data loaded:   '+dataLoaded);
+  lines.push('STAC records:  '+stacData.length);
+  lines.push('Subcontractors:'+MASTERS.companies.length);
+  lines.push('Clusters:      '+MASTERS.clusters.length);
+  lines.push('Categories:    '+liveCategories.length);
+  lines.push('Pending drafts:'+getDrafts().length);
+  const ts=parseInt(localStorage.getItem(CACHE_KEY_TS_STAC)||'0');
+  const mts=parseInt(localStorage.getItem(CACHE_KEY_TS_MST)||'0');
+  lines.push('STAC cache age:'+(ts>0?Math.round((Date.now()-ts)/60000)+' min':'None'));
+  lines.push('Master cache:  '+(mts>0?Math.round((Date.now()-mts)/60000)+' min':'None'));
+  lines.push('Health status: '+(document.getElementById('health-lbl')||{}).textContent||'Unknown');
+  lines.push('Failures:      '+_consecutiveFailures);
+  lines.push('Last sync:     '+(_lastSuccessfulSync>0?new Date(_lastSuccessfulSync).toLocaleString():'Never'));
+  out.textContent=lines.join('\n');
+  // Run live health check
+  runHealthCheck();
+}
+
 
 </script>
 </body>
