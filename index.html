@@ -67,7 +67,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #pg-title{font-size:14px;font-weight:600;}
 #pg-sub{font-size:11px;color:var(--t3);margin-left:8px;}
 .tb-r{display:flex;align-items:center;gap:8px;}
-#cnt{padding:18px;flex:1;}#cnt.hse-active{padding:0;width:100%;}
+#cnt{padding:18px;flex:1;}#cnt.hse-active{padding:0 !important;display:block;width:100%;}
 .view{display:none;}.view.active{display:block;}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit;white-space:nowrap;}
@@ -316,6 +316,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   background: #fff; border-bottom: 1px solid #e2e6f0;
   position: sticky; top: 50px; z-index: 90;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  width: 100%;
+  left: 0;
 }
 #view-hse-form .steps-inner { max-width: 100%; margin: 0; display: flex; padding: 0 20px; }
 #view-hse-form .step-item {
@@ -774,27 +776,29 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 }
 
 /* ══════════════════════════════════════════════════════
-   HSE SCREENS — DEFINITIVE LEFT-ALIGN RULES
-   These appear last in the stylesheet so they always win
+   HSE SCREENS — DEFINITIVE LAYOUT RULES
    ══════════════════════════════════════════════════════ */
 #cnt.hse-active {
   padding: 0 !important;
-  box-sizing: border-box;
 }
+/* Force views to fill full available width below topbar */
 #view-hse-form.active,
 #view-hse-stats.active {
   display: block !important;
   width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  margin: 0 !important;
+  max-width: none !important;
   box-sizing: border-box !important;
+  position: relative !important;
+  left: 0 !important;
+  margin: 0 !important;
+  float: none !important;
 }
 #view-hse-form #sc-form-wrap,
-#view-hse-stats > div {
+#view-hse-stats > div:first-child {
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: none !important;
   box-sizing: border-box !important;
+  float: none !important;
 }
 </style>
 </head><body>
@@ -3679,16 +3683,31 @@ function checkAdminPwd(viewName) {
 function nav(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('active'));
-  // Toggle full-width class on #cnt for HSE views
+  // Apply/remove padding directly via inline style for HSE views
   const cnt=document.getElementById('cnt');
   if(cnt){
     if(v==='hse-form'||v==='hse-stats'){
       cnt.classList.add('hse-active');
+      cnt.style.padding='0';
+      cnt.style.width='100%';
     } else {
       cnt.classList.remove('hse-active');
+      cnt.style.padding='';
+      cnt.style.width='';
     }
   }
-  const ve=document.getElementById('view-'+v);if(ve)ve.classList.add('active');
+  const ve=document.getElementById('view-'+v);
+  if(ve){
+    ve.classList.add('active');
+    if(v==='hse-form'||v==='hse-stats'){
+      ve.style.width='100%';
+      ve.style.maxWidth='none';
+      ve.style.display='block';
+    } else {
+      ve.style.width='';
+      ve.style.maxWidth='';
+    }
+  }
   document.querySelectorAll('.sbi').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+v+"'"))x.classList.add('active');});
   const pg=PAGES[v];
   if(pg){sv('pg-title',pg.t);sv('pg-sub',pg.s);}
