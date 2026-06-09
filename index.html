@@ -2090,7 +2090,14 @@ function showStatus(state){
 // ============================================================
 function populateCategoryDropdown(){
   const sel=document.getElementById('fa-cat');if(!sel)return;
-  const cats=liveCategories.length>0?liveCategories:SM.map(r=>r.cat);
+  const raw=liveCategories.length>0?liveCategories:SM.map(r=>r.cat);
+  // Deduplicate
+  const _seen=new Set();
+  const cats=raw.filter(c=>{
+    const k=String(c||'').trim().toLowerCase();
+    if(!k||_seen.has(k))return false;
+    _seen.add(k);return true;
+  });
   const cur=sel.value;
   sel.innerHTML='<option value="">-- Select Violation Category --</option>';
   cats.forEach((cat,i)=>{
@@ -4738,10 +4745,12 @@ async function loadMasters(force){
           const k=norm(n); if(cSeen.has(k))return false;
           cSeen.add(k); return true;
         }).sort((a,b)=>a.localeCompare(b));
-      // Ensure standard clusters always present
-      ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(cl=>{
-        if(!MASTERS.clusters.find(c=>norm(c)===norm(cl))) MASTERS.clusters.push(cl);
-      });
+      // Ensure standard clusters present — skip if already loaded from sheet
+      if(MASTERS.clusters.length===0){
+        ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].forEach(cl=>{
+          MASTERS.clusters.push(cl);
+        });
+      }
       MASTERS.clusters.sort((a,b)=>a.localeCompare(b));
       const dSeen=new Set();
       MASTERS.disciplines = (data.disciplines||[])
@@ -4816,16 +4825,21 @@ function fillDDFromMasters(id, items, placeholder, allowAll){
   if(!el)return;
   const cur=el.value;
   el.innerHTML='<option value="">'+placeholder+'</option>';
-  if(allowAll&&placeholder!=='All Companies'&&placeholder!=='All Clusters'){}
+  // Deduplicate by normalised key — guaranteed unique values in every dropdown
+  const _seen=new Set();
+  const _norm=s=>String(s||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
   items.forEach(function(v){
-    const name = typeof v==='string' ? v : (v.name||v.company||'');
+    const name=(typeof v==='string'?v:(v.name||v.company||'')).trim();
     if(!name)return;
+    const k=_norm(name);
+    if(_seen.has(k))return;
+    _seen.add(k);
     const o=document.createElement('option');
     o.value=name; o.textContent=name;
     el.appendChild(o);
   });
   // Restore prior selection if still valid
-  if(cur&&Array.from(el.options).some(function(o){return o.value===cur;})) el.value=cur;
+  if(cur&&Array.from(el.options).some(function(o){return o.value===cur;}))el.value=cur;
 }
 
 function clearMastersCache(){
