@@ -67,16 +67,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #pg-title{font-size:14px;font-weight:600;}
 #pg-sub{font-size:11px;color:var(--t3);margin-left:8px;}
 .tb-r{display:flex;align-items:center;gap:8px;}
-#cnt{padding:18px;flex:1;}
+#cnt{padding:18px;flex:1;}#cnt.hse-active{padding:0;width:100%;}
 .view{display:none;}.view.active{display:block;}
-#cnt:has(#view-hse-form.active),
-#cnt:has(#view-hse-stats.active){padding:0;}
-#view-hse-form.active,
-#view-hse-stats.active{
-  width:100%;
-  max-width:100%;
-  display:block;
-}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit;white-space:nowrap;}
 .bp{background:var(--blue);color:#fff;}.bp:hover{background:var(--bdk);}
@@ -272,9 +264,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── FORM CHROME ─────────────────────────────────────────────────── */
-#view-hse-form, #view-hse-stats { padding: 0; margin: 0; background: #F0F2F7; }
-#view-hse-form .view-inner { width: 100%; max-width: 100%; }
-#cnt:has(#view-hse-form.active) { padding: 0; background: #F0F2F7; }
+#view-hse-form,
+#view-hse-stats {
+  display: none;
+  padding: 0;
+  margin: 0;
+  background: #F0F2F7;
+}
+#view-hse-form.active,
+#view-hse-stats.active {
+  display: block;
+}
 #view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 24px 40px 24px; box-sizing: border-box; }
 
 /* ── TOPBAR ─────────────────────────────────────────────────────── */
@@ -314,7 +314,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 /* ── STEP INDICATOR ─────────────────────────────────────────────── */
 #view-hse-form .steps-bar {
   background: #fff; border-bottom: 1px solid #e2e6f0;
-  position: sticky; top: 67px; z-index: 90;
+  position: sticky; top: 50px; z-index: 90;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
 #view-hse-form .steps-inner { max-width: 100%; margin: 0; display: flex; padding: 0 20px; }
@@ -771,6 +771,30 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   border-color: #21409a;
   box-shadow: 0 0 0 3px rgba(33,64,154,.08);
   background: #fff;
+}
+
+/* ══════════════════════════════════════════════════════
+   HSE SCREENS — DEFINITIVE LEFT-ALIGN RULES
+   These appear last in the stylesheet so they always win
+   ══════════════════════════════════════════════════════ */
+#cnt.hse-active {
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+#view-hse-form.active,
+#view-hse-stats.active {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+#view-hse-form #sc-form-wrap,
+#view-hse-stats > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 </style>
 </head><body>
@@ -1268,16 +1292,28 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       </div>
       <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding:0;min-height:100vh;background:#F0F2F7;">
       <!-- Progress bar for HSE form -->
-      <div style="height:3px;background:rgba(0,0,0,.08);margin-bottom:0;">
-        <div style="height:3px;background:var(--orange);transition:width .4s ease;" id="progressFill"></div>
+      <div class="progress-rail">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
       <!-- Step indicator -->
-      <div style="background:#fff;border-bottom:1px solid var(--bdr);display:flex;padding:0 24px;margin-bottom:0;">
-        <div id="sc-step1" onclick="document.querySelector('[data-step=\'1\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--orange);cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;">1</span><span>Details</span></div>
-        <div onclick="document.querySelector('[data-step=\'2\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">2</span><span>Workforce</span></div>
-        <div onclick="document.querySelector('[data-step=\'3\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">3</span><span>Incidents</span></div>
-        <div onclick="document.querySelector('[data-step=\'4\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">4</span><span>Compliance</span></div>
-        <div onclick="document.querySelector('[data-step=\'5\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">5</span><span>IVMS</span></div>
+      <div class="steps-bar">
+        <div class="steps-inner">
+          <div id="sc-step1" class="step-item active" onclick="document.querySelector('[data-step=\'1\']').scrollIntoView({behavior:'smooth'})">
+            <span class="step-num">1</span><span class="step-label">Details</span>
+          </div>
+          <div class="step-item" onclick="document.querySelector('[data-step=\'2\']').scrollIntoView({behavior:'smooth'})">
+            <span class="step-num">2</span><span class="step-label">Workforce</span>
+          </div>
+          <div class="step-item" onclick="document.querySelector('[data-step=\'3\']').scrollIntoView({behavior:'smooth'})">
+            <span class="step-num">3</span><span class="step-label">Incidents</span>
+          </div>
+          <div class="step-item" onclick="document.querySelector('[data-step=\'4\']').scrollIntoView({behavior:'smooth'})">
+            <span class="step-num">4</span><span class="step-label">Compliance</span>
+          </div>
+          <div class="step-item" onclick="document.querySelector('[data-step=\'5\']').scrollIntoView({behavior:'smooth'})">
+            <span class="step-num">5</span><span class="step-label">IVMS</span>
+          </div>
+        </div>
       </div>
 <!-- ── FORM ──────────────────────────────────────────────────────── -->
 <div class="wrap" id="formWrap" style="padding:0 24px 40px 24px;box-sizing:border-box;width:100%;">
@@ -3643,6 +3679,15 @@ function checkAdminPwd(viewName) {
 function nav(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('active'));
+  // Toggle full-width class on #cnt for HSE views
+  const cnt=document.getElementById('cnt');
+  if(cnt){
+    if(v==='hse-form'||v==='hse-stats'){
+      cnt.classList.add('hse-active');
+    } else {
+      cnt.classList.remove('hse-active');
+    }
+  }
   const ve=document.getElementById('view-'+v);if(ve)ve.classList.add('active');
   document.querySelectorAll('.sbi').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+v+"'"))x.classList.add('active');});
   const pg=PAGES[v];
