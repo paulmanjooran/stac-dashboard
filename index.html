@@ -2990,6 +2990,42 @@ function previewForm(){
   openModal('m-prev');
 }
 
+
+// ════════════════════════════════════════════════════════════
+//  uploadFileToStac_ — Stage 2: upload HSE Notice to Drive
+//  Fires after form submit succeeds, updates col P in sheet
+// ════════════════════════════════════════════════════════════
+async function uploadFileToStac_(scriptUrl, stacId, file) {
+  try {
+    toast('⏳ Uploading HSE Default Notice…', 6000);
+    const fileData = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload  = e => resolve(e.target.result.split(',')[1]);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+    if (!fileData) { toast('⚠️ File read failed', 3000, 'warn'); return; }
+
+    await fetch(scriptUrl, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body:    JSON.stringify({
+        action:      'uploadFile',
+        stacId:      stacId,
+        fileData:    fileData,
+        fileMimeType: file.type || 'application/pdf',
+        fileExt:     file.name.split('.').pop() || 'pdf',
+        fileName:    stacId + ' — HSE Default Notice.' + (file.name.split('.').pop() || 'pdf')
+      })
+    });
+    toast('✅ HSE Default Notice uploaded to Drive folder: ' + stacId, 5000);
+  } catch(err) {
+    console.warn('File upload failed:', err);
+    toast('⚠️ File upload failed — submit was saved. Upload manually to Drive folder: ' + stacId, 6000, 'warn');
+  }
+}
+
 async function doSubmit(e){
   e.preventDefault();
   // Validate required fields
@@ -3054,6 +3090,14 @@ async function doSubmit(e){
     fileName:    stacId+' — Warning Letter — '+gv('fa-co')
   };
 
+  // Stage 2 file upload handled separately after form submit
+  // Store file reference for upload after main submit succeeds
+  const fileInput = document.getElementById('fa-ev');
+  let _pendingFile = null;
+  if (fileInput && fileInput.files && fileInput.files.length > 0) {
+    _pendingFile = fileInput.files[0];
+  }
+
   // Always use saved URL first, then CFG default, then hardcoded fallback
   const savedUrl = localStorage.getItem('stac_cfg') ? 
     (JSON.parse(localStorage.getItem('stac_cfg')||'{}').scriptUrl||'') : '';
@@ -3074,9 +3118,13 @@ async function doSubmit(e){
       // Update local cache immediately so dashboard reflects new record
       localStorage.removeItem(CACHE_KEY_STAC);
       localStorage.removeItem(CACHE_KEY_TS_STAC);
-      toast('✅ '+stacId+' submitted successfully',4000);
-      // Force reload from sheet after 3s (sheet needs a moment to write)
-      setTimeout(()=>loadData(true),3000);
+      toast('✅ '+stacId+' submitted — uploading file…',4000);
+      // Stage 2: upload file separately if one was selected
+      if (_pendingFile) {
+        uploadFileToStac_(scriptUrl, stacId, _pendingFile);
+      }
+      // Force reload from sheet after 5s
+      setTimeout(()=>loadData(true),5000);
     }catch(err){
       console.error('doSubmit error:',err);
       // Network error — save locally so record appears in UI
