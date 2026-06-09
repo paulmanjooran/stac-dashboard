@@ -1994,7 +1994,22 @@ async function loadData(force){
       try{localStorage.setItem(CACHE_KEY_STAC,JSON.stringify(stacData));localStorage.setItem(CACHE_KEY_TS_STAC,String(Date.now()));}catch(e){}
       _lastSuccessfulSync=Date.now();_consecutiveFailures=0;
     }}
-    if(subconRaw){const p=parseGVizSubcon(subconRaw);if(p.length>0)subconData=p;}
+    if(subconRaw){
+      const p=parseGVizSubcon(subconRaw);
+      if(p.length>0){
+        subconData=p;
+        // Sync clusters and companies to MASTERS from the live sheet data
+        const _norm=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+        const _scSeen=new Set(), _clSeen=new Set();
+        const liveCos=[], liveCls=[];
+        p.forEach(s=>{
+          if(s.company){const k=_norm(s.company);if(!_scSeen.has(k)){_scSeen.add(k);liveCos.push(s.company.trim());}}
+          if(s.cluster){const k=_norm(s.cluster);if(!_clSeen.has(k)){_clSeen.add(k);liveCls.push(s.cluster.trim());}}
+        });
+        if(liveCos.length>0) MASTERS.companies=liveCos.sort((a,b)=>a.localeCompare(b));
+        if(liveCls.length>0) MASTERS.clusters=liveCls.sort((a,b)=>a.localeCompare(b));
+      }
+    }
     if(matrixRaw)parseScoringMatrixSheet(matrixRaw);
   }catch(e){console.error('loadData error:',e);_consecutiveFailures++;}
   if(!live)stacData=[...RAW];
@@ -2015,7 +2030,9 @@ async function loadData(force){
     if(cur&&!Array.from(el.options).some(o=>o.value===cur))el.value='';
   });
   renderAll();
-  toast(live?'✅ Live — '+stacData.length+' records loaded':'⚠️ Using sample data — set sheet to "Anyone with link → Viewer"',4000,live?'':'warn');
+  toast(live?'✅ Live — '+stacData.length+' records loaded':
+  '⚠️ Using sample data — open Setup tab → Clear All Cache, or check sheet is shared publicly',
+  5000,live?'':'warn');
 }
 
 
@@ -3421,7 +3438,15 @@ async function checkAndSaveAdmin(){
   toast(isAdmin?'✅ Admin access confirmed — delete buttons now visible':'ℹ️ Standard user — no delete access',4000,isAdmin?'':'warn');
 }
 function copyScript(){navigator.clipboard.writeText(SCRIPT_CODE).then(()=>toast('✅ Apps Script copied!',2000));}
-function testConnection(){loadData();}
+function testConnection(){
+  // Clear stale cache then force fresh load
+  try{
+    localStorage.removeItem(CACHE_KEY_STAC);
+    localStorage.removeItem(CACHE_KEY_TS_STAC);
+  }catch(e){}
+  toast('⏳ Connecting to Google Sheet…',3000);
+  loadData(true); // force=true bypasses cache
+}
 
 function checkScriptUrl(){
   const v=gv('cfg-scr');
@@ -3443,14 +3468,23 @@ function checkScriptUrl(){
 
 async function autoAddHeaders(){
   const su=gv('cfg-scr')||CFG.scriptUrl;
-  if(!su||!su.startsWith('https://script.google.com')){toast('⚠️ Configure Apps Script URL first',3000,'warn');return;}
-  toast('⏳ Calling setupHeaders() on Apps Script...',5000);
+  if(!su||!su.startsWith('https://script.google.com')){
+    toast('⚠️ Configure Script URL first — paste your Apps Script Web App URL above',4000,'warn');return;
+  }
+  toast('⏳ Sending setupHeaders request…',4000);
   try{
-    const r=await fetch(su,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'setupHeaders'})});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const res=await r.json();
-    toast(res.ok?'✅ Headers S-AH added to sheet — columns A-R unchanged':'⚠️ '+( res.error||'Unknown error'),5000,res.ok?'':'warn');
-  }catch(err){toast('⚠️ Could not call setupHeaders: '+err.message+'. Run it manually in Apps Script editor → Run → setupHeaders',6000,'warn');}
+    // no-cors: POST reaches Apps Script but response is opaque (can't read body)
+    // This is expected — verify result in Google Sheet row 1 cols S-AH
+    await fetch(su,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'setupHeaders'})
+    });
+    toast('✅ setupHeaders request sent — check your STAC sheet row 1 cols S–AH were added. If not, run setupHeaders() manually from Apps Script menu.',7000);
+  }catch(err){
+    toast('⚠️ Network error: '+err.message+' — run setupHeaders() from Apps Script editor: Extensions → Apps Script → Run → setupHeaders',7000,'warn');
+  }
 }
 
 // ============================================================
@@ -4724,10 +4758,13 @@ async function loadMasters(force){
         disciplines:MASTERS.disciplines, contracts:MASTERS.contracts
       }));
       localStorage.setItem(CACHE_KEY_TS_MST, String(MASTERS._loadedAt));
-      // Sync subconData for backward-compat
-      subconData = MASTERS.companies.map(n=>({
-        company:n, cluster:'', ownerEmail:'', focalEmail:''
-      }));
+      // Sync subconData only if gviz hasn't loaded richer data yet
+      // gviz subconData has cluster/email fields — don't overwrite with bare names
+      if(subconData.length === 0) {
+        subconData = MASTERS.companies.map(n=>({
+          company:n, cluster:'', ownerEmail:'', focalEmail:''
+        }));
+      }
       populateAllMasters();
       setHealthStatus('online');
       updateMasterPanel();
@@ -4804,10 +4841,17 @@ function clearMastersCache(){
 }
 
 function clearAllCache(){
-  [CACHE_KEY_STAC,CACHE_KEY_MASTERS,CACHE_KEY_TS_STAC,CACHE_KEY_TS_MST,
-   'stac_cfg','stac_drafts'].forEach(k=>localStorage.removeItem(k));
+  // Clear all known cache keys including old version keys
+  ['stac_cache_v3','stac_cache_v4','stac_cache_v5','stac_cache_v6',
+   'stac_masters_v3','stac_masters_v4','stac_masters_v5','stac_masters_v6',
+   'stac_cache_ts_v3','stac_cache_ts_v4','stac_cache_ts_v5','stac_cache_ts_v6',
+   'stac_masters_ts_v3','stac_masters_ts_v4','stac_masters_ts_v5','stac_masters_ts_v6',
+   CACHE_KEY_STAC,CACHE_KEY_MASTERS,CACHE_KEY_TS_STAC,CACHE_KEY_TS_MST,
+   'stac_cfg','stac_drafts'
+  ].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
   MASTERS._loadedAt=0;
-  toast('All cache cleared — reloading…',2000);
+  MASTERS.companies=[];MASTERS.clusters=[];MASTERS.disciplines=[];MASTERS.contracts=[];
+  toast('✅ All cache cleared — fetching live data…',2000);
   setTimeout(()=>{ loadMasters(true); loadData(true); },600);
 }
 
