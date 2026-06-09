@@ -1260,33 +1260,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       </div>
     </div>
 
-  </div>
-</div>
 
-<!-- DRILLDOWN MODAL -->
-<div class="mbg" id="m-drill"><div class="mbox mbox-lg">
-  <div class="mhd"><h3 id="m-drill-title">Cases</h3><button class="xbtn" onclick="cm('m-drill')">✕</button></div>
-  <div class="mbd">
-    <div style="margin-bottom:10px;display:flex;justify-content:flex-end;gap:7px;">
-      <button class="btn bg bsm" onclick="exportDrillXL()">⬇ Excel</button>
-      <button class="btn bk bsm" onclick="exportDrillPDF()">🖨 PDF</button>
-    </div>
-    <div class="tw"><table class="tbl"><thead><tr><th>STAC ID</th><th>Date</th><th>Cluster</th><th>Subcontractor</th><th>Category</th><th>YTD Inst.</th><th>Penalty</th></tr></thead>
-    <tbody id="m-drill-body"></tbody></table></div>
-  </div>
-</div></div>
-
-<!-- SCORECARD DETAIL MODAL -->
-<div class="mbg" id="m-sc"><div class="mbox mbox-md">
-  <div class="mhd"><h3 id="m-sc-title">Subcontractor Scorecard</h3>
-    <div style="display:flex;gap:7px;"><button class="btn bg bsm" onclick="exportSCXL()">⬇ Excel</button><button class="btn bk bsm" onclick="exportSCPDF()">🖨 PDF</button><button class="xbtn" onclick="cm('m-sc')">✕</button></div>
-  </div>
-  <div class="mbd" id="m-sc-body"></div>
-</div></div>
-
-
-
-    <!-- HSE STATS FORM VIEW -->
+<!-- HSE STATS FORM VIEW -->
     <div id="view-hse-form" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
       <div id="sc-loading-screen" style="display:none;position:fixed;inset:0;background:var(--blue);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
         <div style="width:56px;height:56px;background:var(--orange);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;margin-bottom:20px;animation:sc-pulse 1.5s ease infinite;">AT</div>
@@ -1729,6 +1704,29 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- DRILLDOWN MODAL -->
+<div class="mbg" id="m-drill"><div class="mbox mbox-lg">
+  <div class="mhd"><h3 id="m-drill-title">Cases</h3><button class="xbtn" onclick="cm('m-drill')">✕</button></div>
+  <div class="mbd">
+    <div style="margin-bottom:10px;display:flex;justify-content:flex-end;gap:7px;">
+      <button class="btn bg bsm" onclick="exportDrillXL()">⬇ Excel</button>
+      <button class="btn bk bsm" onclick="exportDrillPDF()">🖨 PDF</button>
+    </div>
+    <div class="tw"><table class="tbl"><thead><tr><th>STAC ID</th><th>Date</th><th>Cluster</th><th>Subcontractor</th><th>Category</th><th>YTD Inst.</th><th>Penalty</th></tr></thead>
+    <tbody id="m-drill-body"></tbody></table></div>
+  </div>
+</div></div>
+
+<!-- SCORECARD DETAIL MODAL -->
+<div class="mbg" id="m-sc"><div class="mbox mbox-md">
+  <div class="mhd"><h3 id="m-sc-title">Subcontractor Scorecard</h3>
+    <div style="display:flex;gap:7px;"><button class="btn bg bsm" onclick="exportSCXL()">⬇ Excel</button><button class="btn bk bsm" onclick="exportSCPDF()">🖨 PDF</button><button class="xbtn" onclick="cm('m-sc')">✕</button></div>
+  </div>
+  <div class="mbd" id="m-sc-body"></div>
+</div></div>
 
 <!-- Preview modal for STAC form -->
 <div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;" id="m-prev">
