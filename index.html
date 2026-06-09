@@ -264,9 +264,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── FORM CHROME ─────────────────────────────────────────────────── */
-#view-hse-form { padding: 0; margin: 0; background: #F0F2F7; }
+#view-hse-form, #view-hse-stats { padding: 0; margin: 0; background: #F0F2F7; }
 #cnt:has(#view-hse-form.active) { padding: 0; background: #F0F2F7; }
-#view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 20px 40px; }
+#view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 24px 40px 24px; }
 
 /* ── TOPBAR ─────────────────────────────────────────────────────── */
 #view-hse-form .topbar {
@@ -390,7 +390,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #view-hse-form .sec-head.teal   .sec-num { background: #00695C; box-shadow: 0 2px 8px rgba(0,105,92,.3); }
 #view-hse-form .sec-head.navy   .sec-num { background: #1A237E; box-shadow: 0 2px 8px rgba(26,35,126,.3); }
 #view-hse-form .sec-title { font-size: 13px; font-weight: 700; color: #2b3a5e; letter-spacing: .2px; }
-#view-hse-form .sec-body { padding: 22px 20px; }
+#view-hse-form .sec-body { padding: 22px 24px; }
 #view-hse-form .sec-tag {
   margin-left: auto; background: #eef1fb; color: var(--blue);
   font-size: 9px; font-weight: 800; padding: 4px 11px; border-radius: 20px;
@@ -513,7 +513,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* ── SUBMIT AREA ────────────────────────────────────────────────── */
 #view-hse-form .submit-area {
-  background: #fff; border-radius: 12px;
+  background: #fff; border-radius: 12px; margin-left: 0;
   box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(33,64,154,.07);
   border: 1px solid #e8ecf5; border-top: 3px solid var(--orange);
   margin-top: 18px; padding: 22px 24px;
@@ -583,6 +583,126 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   background: linear-gradient(135deg,#1a3585,#21409A);
   transform: translateY(-1px); box-shadow: 0 6px 20px rgba(33,64,154,.4);
 }
+/* ── HSE STATS DASHBOARD ALIGNMENT ─────────────────────────── */
+#view-hse-stats .fbar {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  border: 1px solid #e8ecf5;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+#view-hse-stats .fl {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4d5a7a;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#view-hse-stats input[type="date"],
+#view-hse-stats select {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: #2b3a5e;
+  background: #fafbfd;
+  border: 1.5px solid #d8dff0;
+  border-radius: 7px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#view-hse-stats input[type="date"]:focus,
+#view-hse-stats select:focus {
+  border-color: #21409a;
+  box-shadow: 0 0 0 3px rgba(33,64,154,.08);
+  background: #fff;
+}
+#view-hse-stats .card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e8ecf5;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05), 0 4px 12px rgba(33,64,154,.06);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+#view-hse-stats .chd {
+  padding: 13px 18px;
+  border-bottom: 1px solid #edf0f8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(to right, #f7f9ff, #fff);
+}
+#view-hse-stats .chd h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b3a5e;
+  margin: 0;
+}
+#view-hse-stats .cbd {
+  padding: 16px 18px;
+}
+#view-hse-stats table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+#view-hse-stats table th {
+  background: #21409a;
+  color: #fff;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  padding: 9px 10px;
+  text-align: left;
+}
+#view-hse-stats table td {
+  padding: 8px 10px;
+  border-top: 1px solid #edf0f8;
+  color: #2b3a5e;
+  font-size: 12px;
+}
+#view-hse-stats table tr:nth-child(even) td {
+  background: #fafbfd;
+}
+#view-hse-stats table tr:hover td {
+  background: #f0f3fb;
+}
+#view-hse-stats .kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 16px 18px;
+}
+#view-hse-stats .kpi-tile {
+  background: #f7f9ff;
+  border: 1px solid #e0e6f5;
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+}
+#view-hse-stats .kpi-tile .kv {
+  font-size: 22px;
+  font-weight: 800;
+  color: #21409a;
+  font-family: 'DM Mono', monospace;
+}
+#view-hse-stats .kpi-tile .kl {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7a9a;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-top: 4px;
+}
+
 </style>
 </head><body>
 <nav id="sb">
@@ -595,17 +715,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sbi active" onclick="nav('dashboard')"><span class="ic">📊</span>Dashboard</div>
     <div class="sbi" onclick="nav('new-stac')"><span class="ic">➕</span>New STAC Form</div>
     <div class="sbi" onclick="nav('tracker')"><span class="ic">📋</span>Case Tracker</div>
+    <div class="sbi" onclick="nav('warning-letter')"><span class="ic">✉️</span>Warning Letters</div>
     <div class="sb-sec">Analysis</div>
     <div class="sbi" onclick="nav('fines')"><span class="ic">💰</span>Fines & Penalties</div>
     <div class="sbi" onclick="nav('scorecards')"><span class="ic">🏅</span>Subcon Scorecards</div>
     <div class="sbi" onclick="nav('performance')"><span class="ic">📋</span>Performance Report</div>
     <div class="sbi" onclick="nav('analytics')"><span class="ic">📈</span>Analytics</div>
-    <div class="sb-sec">Tools</div>
-    <div class="sbi" onclick="nav('warning-letter')"><span class="ic">✉️</span>Warning Letters</div>
-    <div class="sbi" onclick="nav('setup')"><span class="ic">⚙️</span>Setup</div>
     <div class="sb-sec">HSE Stats</div>
     <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
     <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Stats Dashboard</div>
+    <div class="sb-sec">Tools</div>
+    <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
   <div class="sb-foot">STAC v4.0 | GID 342483107<br>Next ID: <span id="sb-nid">—</span><br>Ref: STAC ID#</div>
 </nav>
@@ -1076,13 +1196,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div style="width:30px;height:30px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
         <div id="scLoaderStatus" style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px;font-family:monospace;">Connecting…</div>
       </div>
-      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding-bottom:40px;">
+      <div id="sc-form-wrap" style="width:100%;max-width:960px;margin:0;padding:0 0 40px 0;">
       <!-- Progress bar for HSE form -->
       <div style="height:3px;background:rgba(0,0,0,.08);margin-bottom:0;">
         <div style="height:3px;background:var(--orange);transition:width .4s ease;" id="progressFill"></div>
       </div>
       <!-- Step indicator -->
-      <div style="background:#fff;border-bottom:1px solid var(--bdr);display:flex;padding:0 8px;margin-bottom:12px;">
+      <div style="background:#fff;border-bottom:1px solid var(--bdr);display:flex;padding:0 20px;margin-bottom:0;">
         <div id="sc-step1" onclick="document.querySelector('[data-step=\'1\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--orange);cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;">1</span><span>Details</span></div>
         <div onclick="document.querySelector('[data-step=\'2\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">2</span><span>Workforce</span></div>
         <div onclick="document.querySelector('[data-step=\'3\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">3</span><span>Incidents</span></div>
@@ -1425,8 +1545,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
 
     <!-- HSE STATS DASHBOARD VIEW -->
-    <div id="view-hse-stats" class="view">
-      <div class="fbar" style="margin-bottom:14px;">
+    <div id="view-hse-stats" class="view" style="background:#F0F2F7;">
+      <div style="max-width:100%;margin:0;padding:20px 24px 40px 24px;">
+      <div class="fbar" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;align-items:center;">
         <span class="fl">From</span>
         <input type="date" id="hse-fr" onchange="renderHseStats()">
         <span class="fl">To</span>
@@ -2041,10 +2162,16 @@ async function loadData(force){
 // ================================================================
 let isAdmin = false;
 let adminEmail = '';
+// Hardcoded admin emails — Tools tab always visible for these accounts
+const ADMIN_EMAILS = ['paul.manjooran@altasnim.com','paulmanjooran@gmail.com'];
 
 async function checkAdminAccess(){
   isAdmin = false;
-  adminEmail = (CFG.userEmail||'').trim().toLowerCase();
+  adminEmail = (CFG.userEmail||gv('cfg-usr')||'').trim().toLowerCase();
+  // Check hardcoded admin list first (works before sheet loads)
+  if(adminEmail && ADMIN_EMAILS.map(e=>e.toLowerCase()).includes(adminEmail)){
+    isAdmin = true; updateAdminUI(); return;
+  }
   if(!adminEmail){ updateAdminUI(); return; }
   try{
     const data = await fetchGvizData(CFG.sheetId, null, 'Users List');
@@ -2070,6 +2197,11 @@ async function checkAdminAccess(){
 function updateAdminUI(){
   const badge = document.getElementById('admin-badge');
   if(badge) badge.style.display = isAdmin ? 'inline-flex' : 'none';
+  // Tools section — visible to admin only
+  const toolsSec  = document.getElementById('tools-nav-sec');
+  const toolsSetup = document.getElementById('tools-nav-setup');
+  if(toolsSec)  toolsSec.style.display  = isAdmin ? '' : 'none';
+  if(toolsSetup) toolsSetup.style.display = isAdmin ? '' : 'none';
   if(dataLoaded) refreshCurrentView();
 }
 
@@ -3360,6 +3492,82 @@ const PAGES={
   'hse-form':{t:'Subcontractor HSE Data Entry Form',s:'Monthly subcontractor HSE statistics submission — MTC, RWC, IVMS, Safety Qube'},
   'hse-stats':{t:'Subcontractor HSE Stats Dashboard',s:'Manhour, incident and compliance analytics — all filter permutations'}
 };
+
+// ════════════════════════════════════════════════════════════
+//  ADMIN GATE — password-protected access to Tools/Setup
+// ════════════════════════════════════════════════════════════
+const _ADMIN_PWD = 'STAC#Admin123';
+const _ADMIN_SESSION_KEY = 'stac_admin_unlocked';
+
+function adminGate(viewName) {
+  // Check if already unlocked this session
+  if (sessionStorage.getItem(_ADMIN_SESSION_KEY) === '1') {
+    nav(viewName); return;
+  }
+  // Show password modal
+  const overlay = document.createElement('div');
+  overlay.id = 'admin-overlay';
+  overlay.style.cssText = [
+    'position:fixed;inset:0;background:rgba(0,0,0,.55);',
+    'display:flex;align-items:center;justify-content:center;z-index:9999;',
+    'backdrop-filter:blur(3px);'
+  ].join('');
+
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:36px 40px;
+                max-width:380px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.25);
+                border-top:4px solid #21409a;text-align:center;">
+      <div style="width:52px;height:52px;background:#f0f2fa;border-radius:12px;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:24px;margin:0 auto 16px;">🔐</div>
+      <div style="font-size:16px;font-weight:800;color:#2b3a5e;margin-bottom:6px;">
+        Admin Access Required</div>
+      <div style="font-size:12px;color:#6b7a9a;margin-bottom:22px;">
+        This section is restricted. Enter admin password to continue.</div>
+      <input id="admin-pwd-input" type="password" placeholder="Enter password"
+        style="width:100%;padding:11px 14px;border:1.5px solid #d8dff0;
+               border-radius:8px;font-size:14px;outline:none;
+               box-sizing:border-box;margin-bottom:8px;"
+        onkeydown="if(event.key==='Enter')document.getElementById('admin-pwd-btn').click()">
+      <div id="admin-pwd-err" style="color:#c62828;font-size:11px;
+           min-height:18px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="document.getElementById('admin-overlay').remove()"
+          style="padding:10px 22px;border:1.5px solid #d8dff0;background:#fff;
+                 border-radius:8px;cursor:pointer;font-size:13px;color:#6b7a9a;">
+          Cancel</button>
+        <button id="admin-pwd-btn"
+          onclick="checkAdminPwd('${viewName}')"
+          style="padding:10px 28px;background:linear-gradient(135deg,#21409a,#2d55c4);
+                 color:#fff;border:none;border-radius:8px;cursor:pointer;
+                 font-size:13px;font-weight:700;">
+          Unlock</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById('admin-pwd-input').focus(), 100);
+}
+
+function checkAdminPwd(viewName) {
+  const input = document.getElementById('admin-pwd-input');
+  const err   = document.getElementById('admin-pwd-err');
+  if (!input) return;
+  if (input.value === _ADMIN_PWD) {
+    sessionStorage.setItem(_ADMIN_SESSION_KEY, '1');
+    document.getElementById('admin-overlay').remove();
+    nav(viewName);
+  } else {
+    err.textContent = '❌ Incorrect password. Try again.';
+    input.value = '';
+    input.focus();
+    input.style.borderColor = '#e53935';
+    setTimeout(() => {
+      if (err) err.textContent = '';
+      if (input) input.style.borderColor = '#d8dff0';
+    }, 2500);
+  }
+}
+
 function nav(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('active'));
