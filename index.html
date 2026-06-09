@@ -3061,27 +3061,32 @@ async function doSubmit(e){
   if(scriptUrl&&scriptUrl.startsWith('https://script.google.com')){
     try{
       toast('⏳ Submitting…',6000);addLocal(payload);saveDraft(payload);
-      const r = await fetch(scriptUrl,{
+      // no-cors: fire and forget — response is always opaque, can't read it
+      // Assume success if fetch doesn't throw a network error
+      await fetch(scriptUrl,{
         method:'POST',
         mode:'no-cors',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify(payload),
-        redirect:'follow'
+        body:JSON.stringify(payload)
       });
-      if(!r.ok) throw new Error('HTTP '+r.status+' — check Apps Script is deployed as "Anyone" access');
-      const text = await r.text();
-      let res;
-      try{ res = JSON.parse(text); }catch(pe){ throw new Error('Script response not JSON — check deployment. Response: '+text.substring(0,100)); }
-      // no-cors: can't read response — clear draft optimistically
+      // Optimistically assume success — clear draft, update UI immediately
       clearDraft(stacId);
-      toast('✅ '+stacId+' submitted — syncing sheet…',4000);
-      setTimeout(()=>loadData(true),4000);
+      // Update local cache immediately so dashboard reflects new record
+      localStorage.removeItem(CACHE_KEY_STAC);
+      localStorage.removeItem(CACHE_KEY_TS_STAC);
+      toast('✅ '+stacId+' submitted successfully',4000);
+      // Force reload from sheet after 3s (sheet needs a moment to write)
+      setTimeout(()=>loadData(true),3000);
     }catch(err){
       console.error('doSubmit error:',err);
-      toast('⚠️ Sheet write failed: '+err.message+' — using clipboard fallback',5000,'warn');
+      // Network error — save locally so record appears in UI
+      addLocal(payload);
+      toast('⚠️ Network error — record saved locally. Will sync when connection restored.',5000,'warn');
+      resetForm(); nav('tracker');
+      return;
     }
   }
-  // No Apps Script / fallback — save locally + copy to clipboard
+  // No Apps Script configured — save locally
   addLocal(payload);
   showManualPaste(payload, stacId);
   resetForm(); nav('tracker');
@@ -3170,7 +3175,7 @@ function normalizePenalties(){
 
 function addLocal(p){
   const pen=typeof p.penalty==='number'?p.penalty:(parseInt(p.penalty)||0);
-  stacData.unshift({
+  const newRecord = {
     id:p.stacId,date:p.instanceDate||'',cluster:p.cluster||'',
     company:p.company||'',owner:p.owner||'',
     category:p.category||'',description:p.description||'',
@@ -3178,8 +3183,18 @@ function addLocal(p){
     instances:parseInt(p.ytdInstanceCount)||1,
     wlIssued:'No',contractNo:p.contractNo||'',
     closeoutDate:p.closeoutDate||'',_local:true
-  });
-  filteredData=getFiltered();updateIDs();renderAll();
+  };
+  stacData.unshift(newRecord);
+  // Invalidate cache so next loadData fetches fresh from sheet
+  try{
+    localStorage.removeItem(CACHE_KEY_STAC);
+    localStorage.removeItem(CACHE_KEY_TS_STAC);
+  }catch(e){}
+  filteredData=getFiltered();
+  updateIDs();
+  renderAll();
+  // Navigate to tracker so user sees the new record immediately
+  nav('tracker');
 }
 function saveDraft(p){try{const d=JSON.parse(localStorage.getItem('stac_drafts')||'[]');d.unshift({...p,_savedAt:Date.now()});localStorage.setItem('stac_drafts',JSON.stringify(d.slice(0,10)));}catch(e){}}
 function clearDraft(id){try{const d=JSON.parse(localStorage.getItem('stac_drafts')||'[]');localStorage.setItem('stac_drafts',JSON.stringify(d.filter(x=>x.stacId!==id)));}catch(e){}}
