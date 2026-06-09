@@ -585,60 +585,94 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   background: linear-gradient(135deg,#1a3585,#21409A);
   transform: translateY(-1px); box-shadow: 0 6px 20px rgba(33,64,154,.4);
 }
-/* ── HSE STATS DASHBOARD ALIGNMENT ─────────────────────────── */
-#view-hse-stats .fbar {
+
+/* ── HSE STATS — FULL LEFT ALIGNMENT OVERRIDES ──────────────── */
+#view-hse-stats { text-align: left; }
+#view-hse-stats .kgrid {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 14px 0;
+  width: 100%;
+}
+#view-hse-stats .k5 { grid-template-columns: repeat(5, 1fr); }
+#view-hse-stats .k4 { grid-template-columns: repeat(4, 1fr); }
+#view-hse-stats .k3 { grid-template-columns: repeat(3, 1fr); }
+@media(max-width:900px) {
+  #view-hse-stats .k5 { grid-template-columns: repeat(3, 1fr); }
+  #view-hse-stats .k4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media(max-width:600px) {
+  #view-hse-stats .k5,
+  #view-hse-stats .k4,
+  #view-hse-stats .k3 { grid-template-columns: repeat(2, 1fr); }
+}
+#view-hse-stats .kpi {
   background: #fff;
   border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 16px;
+  padding: 14px 16px;
   border: 1px solid #e8ecf5;
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
+  text-align: left;
 }
-#view-hse-stats .fl {
-  font-size: 11px;
+#view-hse-stats .klbl {
+  font-size: 10px;
   font-weight: 700;
-  color: #4d5a7a;
   letter-spacing: .5px;
   text-transform: uppercase;
-  white-space: nowrap;
+  color: #6b7a9a;
+  margin-bottom: 6px;
 }
-#view-hse-stats input[type="date"],
-#view-hse-stats select {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
+#view-hse-stats .kval {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: 'DM Mono', monospace;
+  line-height: 1.1;
   color: #2b3a5e;
-  background: #fafbfd;
-  border: 1.5px solid #d8dff0;
-  border-radius: 7px;
-  padding: 7px 10px;
-  outline: none;
-  transition: border-color .15s, box-shadow .15s;
 }
-#view-hse-stats input[type="date"]:focus,
-#view-hse-stats select:focus {
-  border-color: #21409a;
-  box-shadow: 0 0 0 3px rgba(33,64,154,.08);
-  background: #fff;
+#view-hse-stats .ksub {
+  font-size: 10px;
+  color: #9aa3b8;
+  margin-top: 3px;
+}
+#view-hse-stats .kbl .kval { color: #21409a; }
+#view-hse-stats .kor .kval { color: #f58220; }
+#view-hse-stats .krd .kval { color: #c62828; }
+#view-hse-stats .kam .kval { color: #e65100; }
+#view-hse-stats .kgr .kval { color: #2e7d32; }
+#view-hse-stats .kpu .kval { color: #6a1b9a; }
+#view-hse-stats .kbl { border-left: 3px solid #21409a; }
+#view-hse-stats .kor { border-left: 3px solid #f58220; }
+#view-hse-stats .krd { border-left: 3px solid #c62828; }
+#view-hse-stats .kam { border-left: 3px solid #e65100; }
+#view-hse-stats .kgr { border-left: 3px solid #2e7d32; }
+#view-hse-stats .kpu { border-left: 3px solid #6a1b9a; }
+#view-hse-stats .ch2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0 0 14px 0;
+  width: 100%;
+}
+@media(max-width:700px) {
+  #view-hse-stats .ch2 { grid-template-columns: 1fr; }
 }
 #view-hse-stats .card {
   background: #fff;
   border-radius: 12px;
   border: 1px solid #e8ecf5;
-  box-shadow: 0 1px 4px rgba(0,0,0,.05), 0 4px 12px rgba(33,64,154,.06);
-  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
   overflow: hidden;
+  margin: 0 0 14px 0;
+  width: 100%;
+  box-sizing: border-box;
 }
+#view-hse-stats .ch2 .card { margin: 0; }
 #view-hse-stats .chd {
-  padding: 13px 18px;
+  padding: 12px 18px;
   border-bottom: 1px solid #edf0f8;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   background: linear-gradient(to right, #f7f9ff, #fff);
 }
 #view-hse-stats .chd h3 {
@@ -650,61 +684,86 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #view-hse-stats .cbd {
   padding: 16px 18px;
 }
-#view-hse-stats table {
+#view-hse-stats .tw {
+  overflow-x: auto;
+  padding: 0;
+}
+#view-hse-stats .tbl {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
+  min-width: 700px;
 }
-#view-hse-stats table th {
+#view-hse-stats .tbl thead tr {
   background: #21409a;
-  color: #fff;
-  font-weight: 700;
+}
+#view-hse-stats .tbl thead th {
+  padding: 9px 10px;
   font-size: 10px;
+  font-weight: 700;
   letter-spacing: .4px;
   text-transform: uppercase;
-  padding: 9px 10px;
+  color: #fff;
   text-align: left;
+  white-space: nowrap;
 }
-#view-hse-stats table td {
+#view-hse-stats .tbl tbody td {
   padding: 8px 10px;
   border-top: 1px solid #edf0f8;
   color: #2b3a5e;
-  font-size: 12px;
+  font-size: 11px;
+  vertical-align: middle;
 }
-#view-hse-stats table tr:nth-child(even) td {
+#view-hse-stats .tbl tbody tr:nth-child(even) td {
   background: #fafbfd;
 }
-#view-hse-stats table tr:hover td {
+#view-hse-stats .tbl tbody tr:hover td {
   background: #f0f3fb;
 }
-#view-hse-stats .kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  padding: 16px 18px;
-}
-#view-hse-stats .kpi-tile {
-  background: #f7f9ff;
-  border: 1px solid #e0e6f5;
+#view-hse-stats .fbar {
+  background: #fff;
   border-radius: 10px;
-  padding: 14px 16px;
-  text-align: center;
+  padding: 12px 16px;
+  margin: 0 0 16px 0;
+  border: 1px solid #e8ecf5;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
-#view-hse-stats .kpi-tile .kv {
-  font-size: 22px;
-  font-weight: 800;
-  color: #21409a;
-  font-family: 'DM Mono', monospace;
-}
-#view-hse-stats .kpi-tile .kl {
-  font-size: 10px;
+#view-hse-stats .fl {
+  font-size: 11px;
   font-weight: 700;
-  color: #6b7a9a;
+  color: #4d5a7a;
+  letter-spacing: .4px;
   text-transform: uppercase;
-  letter-spacing: .5px;
-  margin-top: 4px;
+  white-space: nowrap;
 }
-
+#view-hse-stats .fdiv {
+  flex: 1;
+  min-width: 8px;
+}
+#view-hse-stats input[type="date"],
+#view-hse-stats .fbar select {
+  font-size: 12px;
+  color: #2b3a5e;
+  background: #fafbfd;
+  border: 1.5px solid #d8dff0;
+  border-radius: 7px;
+  padding: 7px 11px;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color .15s, box-shadow .15s;
+}
+#view-hse-stats input[type="date"]:focus,
+#view-hse-stats .fbar select:focus {
+  border-color: #21409a;
+  box-shadow: 0 0 0 3px rgba(33,64,154,.08);
+  background: #fff;
+}
 </style>
 </head><body>
 <nav id="sb">
@@ -1549,7 +1608,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
     <!-- HSE STATS DASHBOARD VIEW -->
     <div id="view-hse-stats" class="view" style="background:#F0F2F7;">
-      <div style="max-width:100%;margin:0;padding:20px 24px 40px 24px;">
+      <div style="width:100%;margin:0;padding:20px 24px 40px 24px;box-sizing:border-box;">
       <div class="fbar" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;align-items:center;">
         <span class="fl">From</span>
         <input type="date" id="hse-fr" onchange="renderHseStats()">
