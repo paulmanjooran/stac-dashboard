@@ -848,7 +848,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <div class="fr fr4">
               <div class="fg"><label>Penalty (OMR)<span class="atag">Auto</span></label><select id="fa-pen"><option value="0">OMR 0 — Advisory</option><option value="25">OMR 25 — 1st | Quarter</option><option value="50">OMR 50 — 2nd | Half</option><option value="75">OMR 75 — 1st | Plant</option><option value="100">OMR 100 — 3rd | Training</option><option value="150">OMR 150 — 2nd | Plant</option><option value="300">OMR 300 — 3rd | Plant</option><option value="500">OMR 500 — Final | Full</option></select></div>
               <div class="fg"><label>Closeout Target <span class="req">*</span></label><input type="date" id="fa-cl-dt" required></div>
-              <div class="fg"><label>Initiator <span class="req">*</span></label><input type="text" id="fa-init" required placeholder="Name / email"></div>
+              <div class="fg"><label>Initiator's Name <span class="req">*</span></label><input type="text" id="fa-init" required placeholder="Full Name"></div>
+              <div class="fg"><label>Initiator's Email <span class="req">*</span></label><input type="email" id="fa-init-email" required placeholder="name@altasnim.com"></div>
               <div class="fg"><label>Recommendation<span class="atag">Auto</span></label><select id="fa-rec"><option>Issue 1st Warning Letter</option><option>Issue 2nd Warning Letter</option><option>Issue Final Warning / Escalate</option><option>Commercial Hold</option><option>Work Suspension</option></select></div>
             </div>
             <div class="fr fr1"><div class="fg"><label>ATNM HSE Default Notice <span class="req">*</span></label><input type="file" id="fa-ev" accept=".pdf,.jpg,.png,.docx" multiple required><div class="hint">Upload signed HSE Default Notice. PDF, JPG, PNG, DOCX. Ref recorded in register.</div></div></div>
@@ -3036,7 +3037,8 @@ async function doSubmit(e){
   if(!gv('fa-cl')||!gv('fa-co')||!gv('fa-cat')||!gv('fa-desc')){
     toast('⚠️ Fill all required fields: Cluster, Company, Category, Description',3500,'warn');return;
   }
-  if(!gv('fa-init')){toast('⚠️ Initiator name is required',3000,'warn');return;}
+  if(!gv('fa-init')){toast('⚠️ Initiator\'s Name is required',3000,'warn');return;}
+  if(!gv('fa-init-email')){toast('⚠️ Initiator\'s Email is required',3000,'warn');return;}
   // Validate closeout date is not before instance date
   const instD=gv('fa-dt'), clD=gv('fa-cl-dt');
   if(instD && clD && clD < instD){
@@ -3082,7 +3084,8 @@ async function doSubmit(e){
     annualCeiling:parseInt((gv('fa-ac')||'92').replace(/[^0-9]/g,''))||92,      // V
     complianceScore:gv('fa-cs')||'',            // W  YTD Compliance Score
     ytdDemeritPoints:isDem?-10:0,               // X  YTD Demerit Points
-    initiator:   gv('fa-init'),                  // Y  Initiator
+    initiator:      gv('fa-init'),               // Y  Initiator Name
+    initiatorEmail: gv('fa-init-email')||'',      // AI Initiator Email
     hseMgrEmail: 'abubakar.rahi@altasnim.com',   // Z
     commMgrEmail:'arnab.mukherjee@altasnim.com', // AA
     contMgrEmail:'abdulhameed.alhabsi@altasnim.com', // AB
@@ -3772,7 +3775,7 @@ const NEW_HEADERS = [
   'Annual Ceiling Score (pts)', // V 22
   'YTD Compliance Score',     // W  23
   'YTD Demerit Points',       // X  24
-  'Initiator',                // Y  25
+  'Initiator Name',           // Y  25
   'HSE Manager Email',        // Z  26
   'Commercial Manager Email', // AA 27
   'Contract Manager Email',   // AB 28
@@ -3781,7 +3784,8 @@ const NEW_HEADERS = [
   'Subcon Owner Email',       // AE 31
   'Warning Letter Issued?',   // AF 32
   'Closeout Status',          // AG 33
-  'Created DateTime'          // AH 34
+  'Created DateTime',         // AH 34
+  'Initiator Email',          // AI 35
 ];
 const NEW_COL_START = 19; // S = column 19
 
@@ -3857,6 +3861,7 @@ function writeSTAC(d) {
     'No',                                             // AF 32 Warning Letter Issued?
     '',                                               // AG 33 Closeout Status
     now,                                              // AH 34 Created DateTime
+    d.initiatorEmail || '',                           // AI 35 Initiator Email
   ];
 
   const row = existingCols.concat(newCols);
