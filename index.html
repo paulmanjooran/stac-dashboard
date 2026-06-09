@@ -265,8 +265,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* ── FORM CHROME ─────────────────────────────────────────────────── */
 #view-hse-form, #view-hse-stats { padding: 0; margin: 0; background: #F0F2F7; }
+#view-hse-form .view-inner { width: 100%; max-width: 100%; }
 #cnt:has(#view-hse-form.active) { padding: 0; background: #F0F2F7; }
-#view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 24px 40px 24px; }
+#view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 24px 40px 24px; box-sizing: border-box; }
 
 /* ── TOPBAR ─────────────────────────────────────────────────────── */
 #view-hse-form .topbar {
@@ -354,14 +355,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 }
 @keyframes sc-spin { to { transform: rotate(360deg); } }
 #view-hse-form .loader-status { color: rgba(255,255,255,.4); font-size: 11px; font-family: 'DM Mono', monospace; }
-#view-hse-form .wrap { max-width: 100%; margin: 0; padding: 0 20px; }
+#view-hse-form .wrap { max-width: 100%; margin: 0; padding: 0; }
 
 /* ── SECTION CARD ───────────────────────────────────────────────── */
 #view-hse-form .section-card {
   background: #fff; border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(33,64,154,.07);
-  margin-top: 18px; overflow: hidden; border: 1px solid #e8ecf5;
+  margin: 18px 0 0 0; overflow: hidden; border: 1px solid #e8ecf5;
   animation: sc-slideUp .3s ease both; transition: box-shadow .2s;
+  width: 100%;
 }
 #view-hse-form .section-card:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,.08), 0 8px 24px rgba(33,64,154,.1);
@@ -402,9 +404,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #view-hse-form .sec-head.navy   .sec-tag { background:#e8eaf8; color:#1A237E; border-color:#c5caea; }
 
 /* ── GRID LAYOUTS ───────────────────────────────────────────────── */
-#view-hse-form .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
-#view-hse-form .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 20px; }
-#view-hse-form .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px 16px; }
+#view-hse-form .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+#view-hse-form .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 24px; }
+#view-hse-form .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px 20px; }
 @media(max-width:768px) { #view-hse-form .g3, #view-hse-form .g4 { grid-template-columns: 1fr 1fr; } }
 @media(max-width:480px) { #view-hse-form .g2, #view-hse-form .g3, #view-hse-form .g4 { grid-template-columns: 1fr; } }
 
@@ -513,7 +515,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* ── SUBMIT AREA ────────────────────────────────────────────────── */
 #view-hse-form .submit-area {
-  background: #fff; border-radius: 12px; margin-left: 0;
+  background: #fff; border-radius: 12px; margin-left: 0; width: 100%;
   box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(33,64,154,.07);
   border: 1px solid #e8ecf5; border-top: 3px solid var(--orange);
   margin-top: 18px; padding: 22px 24px;
@@ -1196,13 +1198,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div style="width:30px;height:30px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
         <div id="scLoaderStatus" style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px;font-family:monospace;">Connecting…</div>
       </div>
-      <div id="sc-form-wrap" style="width:100%;max-width:960px;margin:0;padding:0 0 40px 0;">
+      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding:0 0 40px 0;">
       <!-- Progress bar for HSE form -->
       <div style="height:3px;background:rgba(0,0,0,.08);margin-bottom:0;">
         <div style="height:3px;background:var(--orange);transition:width .4s ease;" id="progressFill"></div>
       </div>
       <!-- Step indicator -->
-      <div style="background:#fff;border-bottom:1px solid var(--bdr);display:flex;padding:0 20px;margin-bottom:0;">
+      <div style="background:#fff;border-bottom:1px solid var(--bdr);display:flex;padding:0 24px;margin-bottom:0;">
         <div id="sc-step1" onclick="document.querySelector('[data-step=\'1\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--orange);cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;">1</span><span>Details</span></div>
         <div onclick="document.querySelector('[data-step=\'2\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">2</span><span>Workforce</span></div>
         <div onclick="document.querySelector('[data-step=\'3\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">3</span><span>Incidents</span></div>
@@ -1210,7 +1212,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div onclick="document.querySelector('[data-step=\'5\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">5</span><span>IVMS</span></div>
       </div>
 <!-- ── FORM ──────────────────────────────────────────────────────── -->
-<div class="wrap" id="formWrap">
+<div class="wrap" id="formWrap" style="padding:0 24px;">
 <form id="hseForm" onsubmit="scHandleSubmit(event)" novalidate>
 
   <!-- ── SECTION 1: IDENTITY ─────────────────────────────────────── -->
@@ -1513,8 +1515,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <input type="checkbox" id="decl_check" name="declaration" required>
       <span>I confirm the above declaration <span style="color:var(--orange)">*</span></span>
     </label>
-    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
-      <div class="submit-note" style="text-align:right;">
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;">
+      <div class="submit-note" style="text-align:left;">
         <strong>Before submitting:</strong> All mandatory (*) fields must be complete.
         Submit by the <strong>3rd of the following month</strong>.
         Data is logged directly to the ATNM STAC Backend.
