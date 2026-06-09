@@ -69,6 +69,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .tb-r{display:flex;align-items:center;gap:8px;}
 #cnt{padding:18px;flex:1;}
 .view{display:none;}.view.active{display:block;}
+#cnt:has(#view-hse-form.active),
+#cnt:has(#view-hse-stats.active){padding:0;}
+#view-hse-form.active,
+#view-hse-stats.active{
+  width:100%;
+  max-width:100%;
+  display:block;
+}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit;white-space:nowrap;}
 .bp{background:var(--blue);color:#fff;}.bp:hover{background:var(--bdk);}
@@ -1251,14 +1259,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
     <!-- HSE STATS FORM VIEW -->
-    <div id="view-hse-form" class="view">
+    <div id="view-hse-form" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
       <div id="sc-loading-screen" style="display:none;position:fixed;inset:0;background:var(--blue);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
         <div style="width:56px;height:56px;background:var(--orange);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;margin-bottom:20px;animation:sc-pulse 1.5s ease infinite;">AT</div>
         <div style="color:rgba(255,255,255,.8);font-size:14px;margin-bottom:16px;">Loading Subcontractor HSE Data Entry Form…</div>
         <div style="width:30px;height:30px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
         <div id="scLoaderStatus" style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px;font-family:monospace;">Connecting…</div>
       </div>
-      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding:0 0 40px 0;">
+      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding:0;min-height:100vh;background:#F0F2F7;">
       <!-- Progress bar for HSE form -->
       <div style="height:3px;background:rgba(0,0,0,.08);margin-bottom:0;">
         <div style="height:3px;background:var(--orange);transition:width .4s ease;" id="progressFill"></div>
@@ -1272,7 +1280,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div onclick="document.querySelector('[data-step=\'5\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">5</span><span>IVMS</span></div>
       </div>
 <!-- ── FORM ──────────────────────────────────────────────────────── -->
-<div class="wrap" id="formWrap" style="padding:0 24px;">
+<div class="wrap" id="formWrap" style="padding:0 24px 40px 24px;box-sizing:border-box;width:100%;">
 <form id="hseForm" onsubmit="scHandleSubmit(event)" novalidate>
 
   <!-- ── SECTION 1: IDENTITY ─────────────────────────────────────── -->
@@ -1607,8 +1615,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
 
     <!-- HSE STATS DASHBOARD VIEW -->
-    <div id="view-hse-stats" class="view" style="background:#F0F2F7;">
-      <div style="width:100%;margin:0;padding:20px 24px 40px 24px;box-sizing:border-box;">
+    <div id="view-hse-stats" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
+      <div style="width:100%;margin:0;padding:20px 24px 40px 24px;box-sizing:border-box;min-height:100%;">
       <div class="fbar" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;align-items:center;">
         <span class="fl">From</span>
         <input type="date" id="hse-fr" onchange="renderHseStats()">
