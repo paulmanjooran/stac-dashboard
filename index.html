@@ -1537,7 +1537,7 @@ const MASTERS={companies:[],clusters:[],disciplines:[],contracts:[],_loadedAt:0,
   markLoaded(){this._loadedAt=Date.now();}};
 const CACHE_TTL_STAC=5*60*1000,CACHE_TTL_MASTERS=60*60*1000;
 const CACHE_KEY_STAC='stac_cache_v6',CACHE_KEY_MASTERS='stac_masters_v6';
-const CACHE_KEY_TS_STAC='stac_cache_ts_v6',CACHE_KEY_TS_MST='stac_masters_ts_v3';
+const CACHE_KEY_TS_STAC='stac_cache_ts_v6',CACHE_KEY_TS_MST='stac_masters_ts_v6';
 let _lastSuccessfulSync=0,_consecutiveFailures=0,_healthInterval=null;
 
 const RAW=[
@@ -1797,14 +1797,20 @@ async function fetchGvizData(sheetId,gid,sheetName){
   const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
   const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&${param}&_=${Date.now()}`;
   try{
-    const r=await fetch(url,{mode:'no-cors',cache:'no-store'});
-    if(!r.ok)return null;
+    // mode:'cors' required — gviz is a public CORS endpoint, no-cors returns opaque response
+    const r=await fetch(url,{mode:'cors',cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const text=await r.text();
-    const m=text.match(/setResponse\(([\s\S]+)\)\s*;?\s*$/);
-    if(!m)return null;
+    // gviz wraps response: google.visualization.Query.setResponse({...})
+    const m=text.match(/setResponse\(([\s\S]+?)\)\s*;?\s*$/);
+    if(!m)throw new Error('gviz parse failed');
     const data=JSON.parse(m[1]);
-    return(data.status==='error')?null:data;
+    if(data.status==='error')throw new Error('gviz error: '+JSON.stringify(data.errors));
+    return data;
   }catch(e){
+    console.warn('fetchGvizData cors failed ('+sheetName||gid+'):',e.message,
+      '— if sheet is not public, set Share → Anyone with link → Viewer');
+    // JSONP fallback for environments where cors is blocked
     return await loadSheetGvizJSONP(sheetId,gid,sheetName);
   }
 }
@@ -1840,7 +1846,7 @@ function parseGVizTable(data){
     });
     // Accept both new clean headers and legacy headers
     const id=o['STAC ID #']||o['STAC Vendor #']||'';
-    if(!id||id==='DONOTDELETE'||id.toLowerCase().includes('stac id')||id.toLowerCase().includes('stac vendor'))return;
+    if(!id||id==='DONOTDELETE'||id.toLowerCase().includes('stac id')||id.toLowerCase().includes('stac vendor')||id.toLowerCase()==='nan')return;
     // Penalty: may be numeric (from cell.v) or string like 'OMR 500.00' or 'TBD'
     const _rawPen=o['Penalty (OMR)']||o['Penalty']||'';
     // null = TBD/blank, 0 = confirmed zero, >0 = actual amount
@@ -3880,9 +3886,8 @@ function renderHseStats(){
 async function loadHseStatsData(){
   const sid=(typeof CFG!=='undefined')?CFG.sheetId:'';if(!sid)return;
   try{
-    const SC_TXN_GID=''; // ← Set to your SC_HSE_TXN sheet GID after creating it
-    if(!SC_TXN_GID){console.log('SC_HSE_TXN GID not set — HSE Stats dashboard will show empty until configured.');return;}
-    const raw=await fetchGvizData(sid,SC_TXN_GID,null);if(!raw||!raw.table)return;
+    // Read SC_HSE_TXN by sheet name — no GID needed
+    const raw=await fetchGvizData(sid,null,'SC_HSE_TXN');if(!raw||!raw.table)return;
     const cols=(raw.table.cols||[]).map(c=>(c.label||'').trim().toLowerCase());
     const gi=(row,col)=>{const i=cols.indexOf(col);if(i<0)return'';const c=row.c[i];return c?(c.f||c.v||''):''};
     scTxnData=(raw.table.rows||[]).filter(r=>r&&r.c).map(r=>({
@@ -4018,7 +4023,7 @@ async function scLoadMasterData() {
     const data = await resp.json();
     if (data.subcontractors) {
       SC_MASTERS = data;
-      // Sync contracts to MASTERS so scUpdateContractDropdown can access Sheet4 contracts
+      // Sync contracts to MASTERS so updateContractDropdown can access all contracts
       if (data.contracts && data.contracts.length > 0) {
         MASTERS.contracts = data.contracts;
       }
@@ -4185,117 +4190,12 @@ function scPopulateAllDropdowns() {
   }
 }
 
-function scUpdateContractDropdown() {
-  // ── Stable dual-element approach: select and input always exist in DOM.
-  //    We toggle display and required, never replace elements.
-  //    This prevents the "one cycle fatigue" caused by replaceChild
-  //    destroying the element and losing its reference.
-  const sc      = document.getElementById('sc_name').value;
-  const cluster = document.getElementById('cluster').value;
-  const sel     = document.getElementById('contract_no_sel');
-  const txt     = document.getElementById('contract_no_txt');
-  const info    = document.getElementById('contractInfo');
 
-  // Helper: show SELECT, hide INPUT
-  function showSelect(placeholder) {
-    sel.style.display = 'block';
-    sel.required = false;
-    txt.style.display = 'none';
-    txt.required = false;
-    txt.value = '';
-    if (placeholder) {
-      sel.innerHTML = '<option value="">' + placeholder + '</option>';
-    }
-  }
-
-  // Helper: show INPUT (manual entry), hide SELECT
-  function showInput() {
-    txt.style.display = 'block';
-    txt.required = false;
-    sel.style.display = 'none';
-    sel.required = false;
-    sel.innerHTML = '';
-  }
-
-  // Guard: SC must be selected; cluster optional
-  if (!sc) {
-    showSelect('-- Select Subcontractor first --');
-    if (info) info.innerHTML = '📋 Select a Subcontractor to load related contracts…';
-    return;
-  }
-
-  // FIX v6: Contracts sourced from Sub Contractors sheet (subconData)
-  // subconData is parsed from Sub Contractors sheet — contains contractNo per SC
-  const _scL = sc.trim().toLowerCase();
-  const _seen = new Set();
-
-  // Build contract list from subconData (Sub Contractors sheet) for this SC
-  const matched = [];
-  subconData.forEach(s => {
-    if (!s.company || s.company.trim().toLowerCase() !== _scL) return;
-    // contractNo may be in s.contractNo, s.contract, or s.qs fields
-    const cno = (s.contractNo || s.contract || '').trim();
-    if (!cno || cno.length < 3) return;
-    if (_seen.has(cno.toLowerCase())) return;
-    _seen.add(cno.toLowerCase());
-    matched.push({ contractNo: cno, scName: s.company, cluster: s.cluster || '' });
-  });
-
-  // Supplement with MASTERS.contracts (from getMasters API — Sheet4 + MST_Contracts)
-  (MASTERS.contracts || []).forEach(c => {
-    if (!c.contractNo || !c.scName) return;
-    if (c.scName.trim().toLowerCase() !== _scL) return;
-    const k = c.contractNo.trim().toLowerCase();
-    if (_seen.has(k)) return;
-    _seen.add(k);
-    matched.push(c);
-  });
-
-  if (matched.length === 0) {
-    // No pre-loaded contracts — switch to free-text input
-    showInput();
-    if (info) info.innerHTML = '✏️ No pre-loaded contracts for <strong>' + sc + '</strong>. Enter contract number manually.';
-    return;
-  }
-
-  // Contracts found — populate select
-  showSelect('-- Select Contract --');
-  matched.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.contractNo;
-    opt.textContent = c.contractNo;
-    sel.appendChild(opt);
-  });
-  info.innerHTML = '<strong>' + matched.length + '</strong> contract(s) found for <strong>' + sc + '</strong> in <strong>' + cluster + '</strong>.';
-}
 
 // ═══════════════════════════════════════════════════════════════════
 //  EVENT LISTENERS
 // ═══════════════════════════════════════════════════════════════════
-// Auto-populate Subcontractor Name when contract is selected
-function scOnContractChange() {
-  const sel = document.getElementById('contract_no_sel');
-  const scSel = document.getElementById('sc_name');
-  if (!sel || !scSel) return;
-  const cno = sel.value;
-  if (!cno) return;
-  // If SC already selected — don't overwrite
-  if (scSel.value) return;
-  // Find SC from subconData + MASTERS.contracts
-  const allC = [...(subconData.map(s=>({contractNo:s.contractNo||'',scName:s.company||''}))),
-                ...(MASTERS.contracts||[])];
-  const match = allC.find(c => c.contractNo && c.contractNo.trim() === cno.trim());
-  if (match && match.scName) {
-    // Try to select in dropdown
-    for (let i=0; i<scSel.options.length; i++) {
-      if (scSel.options[i].value.trim().toLowerCase() === match.scName.trim().toLowerCase()) {
-        scSel.selectedIndex = i;
-        scUpdateContractDropdown();
-        break;
-      }
-    }
-  }
-}
+
 function updateContractDropdown() {
   const sc      = (document.getElementById('sc_name')||{}).value || '';
   const sel     = document.getElementById('contract_no_sel');
