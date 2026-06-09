@@ -1262,375 +1262,229 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
 <!-- HSE STATS FORM VIEW -->
-    <div id="view-hse-form" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
-      <div id="sc-loading-screen" style="display:none;position:fixed;inset:0;background:var(--blue);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
-        <div style="width:56px;height:56px;background:var(--orange);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;margin-bottom:20px;animation:sc-pulse 1.5s ease infinite;">AT</div>
-        <div style="color:rgba(255,255,255,.8);font-size:14px;margin-bottom:16px;">Loading Subcontractor HSE Data Entry Form…</div>
-        <div style="width:30px;height:30px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
-        <div id="scLoaderStatus" style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px;font-family:monospace;">Connecting…</div>
-      </div>
-      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding:92px 0 0 0;min-height:100vh;background:#F0F2F7;">
-      <!-- Progress bar for HSE form -->
-      <div class="progress-rail">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <!-- Step indicator -->
-      <div class="steps-bar">
-        <div class="steps-inner">
-          <div id="sc-step1" class="step-item active" onclick="document.querySelector('[data-step=\'1\']').scrollIntoView({behavior:'smooth'})">
-            <span class="step-num">1</span><span class="step-label">Details</span>
+    <div id="view-hse-form" class="view">
+
+  <!-- Loading screen -->
+  <div id="sc-loading-screen" style="display:none;position:fixed;inset:0;background:var(--blue);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
+    <div style="width:52px;height:52px;background:var(--orange);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;margin-bottom:16px;">AT</div>
+    <div style="color:rgba(255,255,255,.8);font-size:13px;margin-bottom:12px;">Loading HSE Data Entry Form…</div>
+    <div style="width:28px;height:28px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
+    <div id="scLoaderStatus" style="color:rgba(255,255,255,.4);font-size:11px;margin-top:10px;font-family:monospace;">Connecting…</div>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="height:3px;background:rgba(0,0,0,.08);position:sticky;top:50px;z-index:89;">
+    <div style="height:3px;background:var(--orange);transition:width .4s ease;width:0%;" id="progressFill"></div>
+  </div>
+
+  <!-- Step indicator -->
+  <div style="background:#fff;border-bottom:1px solid var(--bdr);display:flex;padding:0 20px;position:sticky;top:53px;z-index:88;">
+    <div id="sc-step1" onclick="document.querySelector('[data-step=\'1\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--orange);cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;">1</span><span>Details</span></div>
+    <div onclick="document.querySelector('[data-step=\'2\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">2</span><span>Workforce</span></div>
+    <div onclick="document.querySelector('[data-step=\'3\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">3</span><span>Incidents</span></div>
+    <div onclick="document.querySelector('[data-step=\'4\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">4</span><span>Compliance</span></div>
+    <div onclick="document.querySelector('[data-step=\'5\']').scrollIntoView({behavior:'smooth'})" style="flex:1;padding:10px 6px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;"><span style="width:20px;height:20px;border-radius:50%;background:var(--bdr);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;">5</span><span>IVMS</span></div>
+  </div>
+
+  <!-- Form wrapper — same max-width:900px pattern as New STAC form -->
+  <div id="sc-form-wrap" style="padding:18px;">
+  <div id="formWrap" style="max-width:900px;">
+  <form id="hseForm" onsubmit="scHandleSubmit(event)" novalidate>
+
+    <!-- SECTION 1: SUBCONTRACTOR DETAILS -->
+    <div class="fsec" data-step="1">
+      <div class="fshd fbl">📋 Subcontractor Details <span style="font-size:10px;font-weight:400;opacity:.8;margin-left:auto;">Required</span></div>
+      <div class="fbd">
+        <div class="fr fr3" style="margin-bottom:12px;">
+          <div class="fg">
+            <label>Subcontractor Name <span class="req">*</span></label>
+            <select name="sc_name" id="sc_name" required class="loading"><option value="">Loading…</option></select>
           </div>
-          <div class="step-item" onclick="document.querySelector('[data-step=\'2\']').scrollIntoView({behavior:'smooth'})">
-            <span class="step-num">2</span><span class="step-label">Workforce</span>
+          <div class="fg">
+            <label>Cluster <span class="req">*</span></label>
+            <select name="cluster" id="cluster" required class="loading"><option value="">Loading…</option></select>
           </div>
-          <div class="step-item" onclick="document.querySelector('[data-step=\'3\']').scrollIntoView({behavior:'smooth'})">
-            <span class="step-num">3</span><span class="step-label">Incidents</span>
-          </div>
-          <div class="step-item" onclick="document.querySelector('[data-step=\'4\']').scrollIntoView({behavior:'smooth'})">
-            <span class="step-num">4</span><span class="step-label">Compliance</span>
-          </div>
-          <div class="step-item" onclick="document.querySelector('[data-step=\'5\']').scrollIntoView({behavior:'smooth'})">
-            <span class="step-num">5</span><span class="step-label">IVMS</span>
+          <div class="fg">
+            <label>Discipline <span class="req">*</span></label>
+            <select name="discipline" id="discipline" required class="loading"><option value="">Loading…</option></select>
           </div>
         </div>
-      </div>
-<!-- ── FORM ──────────────────────────────────────────────────────── -->
-<div class="wrap" id="formWrap" style="padding:0 24px 40px 24px;box-sizing:border-box;width:100%;">
-<form id="hseForm" onsubmit="scHandleSubmit(event)" novalidate>
-
-  <!-- ── SECTION 1: IDENTITY ─────────────────────────────────────── -->
-  <div class="section-card" data-step="1">
-    <div class="sec-head">
-      <div class="sec-num">01</div>
-      <div class="sec-title">Subcontractor Details</div>
-      <span class="sec-tag">Required</span>
-    </div>
-    <div class="sec-body">
-      <div class="g3" style="margin-bottom:14px;">
-        <div class="field">
-          <label class="label">Subcontractor Name <span class="req">*</span></label>
-          <select name="sc_name" id="sc_name" required class="loading">
-            <option value="">Loading…</option>
-          </select>
+        <!-- Contract chain info bar -->
+        <div style="background:var(--blt);border:1px solid var(--blue);border-radius:var(--r);padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--blue);display:flex;align-items:center;gap:8px;">
+          <span>📋</span><span id="contractInfo">Select Subcontractor + Cluster to load related contracts…</span>
         </div>
-        <div class="field">
-          <label class="label">Cluster <span class="req">*</span></label>
-          <select name="cluster" id="cluster" required class="loading">
-            <option value="">Loading…</option>
-          </select>
+        <div class="fr fr3">
+          <div class="fg">
+            <label>Contract No <span class="atag">Optional</span></label>
+            <select name="contract_no_sel" id="contract_no_sel" style="display:block;">
+              <option value="">-- Select SC first --</option>
+            </select>
+            <input type="text" id="contract_no_txt" name="contract_no_txt" placeholder="e.g. ATNM/O&G/QS/S033/2024" style="display:none;" autocomplete="off">
+          </div>
+          <div class="fg">
+            <label>Reporting Month <span class="req">*</span></label>
+            <select name="report_month" id="report_month" required><option value="">— Select —</option></select>
+          </div>
+          <div class="fg">
+            <label>Submission Date</label>
+            <input type="date" name="submission_date" id="submission_date" readonly style="background:var(--bg);color:var(--t3);">
+          </div>
         </div>
-        <div class="field">
-          <label class="label">Discipline <span class="req">*</span></label>
-          <select name="discipline" id="discipline" required class="loading">
-            <option value="">Loading…</option>
-          </select>
+        <div class="fr fr2" style="margin-top:12px;">
+          <div class="fg">
+            <label>Period Start <span class="req">*</span></label>
+            <input type="date" name="period_start" id="period_start" required>
+          </div>
+          <div class="fg">
+            <label>Period End <span class="req">*</span></label>
+            <input type="date" name="period_end" id="period_end" required>
+          </div>
         </div>
-      </div>
-
-      <!-- Contract chain display -->
-      <div class="contract-chain">
-        <span>📋</span>
-        <span id="contractInfo">Select Subcontractor + Cluster to load related contracts…</span>
-      </div>
-
-      <div class="g3">
-        <div class="field">
-          <label class="label">Contract No <span class="req">*</span></label>
-          <select name="contract_no_sel" id="contract_no_sel" style="display:block;">
-            <option value="">-- Select SC + Cluster first --</option>
-          </select>
-          <input type="text" id="contract_no_txt" name="contract_no_txt"
-            placeholder="e.g. ATNM/O&amp;G/QS/S033/2024"
-            style="display:none;" autocomplete="off">
-        </div>
-        <div class="field">
-          <label class="label">Reporting Month <span class="req">*</span></label>
-          <select name="report_month" id="report_month" required>
-            <option value="">— Select —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="label">Submission Date</label>
-          <input type="date" name="submission_date" id="submission_date" class="readonly-field" readonly>
-        </div>
-        <div class="field">
-          <label class="label">Period Start <span class="req">*</span></label>
-          <input type="date" name="period_start" id="period_start" required>
-        </div>
-        <div class="field">
-          <label class="label">Period End <span class="req">*</span></label>
-          <input type="date" name="period_end" id="period_end" required>
-        </div>
-      </div>
-
-      <hr class="divider">
-
-      <div class="g3">
-        <div class="field">
-          <label class="label">Submitted By <span class="req">*</span></label>
-          <input type="text" name="submitted_by" placeholder="Full Name" required>
-        </div>
-        <div class="field">
-          <label class="label">Designation</label>
-          <input type="text" name="designation" placeholder="e.g. HSE Officer">
-        </div>
-        <div class="field">
-          <label class="label">Email <span class="req">*</span></label>
-          <input type="email" name="email" placeholder="name@company.com" required>
+        <div class="fr fr3" style="margin-top:12px;">
+          <div class="fg">
+            <label>Submitted By <span class="req">*</span></label>
+            <input type="text" name="submitted_by" id="submitted_by" placeholder="Full Name" required>
+          </div>
+          <div class="fg">
+            <label>Designation</label>
+            <input type="text" name="designation" id="designation" placeholder="e.g. HSE Officer">
+          </div>
+          <div class="fg">
+            <label>Email <span class="req">*</span></label>
+            <input type="email" name="email" id="email" placeholder="name@company.com" required>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── SECTION 2: WORKFORCE ─────────────────────────────────────── -->
-  <div class="section-card" data-step="2">
-    <div class="sec-head orange">
-      <div class="sec-num">02</div>
-      <div class="sec-title">Workforce & Exposure Data</div>
-      <span class="sec-tag">Fields 1.1 – 1.8</span>
-    </div>
-    <div class="sec-body">
-      <div class="g4">
-        <div class="field">
-          <label class="label">Employees <span class="code">1.1</span> <span class="req">*</span></label>
-          <input class="num" type="number" name="f1_1" min="0" placeholder="0" required>
-        </div>
-        <div class="field">
-          <label class="label">Manhours <span class="code">1.2</span> <span class="req">*</span></label>
-          <input class="num" type="number" name="f1_2" min="0" placeholder="0" required>
-        </div>
-        <div class="field">
-          <label class="label">KM Driven <span class="code">1.3</span></label>
-          <input class="num" type="number" name="f1_3" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">Veh 0–4T <span class="code">1.4</span></label>
-          <input class="num" type="number" name="f1_4" min="0" placeholder="0" onchange="scSumVehicles()">
-        </div>
-        <div class="field">
-          <label class="label">Veh &gt;4T <span class="code">1.5</span></label>
-          <input class="num" type="number" name="f1_5" min="0" placeholder="0" onchange="scSumVehicles()">
-        </div>
-        <div class="field">
-          <label class="label">Light Bus <span class="code">1.6</span></label>
-          <input class="num" type="number" name="f1_6" min="0" placeholder="0" onchange="scSumVehicles()">
-        </div>
-        <div class="field">
-          <label class="label">Heavy Bus <span class="code">1.7</span></label>
-          <input class="num" type="number" name="f1_7" min="0" placeholder="0" onchange="scSumVehicles()">
-        </div>
-        <div class="field">
-          <label class="label">Total Vehicles <span class="code">1.8</span></label>
-          <input class="num readonly-field" type="number" name="f1_8" id="f1_8" readonly placeholder="Auto">
+    <!-- SECTION 2: WORKFORCE -->
+    <div class="fsec" data-step="2">
+      <div class="fshd for">👷 Workforce & Exposure Data <span style="font-size:10px;font-weight:400;opacity:.8;margin-left:auto;">Fields 1.1 – 1.8</span></div>
+      <div class="fbd">
+        <div class="fr fr4">
+          <div class="fg"><label>Employees <span class="atag">1.1</span> <span class="req">*</span></label><input type="number" name="f1_1" min="0" placeholder="0" required></div>
+          <div class="fg"><label>Manhours <span class="atag">1.2</span> <span class="req">*</span></label><input type="number" name="f1_2" min="0" placeholder="0" required></div>
+          <div class="fg"><label>KM Driven <span class="atag">1.3</span></label><input type="number" name="f1_3" min="0" placeholder="0"></div>
+          <div class="fg"><label>Veh 0–4T <span class="atag">1.4</span></label><input type="number" name="f1_4" min="0" placeholder="0" onchange="scSumVehicles()"></div>
+          <div class="fg"><label>Veh &gt;4T <span class="atag">1.5</span></label><input type="number" name="f1_5" min="0" placeholder="0" onchange="scSumVehicles()"></div>
+          <div class="fg"><label>Light Bus <span class="atag">1.6</span></label><input type="number" name="f1_6" min="0" placeholder="0" onchange="scSumVehicles()"></div>
+          <div class="fg"><label>Heavy Bus <span class="atag">1.7</span></label><input type="number" name="f1_7" min="0" placeholder="0" onchange="scSumVehicles()"></div>
+          <div class="fg"><label>Total Vehicles <span class="atag">Auto</span></label><input type="number" name="f1_8" id="f1_8" readonly placeholder="Auto" style="background:var(--bg);color:var(--t3);"></div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── SECTION 3: INCIDENTS ─────────────────────────────────────── -->
-  <div class="section-card" data-step="3">
-    <div class="sec-head red">
-      <div class="sec-num">03</div>
-      <div class="sec-title">Incident Reporting</div>
-      <span class="sec-tag">Critical</span>
-    </div>
-    <div class="sec-body">
-      <div class="sub-head">⚠ Reportable and Recordable Cases</div>
-      <div class="g4" style="margin-bottom:18px;">
-        <div class="incident-box field">
-          <label class="label">Fatalities <span class="code">1.9</span> <span class="req">*</span></label>
-          <input class="num" type="number" name="f1_9" min="0" placeholder="0" required>
+    <!-- SECTION 3: INCIDENTS -->
+    <div class="fsec" data-step="3">
+      <div class="fshd" style="background:#c62828;color:#fff;">⚠ Incident Reporting <span style="font-size:10px;font-weight:400;opacity:.8;margin-left:auto;">Critical</span></div>
+      <div class="fbd">
+        <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Reportable & Recordable Cases</div>
+        <div class="fr fr4" style="margin-bottom:12px;">
+          <div class="fg"><label>Fatalities <span class="atag">1.9</span> <span class="req">*</span></label><input type="number" name="f1_9" min="0" placeholder="0" required></div>
+          <div class="fg"><label>LTI <span class="atag">1.10</span> <span class="req">*</span></label><input type="number" name="f1_10" min="0" placeholder="0" required></div>
+          <div class="fg"><label>MTC <span class="atag">1.11a</span> <span class="req">*</span></label><input type="number" name="f1_11_mtc" min="0" placeholder="0" required></div>
+          <div class="fg"><label>RWC <span class="atag">1.11b</span> <span class="req">*</span></label><input type="number" name="f1_11_rwc" min="0" placeholder="0" required></div>
+          <div class="fg"><label>MVI <span class="atag">1.11c</span></label><input type="number" name="f1_mvi" min="0" placeholder="0"></div>
+          <div class="fg"><label>SMVI <span class="atag">1.11d</span></label><input type="number" name="f1_smvi" min="0" placeholder="0"></div>
+          <div class="fg"><label>FAC <span class="atag">1.12</span></label><input type="number" name="f1_12" min="0" placeholder="0"></div>
+          <div class="fg"><label>NWR <span class="atag">1.13</span></label><input type="number" name="f1_13" min="0" placeholder="0"></div>
+          <div class="fg"><label>NAD <span class="atag">1.14</span></label><input type="number" name="f1_14" min="0" placeholder="0"></div>
         </div>
-        <div class="incident-box field">
-          <label class="label">LTI <span class="code">1.10</span> <span class="req">*</span></label>
-          <input class="num" type="number" name="f1_10" min="0" placeholder="0" required>
-        </div>
-        <div class="incident-box field">
-          <label class="label">MTC <span class="code">1.11a</span> <span class="req">*</span></label>
-          <input class="num" type="number" name="f1_11_mtc" min="0" placeholder="0" required>
-        </div>
-        <div class="incident-box field">
-          <label class="label">RWC <span class="code">1.11b</span> <span class="req">*</span></label>
-          <input class="num" type="number" name="f1_11_rwc" min="0" placeholder="0" required>
-        </div>
-        <div class="incident-box field">
-          <label class="label">MVI <span class="code">1.11c</span></label>
-          <input class="num" type="number" name="f1_mvi" min="0" placeholder="0">
-        </div>
-        <div class="incident-box field">
-          <label class="label">SMVI <span class="code">1.11d</span></label>
-          <input class="num" type="number" name="f1_smvi" min="0" placeholder="0">
-        </div>
-        <div class="incident-box field">
-          <label class="label">FAC <span class="code">1.12</span></label>
-          <input class="num" type="number" name="f1_12" min="0" placeholder="0">
-        </div>
-        <div class="incident-box field">
-          <label class="label">NWR <span class="code">1.13</span></label>
-          <input class="num" type="number" name="f1_13" min="0" placeholder="0">
-        </div>
-        <div class="incident-box field">
-          <label class="label">NAD <span class="code">1.14</span></label>
-          <input class="num" type="number" name="f1_14" min="0" placeholder="0">
-        </div>
-      </div>
-
-      <hr class="divider">
-      <div class="sub-head">📋 Observations & Near Miss Reporting</div>
-      <div class="g3">
-        <div class="field">
-          <label class="label">Safety Qube Observations <span class="code">1.15</span></label>
-          <input class="num" type="number" name="f1_sq_obs" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">Safety Qube Near Miss <span class="code">1.16</span></label>
-          <input class="num" type="number" name="f1_sq_nm" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">PDO Ihtimam Plus (HPI) <span class="code">1.17</span></label>
-          <input class="num" type="number" name="f1_pdo_hpi" min="0" placeholder="0">
+        <div style="border-top:1px solid var(--bdr);padding-top:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Observations & Near Miss</div>
+          <div class="fr fr3">
+            <div class="fg"><label>Safety Qube Obs <span class="atag">1.15</span></label><input type="number" name="f1_sq_obs" min="0" placeholder="0"></div>
+            <div class="fg"><label>Safety Qube NM <span class="atag">1.16</span></label><input type="number" name="f1_sq_nm" min="0" placeholder="0"></div>
+            <div class="fg"><label>PDO Ihtimam+ HPI <span class="atag">1.17</span></label><input type="number" name="f1_pdo_hpi" min="0" placeholder="0"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── SECTION 4: COMPLIANCE ────────────────────────────────────── -->
-  <div class="section-card" data-step="4">
-    <div class="sec-head navy">
-      <div class="sec-num">04</div>
-      <div class="sec-title">LSR Violations & Road Safety</div>
-      <span class="sec-tag">Compliance</span>
-    </div>
-    <div class="sec-body">
-      <div class="sub-head">🚫 LSR Violations & Class A Defects</div>
-      <div class="g4" style="margin-bottom:18px;">
-        <div class="field">
-          <label class="label">LSR Violation PDO <span class="code">1.21</span></label>
-          <input class="num" type="number" name="f1_21" min="0" placeholder="0">
+    <!-- SECTION 4: COMPLIANCE -->
+    <div class="fsec" data-step="4">
+      <div class="fshd fbl">🚫 LSR Violations & Road Safety <span style="font-size:10px;font-weight:400;opacity:.8;margin-left:auto;">Compliance</span></div>
+      <div class="fbd">
+        <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">LSR Violations & Class A Defects</div>
+        <div class="fr fr4" style="margin-bottom:12px;">
+          <div class="fg"><label>LSR Violation PDO <span class="atag">1.21</span></label><input type="number" name="f1_21" min="0" placeholder="0"></div>
+          <div class="fg"><label>LSR Violation Internal <span class="atag">1.22</span></label><input type="number" name="f1_22" min="0" placeholder="0"></div>
+          <div class="fg"><label>Class A Defect PDO <span class="atag">1.23</span></label><input type="number" name="f1_23" min="0" placeholder="0"></div>
+          <div class="fg"><label>Class A Defect Internal <span class="atag">1.24</span></label><input type="number" name="f1_24" min="0" placeholder="0"></div>
         </div>
-        <div class="field">
-          <label class="label">LSR Violation Internal <span class="code">1.22</span></label>
-          <input class="num" type="number" name="f1_22" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">Class A Defect PDO <span class="code">1.23</span></label>
-          <input class="num" type="number" name="f1_23" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">Class A Defect Internal <span class="code">1.24</span></label>
-          <input class="num" type="number" name="f1_24" min="0" placeholder="0">
-        </div>
-      </div>
-
-      <hr class="divider">
-      <div class="sub-head">🚗 Road Safety Actions</div>
-      <div class="g3">
-        <div class="field">
-          <label class="label">RS LSR (PDO) <span class="code">1.25</span></label>
-          <input class="num" type="number" name="f1_25" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">RS LSR (Internal) <span class="code">1.26</span></label>
-          <input class="num" type="number" name="f1_26" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">RS Counselling <span class="code">1.26a</span></label>
-          <input class="num" type="number" name="f1_rs_counsel" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">RS Warning Letters <span class="code">1.27</span></label>
-          <input class="num" type="number" name="f1_27" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">RS Final Warning <span class="code">1.28</span></label>
-          <input class="num" type="number" name="f1_28" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label class="label">RS Dismissal <span class="code">1.29</span></label>
-          <input class="num" type="number" name="f1_29" min="0" placeholder="0">
+        <div style="border-top:1px solid var(--bdr);padding-top:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Road Safety Actions</div>
+          <div class="fr fr3">
+            <div class="fg"><label>RS LSR PDO <span class="atag">1.25</span></label><input type="number" name="f1_25" min="0" placeholder="0"></div>
+            <div class="fg"><label>RS LSR Internal <span class="atag">1.26</span></label><input type="number" name="f1_26" min="0" placeholder="0"></div>
+            <div class="fg"><label>RS Counselling <span class="atag">1.26a</span></label><input type="number" name="f1_rs_counsel" min="0" placeholder="0"></div>
+            <div class="fg"><label>RS Warning Letters <span class="atag">1.27</span></label><input type="number" name="f1_27" min="0" placeholder="0"></div>
+            <div class="fg"><label>RS Final Warning <span class="atag">1.28</span></label><input type="number" name="f1_28" min="0" placeholder="0"></div>
+            <div class="fg"><label>RS Dismissal <span class="atag">1.29</span></label><input type="number" name="f1_29" min="0" placeholder="0"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── SECTION 5: IVMS ─────────────────────────────────────────── -->
-  <div class="section-card" data-step="5">
-    <div class="sec-head teal">
-      <div class="sec-num">05</div>
-      <div class="sec-title">IVMS Monthly RAG Status</div>
-      <span class="sec-tag">Full Year</span>
-    </div>
-    <div class="sec-body">
-      <p style="font-size:12px;color:var(--dark-l);margin-bottom:14px;">
-        Enter vehicle count per RAG status for each month. Use <strong>0</strong> for months not yet completed or not applicable.
-      </p>
-      <div class="ivms-wrap">
-        <table class="ivms-table" id="ivmsTable">
-          <thead>
-            <tr>
-              <th>RAG</th>
-              <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th>
-              <th>May</th><th>Jun</th><th>Jul</th><th>Aug</th>
-              <th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="rag-r ivms-r">
-              <td>🔴 Red</td>
-              <!-- filled by JS -->
-            </tr>
-            <tr class="rag-a ivms-a">
-              <td>🟡 Amber</td>
-            </tr>
-            <tr class="rag-g ivms-g">
-              <td>🟢 Green</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- SECTION 5: IVMS -->
+    <div class="fsec" data-step="5">
+      <div class="fshd" style="background:#00695C;color:#fff;">🚗 IVMS Monthly RAG Status <span style="font-size:10px;font-weight:400;opacity:.8;margin-left:auto;">Full Year</span></div>
+      <div class="fbd">
+        <p style="font-size:12px;color:var(--t2);margin-bottom:12px;">Enter vehicle count per RAG status for each month. Use <strong>0</strong> for months not yet completed.</p>
+        <div style="overflow-x:auto;border-radius:var(--r);border:1px solid var(--bdr);">
+          <table id="ivmsTable" style="width:100%;border-collapse:collapse;min-width:700px;font-size:12px;">
+            <thead>
+              <tr style="background:var(--blue);color:#fff;">
+                <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;min-width:80px;">RAG</th>
+                <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Jan</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Feb</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Mar</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Apr</th>
+                <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">May</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Jun</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Jul</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Aug</th>
+                <th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Sep</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Oct</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Nov</th><th style="padding:8px 6px;text-align:center;font-size:10px;font-weight:700;">Dec</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="rag-r ivms-r" style="background:#fff5f5;"><td style="padding:6px 10px;font-weight:700;font-size:11px;color:#c62828;">🔴 Red</td></tr>
+              <tr class="rag-a ivms-a" style="background:#fff9f0;"><td style="padding:6px 10px;font-weight:700;font-size:11px;color:#e65100;">🟡 Amber</td></tr>
+              <tr class="rag-g ivms-g" style="background:#f5fbf5;"><td style="padding:6px 10px;font-weight:700;font-size:11px;color:#2e7d32;">🟢 Green</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="fsec">
+      <div class="fbd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          <input type="checkbox" id="decl_check" name="declaration" required style="width:16px;height:16px;accent-color:var(--blue);">
+          <span>I confirm all data is accurate and complete <span style="color:var(--red);">*</span></span>
+        </label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="font-size:11px;color:var(--t3);">Submit by <strong>3rd of following month</strong></div>
+          <button type="button" class="btn bk" onclick="scResetForm()">Clear</button>
+          <button type="submit" class="btn bo" id="submitBtn">Submit Report →</button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+  </div><!-- /formWrap -->
+  </div><!-- /sc-form-wrap -->
+
+  <!-- Success screen -->
+  <div id="successScreen" style="display:none;max-width:900px;margin:40px auto;padding:0 18px;">
+    <div style="background:#fff;border-radius:var(--r);padding:48px 40px;text-align:center;border:1px solid var(--bdr);border-top:4px solid #2e7d32;">
+      <div style="font-size:36px;margin-bottom:16px;">✅</div>
+      <div style="font-size:20px;font-weight:700;color:#1e2d4a;margin-bottom:8px;">Submission Received</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:20px;">HSE Statistics recorded in ATNM STAC Backend Master.</div>
+      <div id="successRef" style="font-family:monospace;font-size:15px;font-weight:600;color:var(--blue);background:var(--blt);border:1px solid var(--blue);border-radius:var(--r);padding:10px 24px;display:inline-block;margin-bottom:24px;">TXN-XXXX-XXXX</div>
+      <br>
+      <button class="btn bp" onclick="scStartNewSubmission()">Submit Another Month →</button>
     </div>
   </div>
 
 
-  <!-- ── SUBMIT AREA ────────────────────────────────────────────── -->
-  <div class="submit-area">
-    <label class="check-row" style="flex:1;min-width:260px;">
-      <input type="checkbox" id="decl_check" name="declaration" required>
-      <span>I confirm the above declaration <span style="color:var(--orange)">*</span></span>
-    </label>
-    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;">
-      <div class="submit-note" style="text-align:left;">
-        <strong>Before submitting:</strong> All mandatory (*) fields must be complete.
-        Submit by the <strong>3rd of the following month</strong>.
-        Data is logged directly to the ATNM STAC Backend.
-      </div>
-      <div class="btn-row">
-        <button type="button" class="btn-reset" onclick="scResetForm()">Clear</button>
-        <button type="submit" class="btn-submit" id="submitBtn">Submit Report →</button>
-      </div>
-    </div>
-  </div>
 
-</form>
-</div>
-<!-- ── SUCCESS SCREEN ─────────────────────────────────────────────── -->
-<div id="successScreen">
-  <div class="success-card">
-    <div class="success-icon">✅</div>
-    <div class="success-title">Submission Received</div>
-    <div class="success-sub">Your HSE Statistics have been recorded in the ATNM STAC Backend Master.</div>
-    <div class="success-ref" id="successRef">TXN-XXXX-XXXX</div>
-    <p style="font-size:13px;color:var(--dark-l);margin-bottom:24px;">
-      Keep this reference number for your records. The HSE Manager has been notified.
-    </p>
-    <button class="btn-new" onclick="scStartNewSubmission()">Submit Another Month →</button>
-  </div>
-</div>
-      </div>
-    </div>
-
-    <!-- HSE STATS DASHBOARD VIEW -->
-    <div id="view-hse-stats" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
+    id="view-hse-stats" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
       <div style="width:100%;margin:0;padding:112px 24px 40px 24px;box-sizing:border-box;min-height:100%;">
       <div class="fbar" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;align-items:center;">
         <span class="fl">From</span>
