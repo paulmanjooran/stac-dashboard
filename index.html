@@ -314,7 +314,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 /* ── STEP INDICATOR ─────────────────────────────────────────────── */
 #view-hse-form .steps-bar {
   background: #fff; border-bottom: 1px solid #e2e6f0;
-  position: sticky; top: 50px; z-index: 90;
+  position: sticky; top: 50px; z-index: 90; width: 100%;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
   width: 100%;
   left: 0;
@@ -1294,7 +1294,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div style="width:30px;height:30px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:sc-spin .8s linear infinite;"></div>
         <div id="scLoaderStatus" style="color:rgba(255,255,255,.5);font-size:11px;margin-top:12px;font-family:monospace;">Connecting…</div>
       </div>
-      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding:0;min-height:100vh;background:#F0F2F7;">
+      <div id="sc-form-wrap" style="width:100%;max-width:100%;margin:0;padding:92px 0 0 0;min-height:100vh;background:#F0F2F7;">
       <!-- Progress bar for HSE form -->
       <div class="progress-rail">
         <div class="progress-fill" id="progressFill"></div>
@@ -1656,7 +1656,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
     <!-- HSE STATS DASHBOARD VIEW -->
     <div id="view-hse-stats" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
-      <div style="width:100%;margin:0;padding:20px 24px 40px 24px;box-sizing:border-box;min-height:100%;">
+      <div style="width:100%;margin:0;padding:112px 24px 40px 24px;box-sizing:border-box;min-height:100%;">
       <div class="fbar" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;align-items:center;">
         <span class="fl">From</span>
         <input type="date" id="hse-fr" onchange="renderHseStats()">
