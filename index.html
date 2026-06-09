@@ -1131,7 +1131,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div class="g3">
         <div class="field">
           <label class="label">Contract No <span class="req">*</span></label>
-          <select name="contract_no_sel" id="contract_no_sel" required style="display:block;">
+          <select name="contract_no_sel" id="contract_no_sel" style="display:block;">
             <option value="">-- Select SC + Cluster first --</option>
           </select>
           <input type="text" id="contract_no_txt" name="contract_no_txt"
@@ -1536,8 +1536,8 @@ const MASTERS={companies:[],clusters:[],disciplines:[],contracts:[],_loadedAt:0,
   _ttl:60*60*1000,isStale(){return Date.now()-this._loadedAt>this._ttl;},
   markLoaded(){this._loadedAt=Date.now();}};
 const CACHE_TTL_STAC=5*60*1000,CACHE_TTL_MASTERS=60*60*1000;
-const CACHE_KEY_STAC='stac_cache_v3',CACHE_KEY_MASTERS='stac_masters_v3';
-const CACHE_KEY_TS_STAC='stac_cache_ts_v3',CACHE_KEY_TS_MST='stac_masters_ts_v3';
+const CACHE_KEY_STAC='stac_cache_v6',CACHE_KEY_MASTERS='stac_masters_v6';
+const CACHE_KEY_TS_STAC='stac_cache_ts_v6',CACHE_KEY_TS_MST='stac_masters_ts_v3';
 let _lastSuccessfulSync=0,_consecutiveFailures=0,_healthInterval=null;
 
 const RAW=[
@@ -1901,10 +1901,19 @@ function parseGVizSubcon(data){
                      o['Subcontract focal point/ manager/Subcontract focal point/ manager Email ID']||'';
     const coordEmail=o['ATNM Subcontractor Coordinator']||o['Subcontract Coordinator Email ID']||
                      o['Subcontract Coordinator/Subcontract Coordinator Email ID']||'';
+    // Contract No: try all known column headers + positional fallback (col C = index 2)
     const contractNo = o['Subcontract No']||o['Contract No']||o['Contract Number']||
       o['Subcontract Number']||o['Agreement No']||o['Contract / Agreement #']||
-      o['Contract No.']||o['Subcontract No.']||'';
-    rows.push({company:co.trim(),cluster:o['Clusters']||o['Cluster']||o['Cluster/Cluster']||'',
+      o['Contract No.']||o['Subcontract No.']||o['Subcontract #']||o['Contract #']||
+      o['Contract']||o['Subcontract']||
+      // Positional fallback: col C (index 2) if all named cols empty
+      (Object.values(o).length>2 ? (Object.values(o)[2]||'') : '')||'';
+    // Cluster: col A of Sub Contractors sheet — try all header variants + col A positional
+    const clusterVal = o['Clusters']||o['Cluster']||o['Cluster/Cluster']||
+      o['Cluster Location']||o['Site']||o['Location']||
+      // Positional fallback: col A (index 0)
+      (Object.values(o).length>0 ? (Object.values(o)[0]||'') : '')||'';
+    rows.push({company:co.trim(),cluster:clusterVal,
       owner:o['Owner Name']||o['Subcontract Owner/Subcontract Owner Name']||o['Subcontractor Owner']||'',
       ownerEmail:ownerEmail,focal:focalEmail,focalEmail:focalEmail,
       coord:coordEmail,coordEmail:coordEmail,
@@ -4263,10 +4272,117 @@ function scUpdateContractDropdown() {
 // ═══════════════════════════════════════════════════════════════════
 //  EVENT LISTENERS
 // ═══════════════════════════════════════════════════════════════════
+// Auto-populate Subcontractor Name when contract is selected
+function scOnContractChange() {
+  const sel = document.getElementById('contract_no_sel');
+  const scSel = document.getElementById('sc_name');
+  if (!sel || !scSel) return;
+  const cno = sel.value;
+  if (!cno) return;
+  // If SC already selected — don't overwrite
+  if (scSel.value) return;
+  // Find SC from subconData + MASTERS.contracts
+  const allC = [...(subconData.map(s=>({contractNo:s.contractNo||'',scName:s.company||''}))),
+                ...(MASTERS.contracts||[])];
+  const match = allC.find(c => c.contractNo && c.contractNo.trim() === cno.trim());
+  if (match && match.scName) {
+    // Try to select in dropdown
+    for (let i=0; i<scSel.options.length; i++) {
+      if (scSel.options[i].value.trim().toLowerCase() === match.scName.trim().toLowerCase()) {
+        scSel.selectedIndex = i;
+        scUpdateContractDropdown();
+        break;
+      }
+    }
+  }
+}
+function updateContractDropdown() {
+  const sc      = (document.getElementById('sc_name')||{}).value || '';
+  const sel     = document.getElementById('contract_no_sel');
+  const txt     = document.getElementById('contract_no_txt');
+  const info    = document.getElementById('contractInfo');
+
+  function showSel(ph) {
+    if(sel){ sel.style.display='block'; sel.required=false;
+      sel.innerHTML='<option value="">'+ph+'</option>'; }
+    if(txt){ txt.style.display='none'; txt.required=false; txt.value=''; }
+  }
+  function showTxt() {
+    if(txt){ txt.style.display='block'; txt.required=false; }
+    if(sel){ sel.style.display='none'; sel.required=false; sel.innerHTML=''; }
+  }
+
+  if (!sc) {
+    showSel('-- Select Subcontractor first --');
+    if(info) info.innerHTML = '📋 Select a Subcontractor to load contracts…';
+    return;
+  }
+
+  const scL = sc.trim().toLowerCase();
+  const seen = new Set();
+  const matched = [];
+
+  // Primary: subconData (Sub Contractors sheet)
+  (subconData||[]).forEach(s => {
+    if(!s.company || s.company.trim().toLowerCase() !== scL) return;
+    const cno = (s.contractNo || s.contract || '').trim();
+    if(!cno || cno.length < 3) return;
+    const k = cno.toLowerCase();
+    if(seen.has(k)) return;
+    seen.add(k);
+    matched.push(cno);
+  });
+
+  // Supplement: MASTERS.contracts (getMasters API)
+  (MASTERS.contracts||[]).forEach(c => {
+    if(!c.contractNo || !c.scName) return;
+    if(c.scName.trim().toLowerCase() !== scL) return;
+    const k = c.contractNo.trim().toLowerCase();
+    if(seen.has(k)) return;
+    seen.add(k);
+    matched.push(c.contractNo.trim());
+  });
+
+  if (!matched.length) {
+    showTxt();
+    if(info) info.innerHTML = '✏️ No contracts found for <strong>'+sc+'</strong> — enter manually.';
+    return;
+  }
+
+  showSel('-- Select Contract No --');
+  matched.forEach(cno => {
+    const opt = document.createElement('option');
+    opt.value = cno; opt.textContent = cno;
+    sel.appendChild(opt);
+  });
+  if(info) info.innerHTML = '<strong>'+matched.length+'</strong> contract(s) found for <strong>'+sc+'</strong>.';
+}
+
 function scSetupListeners() {
   // SC + Cluster change → refresh contracts
   document.getElementById('sc_name').addEventListener('change', updateContractDropdown);
   document.getElementById('cluster').addEventListener('change', updateContractDropdown);
+  // Auto-fill SC name when contract selected (reverse lookup)
+  const _csel = document.getElementById('contract_no_sel');
+  if(_csel) _csel.addEventListener('change', function() {
+    const cno = this.value;
+    if(!cno) return;
+    const scSel = document.getElementById('sc_name');
+    if(scSel && !scSel.value) {
+      const allC = [
+        ...(subconData||[]).map(s=>({contractNo:s.contractNo||'',scName:s.company||''})),
+        ...(MASTERS.contracts||[])
+      ];
+      const match = allC.find(c => c.contractNo && c.contractNo.trim()===cno.trim());
+      if(match && match.scName) {
+        for(let i=0;i<scSel.options.length;i++) {
+          if(scSel.options[i].value.trim().toLowerCase()===match.scName.trim().toLowerCase()){
+            scSel.selectedIndex=i; updateContractDropdown(); break;
+          }
+        }
+      }
+    }
+  });
 
   // Period Start → auto-set Period End to last day of same month
   document.getElementById('period_start').addEventListener('change', function() {
