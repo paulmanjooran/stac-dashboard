@@ -3599,7 +3599,13 @@ function checkAdminPwd(viewName) {
 }
 
 function nav(v){
-  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  // Clear ALL views — remove active class AND any inline display overrides
+  document.querySelectorAll('.view').forEach(x=>{
+    x.classList.remove('active');
+    x.style.display='';
+    x.style.width='';
+    x.style.maxWidth='';
+  });
   document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('active'));
   // Apply/remove padding directly via inline style for HSE views
   const cnt=document.getElementById('cnt');
@@ -3650,13 +3656,11 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
-    // HSE Stats Dashboard — independent of form init
-    // Ensure data is loaded then render
+    populateHseStatsSCDropdown();
+    renderHseStats();
+    // If no data yet, trigger a fresh load (async — will re-render when done)
     if(typeof scTxnData !== 'undefined' && scTxnData.length === 0) {
       loadHseStatsData();
-    } else {
-      populateHseStatsSCDropdown();
-      renderHseStats();
     }
   }
 }
