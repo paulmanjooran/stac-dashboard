@@ -3609,6 +3609,8 @@ function nav(v){
       cnt.classList.remove('hse-active');
       cnt.style.padding='';
       cnt.style.width='';
+      // Reset scInitialized so HSE form fully re-inits on next visit
+      if(typeof scInitialized !== 'undefined') scInitialized = false;
     }
   }
   const ve=document.getElementById('view-'+v);
@@ -3641,7 +3643,13 @@ function nav(v){
   else if(v==='warning-letter')populateWLSel();
   else if(v==='new-stac'){initForm();}
   else if(v==='setup'){const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;}
-  else if(v==='hse-form'){scInit();}
+  else if(v==='hse-form'){
+    scInit();
+    // Always re-populate dropdowns on nav (in case masters loaded after init)
+    if(typeof scPopulateAllDropdowns === 'function') {
+      setTimeout(scPopulateAllDropdowns, 100);
+    }
+  }
   else if(v==='hse-stats'){scInit();populateHseStatsSCDropdown();renderHseStats();}
 }
 function renderAll(){
@@ -4319,7 +4327,7 @@ async function scLoadMasterData() {
   scSetLoaderStatus('Connecting to ATNM STAC Backend…');
 
   try {
-    if (SUBMIT_URL === 'https://script.google.com/macros/s/AKfycbxfSSstbInrJ5fu0MBC_44jzu5ByZFs-15DKJ5GDBgPTRkzCDAeflpTPv4zZp39b85f/exec') {
+    if (!SUBMIT_URL || SUBMIT_URL.trim() === '') {
       throw new Error('URL not configured');
     }
     const url = `${SUBMIT_URL}?action=getMasters&t=${Date.now()}`;
@@ -4603,14 +4611,17 @@ function scSetupListeners() {
   // Vehicle auto-sum
   ['f1_4','f1_5','f1_6','f1_7'].forEach(n => {
     const el = document.querySelector(`[name="${n}"]`);
-    if (el) el.addEventListener('input', sumVehicles);
+    if (el) el.addEventListener('input', scSumVehicles);
   });
 
-  // Progress tracking
-  document.querySelectorAll('input,select,textarea').forEach(el => {
-    el.addEventListener('change', updateProgress);
-    el.addEventListener('input', updateProgress);
-  });
+  // Progress tracking — scoped to HSE form only
+  const hseForm = document.getElementById('hseForm');
+  if (hseForm) {
+    hseForm.querySelectorAll('input,select,textarea').forEach(el => {
+      el.addEventListener('change', scUpdateProgress);
+      el.addEventListener('input', scUpdateProgress);
+    });
+  }
 
   // Scroll step indicator
   const sections = document.querySelectorAll('.section-card[data-step]');
@@ -4625,7 +4636,7 @@ function scSetupListeners() {
   sections.forEach(s => observer.observe(s));
 
   // Form submit
-  document.getElementById('hseForm').addEventListener('submit', handleSubmit);
+  document.getElementById('hseForm').addEventListener('submit', scHandleSubmit);
 }
 
 function scSumVehicles() {
