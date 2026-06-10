@@ -267,12 +267,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── FORM CHROME ─────────────────────────────────────────────────── */
-#view-hse-form,
-#view-hse-stats {
-  padding: 0;
-  margin: 0;
-  background: #F0F2F7;
-}
+#view-hse-form { padding: 0; margin: 0; background: #F0F2F7; }
+#view-hse-stats { padding: 0; margin: 0; background: #F0F2F7; }
 #view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 24px 40px 24px; box-sizing: border-box; }
 
 /* ── TOPBAR ─────────────────────────────────────────────────────── */
@@ -782,16 +778,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 /* Force views to fill full available width below topbar */
 
 /* === HSE VIEWS — SINGLE AUTHORITATIVE DISPLAY RULE === */
-#view-hse-form,
-#view-hse-stats {
-  display: none;
-}
-#view-hse-form.active,
-#view-hse-stats.active {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-}
+#view-hse-form  { display: none !important; }
+#view-hse-stats { display: none !important; }
+#view-hse-form.active  { display: block !important; width: 100%; box-sizing: border-box; }
+#view-hse-stats.active { display: block !important; width: 100%; box-sizing: border-box; }
 #cnt.hse-active {
   padding: 0;
 }
