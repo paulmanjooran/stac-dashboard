@@ -3626,11 +3626,7 @@ function nav(v){
     }
   }
   document.querySelectorAll('.sbi').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+v+"'"))x.classList.add('active');});
-  // Hide the OTHER HSE nav item when one HSE screen is active
-  const hseFormNav  = document.querySelector('.sbi[onclick*="hse-form"]');
-  const hseStatsNav = document.querySelector('.sbi[onclick*="hse-stats"]');
-  if(hseFormNav)  hseFormNav.style.display  = (v==='hse-stats') ? 'none' : '';
-  if(hseStatsNav) hseStatsNav.style.display = (v==='hse-form')  ? 'none' : '';
+
   const pg=PAGES[v];
   if(pg){sv('pg-title',pg.t);sv('pg-sub',pg.s);}
   if(v==='dashboard'){filteredData=getFiltered();renderDash();}
@@ -3650,7 +3646,16 @@ function nav(v){
       setTimeout(scPopulateAllDropdowns, 100);
     }
   }
-  else if(v==='hse-stats'){scInit();populateHseStatsSCDropdown();renderHseStats();}
+  else if(v==='hse-stats'){
+    // HSE Stats Dashboard — independent of form init
+    // Ensure data is loaded then render
+    if(typeof scTxnData !== 'undefined' && scTxnData.length === 0) {
+      loadHseStatsData();
+    } else {
+      populateHseStatsSCDropdown();
+      renderHseStats();
+    }
+  }
 }
 function renderAll(){
   filteredData=getFiltered();
@@ -4221,9 +4226,15 @@ async function loadHseStatsData(){
       ivms_red_jul:gi(r,'red-jul'),ivms_red_aug:gi(r,'red-aug'),ivms_red_sep:gi(r,'red-sep'),
       ivms_red_oct:gi(r,'red-oct'),ivms_red_nov:gi(r,'red-nov'),ivms_red_dec:gi(r,'red-dec'),
     })).filter(r=>r.txn_id||r.manhours);
-    populateHseStatsSCDropdown();renderHseStats();
+    populateHseStatsSCDropdown();
+    renderHseStats();
     console.log('SC_HSE_TXN loaded: '+scTxnData.length+' records');
-  }catch(e){console.warn('loadHseStatsData:',e);}
+  } catch(e) {
+    console.warn('loadHseStatsData:', e);
+    // Still render even on error (will show empty state)
+    populateHseStatsSCDropdown();
+    renderHseStats();
+  }
 }
 
 function exportHseStatsXL(){
@@ -4774,14 +4785,19 @@ function scShowToast(msg, isError = false) {
 // ── scInit: entry point called when HSE Form tab is clicked ──────
 let scInitialized = false;
 async function scInit() {
-  if(scInitialized) return;
-  scInitialized = true;
   const screen = document.getElementById('sc-loading-screen');
+  if(scInitialized) {
+    // Already initialised — just re-populate dropdowns and ensure form is ready
+    if(typeof scPopulateAllDropdowns === 'function') scPopulateAllDropdowns();
+    return;
+  }
+  scInitialized = true;
   if(screen) screen.style.display = 'flex';
   try {
     await scInit_inner();
   } catch(err) {
     console.error('scInit error:', err);
+    scInitialized = false; // allow retry
   }
   if(screen) screen.style.display = 'none';
 }
