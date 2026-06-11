@@ -1468,81 +1468,167 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
 
-    <div id="view-hse-stats" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
-      <div style="max-width:100%;margin:0;padding:20px 24px 40px 24px;">
-      <div class="fbar" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;align-items:center;">
-        <span class="fl">From</span>
-        <input type="date" id="hse-fr" onchange="renderHseStats()">
-        <span class="fl">To</span>
-        <input type="date" id="hse-to" onchange="renderHseStats()">
-        <div class="fdiv"></div>
-        <span class="fl">Cluster</span>
-        <select id="hse-cl" onchange="renderHseStats()">
-          <option value="">All Clusters</option>
-        </select>
-        <span class="fl">Discipline</span>
-        <select id="hse-di" onchange="renderHseStats()">
-          <option value="">All Disciplines</option>
-        </select>
-        <span class="fl">Subcontractor</span>
-        <select id="hse-sc" onchange="renderHseStats()">
-          <option value="">All Subcontractors</option>
-        </select>
-        <div class="fdiv"></div>
-        <button class="btn bk bsm" onclick="resetHseFilters()">✕ Reset</button>
-        <span id="hse-rec-count" style="font-size:11px;color:var(--t3);margin-left:4px;"></span>
-      </div>
-      <div class="kgrid k5" style="margin-bottom:12px;">
-        <div class="kpi kbl"><div class="klbl">Total Manhours</div><div class="kval" id="hk-mh">—</div><div class="ksub">All filtered records</div></div>
-        <div class="kpi kbl"><div class="klbl">Total Employees</div><div class="kval" id="hk-emp">—</div><div class="ksub">Headcount</div></div>
-        <div class="kpi kor"><div class="klbl">TRIR</div><div class="kval" id="hk-trir">—</div><div class="ksub">per 200,000 MH</div></div>
-        <div class="kpi kor"><div class="klbl">LTIFR</div><div class="kval" id="hk-ltifr">—</div><div class="ksub">per 1,000,000 MH</div></div>
-        <div class="kpi kbl"><div class="klbl">KM Driven</div><div class="kval" id="hk-km">—</div><div class="ksub">Total</div></div>
-      </div>
-      <div class="kgrid k5" style="margin-bottom:12px;">
-        <div class="kpi krd"><div class="klbl">Fatalities</div><div class="kval" id="hk-fat">0</div></div>
-        <div class="kpi krd"><div class="klbl">LTI</div><div class="kval" id="hk-lti">0</div></div>
-        <div class="kpi kam"><div class="klbl">MTC</div><div class="kval" id="hk-mtc">0</div></div>
-        <div class="kpi kam"><div class="klbl">RWC</div><div class="kval" id="hk-rwc">0</div></div>
-        <div class="kpi kam"><div class="klbl">FAC</div><div class="kval" id="hk-fac">0</div></div>
-      </div>
-      <div class="kgrid k4" style="margin-bottom:16px;">
-        <div class="kpi kgr"><div class="klbl">Safety Qube Obs</div><div class="kval" id="hk-sqobs">0</div></div>
-        <div class="kpi kgr"><div class="klbl">Safety Qube NM</div><div class="kval" id="hk-sqnm">0</div></div>
-        <div class="kpi kgr"><div class="klbl">PDO Ihtimam+ (HPI)</div><div class="kval" id="hk-hpi">0</div></div>
-        <div class="kpi kpu"><div class="klbl">IVMS Red (YTD)</div><div class="kval" id="hk-red">0</div></div>
-      </div>
-      <div class="ch2" style="margin-bottom:14px;">
-        <div class="card"><div class="chd"><h3>📊 Manhours by Subcontractor</h3></div><div class="cbd"><canvas id="hse-ch-sc" height="200"></canvas></div></div>
-        <div class="card"><div class="chd"><h3>📍 Manhours by Cluster</h3></div><div class="cbd"><canvas id="hse-ch-cl" height="200"></canvas></div></div>
-      </div>
-      <div class="ch2" style="margin-bottom:14px;">
-        <div class="card"><div class="chd"><h3>📈 Monthly Manhours Trend</h3></div><div class="cbd"><canvas id="hse-ch-mo" height="180"></canvas></div></div>
-        <div class="card"><div class="chd"><h3>⚠ Incident Breakdown</h3></div><div class="cbd"><canvas id="hse-ch-inc" height="180"></canvas></div></div>
-      </div>
-      <div class="card">
-        <div class="chd">
-          <h3>🔍 SC × Cluster × Discipline Breakdown</h3>
-          <div style="display:flex;gap:6px;">
-            <button class="btn bk bsm" onclick="exportHseStatsXL()">⬇ Excel</button>
-            <button class="btn bk bsm" onclick="exportHseStatsPDF()">⬇ PDF</button>
-          </div>
-        </div>
-        <div class="cbd tw">
-          <table class="tbl" id="hse-drill-tbl">
-            <thead><tr>
-              <th>Subcontractor</th><th>Cluster</th><th>Discipline</th><th>Month</th>
-              <th>Employees</th><th>Manhours</th><th>TRIR</th><th>LTI</th>
-              <th>Fatalities</th><th>MTC</th><th>RWC</th><th>SQ Obs</th><th>IVMS Red</th>
-            </tr></thead>
-            <tbody id="hse-drill-body">
-              <tr><td colspan="13" style="text-align:center;padding:24px;color:var(--t3);">Submit records via the Subcontractor HSE Data Entry Form tab to populate this dashboard.</td></tr>
-            </tbody>
-          </table>
-        </div>
+    <div id="view-hse-stats" class="view">
+  <div id="hse-wrap" style="padding:20px 24px 40px 24px;min-height:100vh;background:#f0f2f7;box-sizing:border-box;">
+
+    <!-- Filter bar -->
+    <div id="hse-fbar" style="background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+      <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.4px;">From</span>
+      <input type="date" id="hse-fr" onchange="renderHseStats()" style="border:1.5px solid #d8dff0;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;font-family:inherit;">
+      <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.4px;">To</span>
+      <input type="date" id="hse-to" onchange="renderHseStats()" style="border:1.5px solid #d8dff0;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;font-family:inherit;">
+      <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.4px;">Cluster</span>
+      <select id="hse-cl" onchange="renderHseStats()" style="border:1.5px solid #d8dff0;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;font-family:inherit;"><option value="">All Clusters</option></select>
+      <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.4px;">Discipline</span>
+      <select id="hse-di" onchange="renderHseStats()" style="border:1.5px solid #d8dff0;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;font-family:inherit;"><option value="">All Disciplines</option></select>
+      <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.4px;">Subcontractor</span>
+      <select id="hse-sc" onchange="renderHseStats()" style="border:1.5px solid #d8dff0;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;font-family:inherit;"><option value="">All Subcontractors</option></select>
+      <button onclick="resetHseFilters()" style="background:transparent;border:1.5px solid #d8dff0;border-radius:6px;padding:5px 12px;font-size:11px;color:#6b7a9a;cursor:pointer;font-family:inherit;">✕ Reset</button>
+      <span id="hse-rec-count" style="font-size:11px;color:#9aa3b8;"></span>
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button onclick="hseRefresh()" style="background:#21409a;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+        <button onclick="exportHseStatsXL()" style="background:#fff;border:1.5px solid #d8dff0;border-radius:6px;padding:5px 12px;font-size:11px;color:#4d5a7a;cursor:pointer;font-family:inherit;">⬇ Excel</button>
       </div>
     </div>
+
+    <!-- Status bar -->
+    <div id="hse-status-bar" style="display:none;padding:6px 0 10px 0;font-size:12px;color:#9aa3b8;"></div>
+
+    <!-- KPI Row 1: Exposure -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;">
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:3px solid #21409a;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:5px;">Total Manhours</div>
+        <div id="hk-mh" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#21409a;line-height:1.1;">—</div>
+        <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">Exposure hrs</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:3px solid #21409a;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:5px;">Total Employees</div>
+        <div id="hk-emp" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#21409a;line-height:1.1;">—</div>
+        <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">Headcount</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:3px solid #21409a;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:5px;">KM Driven</div>
+        <div id="hk-km" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#21409a;line-height:1.1;">—</div>
+        <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">Total</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:3px solid #f58220;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:5px;">TRIR</div>
+        <div id="hk-trir" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#f58220;line-height:1.1;">—</div>
+        <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">per 200,000 MH</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:3px solid #f58220;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:5px;">LTIFR</div>
+        <div id="hk-ltifr" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#f58220;line-height:1.1;">—</div>
+        <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">per 1,000,000 MH</div>
+      </div>
+    </div>
+
+    <!-- KPI Row 2: Incidents -->
+    <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:10px;margin-bottom:16px;">
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #c62828;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">Fatalities</div>
+        <div id="hk-fat" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#c62828;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #c62828;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">LTI</div>
+        <div id="hk-lti" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#c62828;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #e65100;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">MTC</div>
+        <div id="hk-mtc" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #e65100;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">RWC</div>
+        <div id="hk-rwc" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #e65100;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">FAC</div>
+        <div id="hk-fac" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #2e7d32;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">SQ Obs</div>
+        <div id="hk-sqobs" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #2e7d32;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">SQ Near Miss</div>
+        <div id="hk-sqnm" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #2e7d32;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">PDO HPI</div>
+        <div id="hk-hpi" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;line-height:1.1;">0</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e2e6f0;border-left:3px solid #6a1b9a;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">IVMS Red</div>
+        <div id="hk-red" style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:#6a1b9a;line-height:1.1;">0</div>
+      </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="padding:12px 16px;border-bottom:1px solid #edf0f8;background:linear-gradient(to right,#f7f9ff,#fff);">
+          <h3 style="font-size:13px;font-weight:700;color:#2b3a5e;margin:0;">📊 Manhours by Subcontractor</h3>
+        </div>
+        <div style="padding:16px;"><canvas id="hse-ch-sc" height="200"></canvas></div>
+      </div>
+      <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="padding:12px 16px;border-bottom:1px solid #edf0f8;background:linear-gradient(to right,#f7f9ff,#fff);">
+          <h3 style="font-size:13px;font-weight:700;color:#2b3a5e;margin:0;">📍 Manhours by Cluster</h3>
+        </div>
+        <div style="padding:16px;"><canvas id="hse-ch-cl" height="200"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="padding:12px 16px;border-bottom:1px solid #edf0f8;background:linear-gradient(to right,#f7f9ff,#fff);">
+          <h3 style="font-size:13px;font-weight:700;color:#2b3a5e;margin:0;">📈 Monthly Manhours Trend</h3>
+        </div>
+        <div style="padding:16px;"><canvas id="hse-ch-mo" height="180"></canvas></div>
+      </div>
+      <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+        <div style="padding:12px 16px;border-bottom:1px solid #edf0f8;background:linear-gradient(to right,#f7f9ff,#fff);">
+          <h3 style="font-size:13px;font-weight:700;color:#2b3a5e;margin:0;">⚠ Incident Breakdown</h3>
+        </div>
+        <div style="padding:16px;"><canvas id="hse-ch-inc" height="180"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Drill table -->
+    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="padding:12px 16px;border-bottom:1px solid #edf0f8;background:linear-gradient(to right,#f7f9ff,#fff);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:13px;font-weight:700;color:#2b3a5e;margin:0;">🔍 SC × Cluster × Discipline Breakdown</h3>
+        <button onclick="exportHseStatsPDF()" style="background:#fff;border:1.5px solid #d8dff0;border-radius:6px;padding:4px 11px;font-size:11px;color:#4d5a7a;cursor:pointer;font-family:inherit;">⬇ PDF</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="hse-drill-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:800px;">
+          <thead>
+            <tr style="background:#21409a;">
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Subcontractor</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Cluster</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Discipline</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Month</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Employees</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Manhours</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">TRIR</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">LTI</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Fatal</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">MTC</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">RWC</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">SQ Obs</th>
+              <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">IVMS Red</th>
+            </tr>
+          </thead>
+          <tbody id="hse-drill-body">
+            <tr><td colspan="13" style="text-align:center;padding:28px;color:#9aa3b8;font-size:13px;">Loading data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
+</div>
 </div>
 
 <!-- DRILLDOWN MODAL -->
@@ -4080,155 +4166,209 @@ window.addEventListener('DOMContentLoaded',()=>{
 // ════════ HSE STATS DASHBOARD MODULE ════════
 let scTxnData = [];
 
-function populateHseStatsSCDropdown() {
-  function fillSel(id, opts, ph) {
-    const el = document.getElementById(id); if(!el) return;
-    const cur = el.value;
-    el.innerHTML = '<option value="">' + ph + '</option>';
-    opts.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});
-    if(cur && Array.from(el.options).some(function(o){return o.value===cur;})) el.value=cur;
-  }
-  function dedup(arr) {
-    var seen=new Set();
-    return arr.filter(function(v){
-      if(!v||v.trim().length<2)return false;
-      var k=v.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-      if(seen.has(k))return false; seen.add(k); return true;
-    }).sort(function(a,b){return a.localeCompare(b);});
-  }
-  var subSrc = (typeof subconData!=='undefined'&&subconData.length>0) ? subconData :
-               (typeof SC_MASTERS!=='undefined'&&SC_MASTERS.subcontractors.length>0) ?
-               SC_MASTERS.subcontractors.map(function(s){return {company:s.name||s,cluster:''};}) : [];
-  fillSel('hse-sc',
-    dedup([].concat(scTxnData.map(function(r){return r.sc;}),subSrc.map(function(s){return s.company;}))),
-    'All Subcontractors');
-  var clBase=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
-  fillSel('hse-cl',
-    dedup([].concat(scTxnData.map(function(r){return r.cluster;}),subSrc.map(function(s){return s.cluster||'';}),clBase)),
-    'All Clusters');
-  var diBase=['Civil','Mechanical','Electrical','Inspection/Testing','Plant & Logistics'];
-  fillSel('hse-di',
-    dedup([].concat(scTxnData.map(function(r){return r.discipline;}),diBase)),
-    'All Disciplines');
-}
-function getHseFiltered() {
-  const fr=gv2('hse-fr'), to=gv2('hse-to'), cl=gv2('hse-cl'), di=gv2('hse-di'), sc=gv2('hse-sc');
+function gv2(id){const el=document.getElementById(id);return el?el.value:'';}
+
+function getHseFiltered(){
+  const fr=gv2('hse-fr'),to=gv2('hse-to'),cl=gv2('hse-cl'),di=gv2('hse-di'),sc=gv2('hse-sc');
   return scTxnData.filter(r=>{
     if(fr && r.period_start && r.period_start<fr) return false;
     if(to && r.period_end   && r.period_end>to)   return false;
-    if(cl && String(r.cluster||'').trim().toLowerCase()!==cl.trim().toLowerCase()) return false;
-    if(di && String(r.discipline||'').trim().toLowerCase()!==di.trim().toLowerCase()) return false;
-    if(sc && String(r.sc||'').trim().toLowerCase()!==sc.trim().toLowerCase()) return false;
+    if(cl && (r.cluster||'').trim().toLowerCase()!==cl.trim().toLowerCase()) return false;
+    if(di && (r.discipline||'').trim().toLowerCase()!==di.trim().toLowerCase()) return false;
+    if(sc && (r.sc||'').trim().toLowerCase()!==sc.trim().toLowerCase()) return false;
     return true;
   });
 }
-function gv2(id){const el=document.getElementById(id);return el?el.value:'';}
 
 function resetHseFilters(){
-  ['hse-fr','hse-to','hse-cl','hse-di','hse-sc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['hse-fr','hse-to','hse-cl','hse-di','hse-sc'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
   renderHseStats();
 }
 
-function hn(v){return isNaN(parseFloat(v))?0:parseFloat(v);}
+function hseRefresh(){
+  scTxnData=[];
+  const sb=document.getElementById('hse-status-bar');
+  if(sb){sb.style.display='block';sb.textContent='Refreshing…';}
+  loadHseStatsData();
+}
+
+function populateHseStatsSCDropdown(){
+  function fillSel(id,opts,ph){
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">'+ph+'</option>';
+    opts.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});
+    if(cur&&Array.from(el.options).some(o=>o.value===cur))el.value=cur;
+  }
+  function dedup(arr){
+    const seen=new Set();
+    return arr.filter(v=>{
+      if(!v||String(v).trim().length<2)return false;
+      const k=String(v).trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+      if(seen.has(k))return false;seen.add(k);return true;
+    }).sort((a,b)=>String(a).localeCompare(String(b)));
+  }
+  const subSrc=(typeof subconData!=='undefined'&&subconData.length>0)?subconData:[];
+  fillSel('hse-sc',
+    dedup([...scTxnData.map(r=>r.sc),...subSrc.map(s=>s.company)]),'All Subcontractors');
+  const clBase=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
+  fillSel('hse-cl',
+    dedup([...scTxnData.map(r=>r.cluster),...subSrc.map(s=>s.cluster||''),...clBase]),'All Clusters');
+  const diBase=['Civil','Mechanical','Electrical','Inspection/Testing','Plant & Logistics'];
+  fillSel('hse-di',
+    dedup([...scTxnData.map(r=>r.discipline),...diBase]),'All Disciplines');
+}
 
 function renderHseStats(){
   const rows=getHseFiltered();
-  const cnt=document.getElementById('hse-rec-count');if(cnt)cnt.textContent=rows.length+' record'+(rows.length!==1?'s':'');
+  const cnt=document.getElementById('hse-rec-count');
+  if(cnt)cnt.textContent=rows.length+' record'+(rows.length!==1?'s':'');
+
   let mh=0,emp=0,km=0,fat=0,lti=0,mtc=0,rwc=0,fac=0,sqObs=0,sqNm=0,hpi=0,red=0;
   rows.forEach(r=>{
     mh+=hn(r.manhours);emp+=hn(r.employees);km+=hn(r.km_driven);
     fat+=hn(r.fatalities);lti+=hn(r.lti);mtc+=hn(r.mtc);rwc+=hn(r.rwc);fac+=hn(r.fac);
     sqObs+=hn(r.sq_obs);sqNm+=hn(r.sq_nm);hpi+=hn(r.pdo_hpi);
-    ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].forEach(m=>red+=hn(r['ivms_red_'+m]));
+    ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+      .forEach(m=>red+=hn(r['ivms_red_'+m]));
   });
   const trir=mh>0?((lti+mtc+rwc+fac)*200000/mh).toFixed(2):'—';
   const ltifr=mh>0?(lti*1000000/mh).toFixed(2):'—';
+
   function sv2(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
   sv2('hk-mh',mh.toLocaleString());sv2('hk-emp',emp.toLocaleString());
-  sv2('hk-trir',trir);sv2('hk-ltifr',ltifr);sv2('hk-km',km.toLocaleString());
+  sv2('hk-km',km.toLocaleString());sv2('hk-trir',trir);sv2('hk-ltifr',ltifr);
   sv2('hk-fat',fat);sv2('hk-lti',lti);sv2('hk-mtc',mtc);sv2('hk-rwc',rwc);sv2('hk-fac',fac);
   sv2('hk-sqobs',sqObs);sv2('hk-sqnm',sqNm);sv2('hk-hpi',hpi);sv2('hk-red',red);
-  const fatEl=document.getElementById('hk-fat');if(fatEl)fatEl.style.color=fat>0?'var(--red)':'';
-  const ltiEl=document.getElementById('hk-lti');if(ltiEl)ltiEl.style.color=lti>0?'var(--red)':'';
-  // Charts
-  const scMap={};rows.forEach(r=>{if(!r.sc)return;scMap[r.sc]=(scMap[r.sc]||0)+hn(r.manhours);});
+
+  const fatEl=document.getElementById('hk-fat');
+  if(fatEl)fatEl.style.color=fat>0?'#c62828':'#c62828';
+  const ltiEl=document.getElementById('hk-lti');
+  if(ltiEl)ltiEl.style.color=lti>0?'#c62828':'#c62828';
+
+  // Chart 1: Manhours by SC
+  const scMap={};
+  rows.forEach(r=>{if(!r.sc)return;scMap[r.sc]=(scMap[r.sc]||0)+hn(r.manhours);});
   const scTop=Object.entries(scMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  mkChart('hse-ch-sc','bar',scTop.map(([k])=>k.length>22?k.substring(0,22)+'…':k),scTop.map(([,v])=>v),scTop.map(()=>'#21409a88'),false,null,'#21409a');
-  const clMap={};rows.forEach(r=>{if(!r.cluster)return;clMap[r.cluster]=(clMap[r.cluster]||0)+hn(r.manhours);});
+  mkChart('hse-ch-sc','bar',
+    scTop.map(([k])=>k.length>22?k.substring(0,22)+'…':k),
+    scTop.map(([,v])=>v),
+    scTop.map(()=>'#21409a88'),false,null,'#21409a');
+
+  // Chart 2: Manhours by Cluster (doughnut)
+  const clMap={};
+  rows.forEach(r=>{if(!r.cluster)return;clMap[r.cluster]=(clMap[r.cluster]||0)+hn(r.manhours);});
   const clE=Object.entries(clMap);
-  mkChart('hse-ch-cl','doughnut',clE.map(([k])=>k),clE.map(([,v])=>v),['#21409a','#f58220','#1b7a3e','#c0392b','#8e44ad'].slice(0,clE.length),true,null,null);
-  const moMap={};rows.forEach(r=>{if(!r.report_month)return;moMap[r.report_month]=(moMap[r.report_month]||0)+hn(r.manhours);});
+  mkChart('hse-ch-cl','doughnut',
+    clE.map(([k])=>k),clE.map(([,v])=>v),
+    ['#21409a','#f58220','#1b7a3e','#c0392b','#8e44ad'].slice(0,clE.length),
+    true,null,null);
+
+  // Chart 3: Monthly trend
+  const moMap={};
+  rows.forEach(r=>{if(!r.report_month)return;moMap[r.report_month]=(moMap[r.report_month]||0)+hn(r.manhours);});
   const moKeys=Object.keys(moMap).sort();
-  mkChart('hse-ch-mo','bar',moKeys,moKeys.map(k=>moMap[k]),Array(moKeys.length).fill('#21409a66'),false,null,'#21409a');
-  const iL=['LTI','MTC','RWC','FAC','Fatal'],iV=[lti,mtc,rwc,fac,fat],iC=['#c0392b','#d68910','#f58220','#1b7a3e','#000'];
-  mkChart('hse-ch-inc','doughnut',iL.filter((_,i)=>iV[i]>0),iV.filter(v=>v>0),iC.filter((_,i)=>iV[i]>0),true,null,null);
+  mkChart('hse-ch-mo','bar',moKeys,moKeys.map(k=>moMap[k]),
+    Array(moKeys.length).fill('#21409a66'),false,null,'#21409a');
+
+  // Chart 4: Incident breakdown (doughnut)
+  const iL=['LTI','MTC','RWC','FAC','Fatal'];
+  const iV=[lti,mtc,rwc,fac,fat];
+  const iC=['#c0392b','#d68910','#f58220','#1b7a3e','#000'];
+  const iLf=iL.filter((_,i)=>iV[i]>0);
+  const iVf=iV.filter(v=>v>0);
+  const iCf=iC.filter((_,i)=>iV[i]>0);
+  mkChart('hse-ch-inc','doughnut',iLf,iVf,iCf,true,null,null);
+
   // Drill table
   const tbody=document.getElementById('hse-drill-body');if(!tbody)return;
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:24px;color:var(--t3);">No records match filters.</td></tr>';return;}
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:28px;color:#9aa3b8;font-size:13px;">'+(scTxnData.length===0?'Loading data… (check that SC_HSE_TXN sheet is published)':'No records match the selected filters.')+'</td></tr>';
+    return;
+  }
   const sorted=[...rows].sort((a,b)=>hn(b.manhours)-hn(a.manhours));
   tbody.innerHTML=sorted.map((r,i)=>{
     const hasInc=hn(r.fatalities)>0||hn(r.lti)>0;
-    const bg=hasInc?'background:#fdecea;':(i%2===0?'':'background:#f9fafb;');
-    const tr=hn(r.manhours)>0?((hn(r.lti)+hn(r.mtc)+hn(r.rwc)+hn(r.fac))*200000/hn(r.manhours)).toFixed(2):'—';
-    const redYtd=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].reduce((s,m)=>s+hn(r['ivms_red_'+m]),0);
-    return`<tr style="${bg}"><td class="tdc" title="${r.sc||''}">${(r.sc||'—').substring(0,28)}</td><td>${r.cluster||'—'}</td><td>${r.discipline||'—'}</td><td style="white-space:nowrap;">${r.report_month||'—'}</td><td style="text-align:right;">${hn(r.employees).toLocaleString()}</td><td style="text-align:right;font-weight:600;">${hn(r.manhours).toLocaleString()}</td><td style="text-align:right;">${tr}</td><td style="text-align:right;${hn(r.lti)>0?'color:var(--red);font-weight:700;':''}">${hn(r.lti)}</td><td style="text-align:right;${hn(r.fatalities)>0?'color:var(--red);font-weight:700;':''}">${hn(r.fatalities)}</td><td style="text-align:right;">${hn(r.mtc)}</td><td style="text-align:right;">${hn(r.rwc)}</td><td style="text-align:right;">${hn(r.sq_obs)}</td><td style="text-align:right;">${redYtd}</td></tr>`;
+    const rowBg=hasInc?'background:#fdecea;':(i%2===0?'':'background:#f9fafb;');
+    const rowTrir=hn(r.manhours)>0?((hn(r.lti)+hn(r.mtc)+hn(r.rwc)+hn(r.fac))*200000/hn(r.manhours)).toFixed(2):'—';
+    const rowRed=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+      .reduce((s,m)=>s+hn(r['ivms_red_'+m]),0);
+    const td='padding:8px 10px;border-top:1px solid #edf0f8;color:#2b3a5e;font-size:11px;vertical-align:middle;';
+    const tdr=td+'text-align:right;';
+    const tdrRed=tdr+(hn(r.lti)>0||hn(r.fatalities)>0?'color:#c62828;font-weight:700;':'');
+    return `<tr style="${rowBg}">
+      <td style="${td}max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(r.sc||'').replace(/"/g,'&quot;')}">${(r.sc||'—').substring(0,30)}</td>
+      <td style="${td}">${r.cluster||'—'}</td>
+      <td style="${td}">${r.discipline||'—'}</td>
+      <td style="${td}white-space:nowrap;">${r.report_month||'—'}</td>
+      <td style="${tdr}">${hn(r.employees).toLocaleString()}</td>
+      <td style="${tdr}font-weight:600;">${hn(r.manhours).toLocaleString()}</td>
+      <td style="${tdr}">${rowTrir}</td>
+      <td style="${tdr}${hn(r.lti)>0?'color:#c62828;font-weight:700;':''}">${hn(r.lti)}</td>
+      <td style="${tdr}${hn(r.fatalities)>0?'color:#c62828;font-weight:700;':''}">${hn(r.fatalities)}</td>
+      <td style="${tdr}">${hn(r.mtc)}</td>
+      <td style="${tdr}">${hn(r.rwc)}</td>
+      <td style="${tdr}">${hn(r.sq_obs)}</td>
+      <td style="${tdr}">${rowRed}</td>
+    </tr>`;
   }).join('');
 }
 
 async function loadHseStatsData(){
-  const sid=(typeof CFG!=='undefined')?CFG.sheetId:'';if(!sid)return;
+  const sid=(typeof CFG!=='undefined')?CFG.sheetId:'';
+  if(!sid)return;
+  const sb=document.getElementById('hse-status-bar');
   try{
-    // Read SC_HSE_TXN by sheet name — no GID needed
-    const raw=await fetchGvizData(sid,null,'SC_HSE_TXN');if(!raw||!raw.table)return;
+    if(sb){sb.style.display='block';sb.textContent='Fetching SC_HSE_TXN…';}
+    const raw=await fetchGvizData(sid,null,'SC_HSE_TXN');
+    if(!raw||!raw.table){
+      if(sb)sb.textContent='SC_HSE_TXN: no data returned. Check sheet name and sharing (Anyone with link → Viewer).';
+      populateHseStatsSCDropdown();renderHseStats();return;
+    }
     const cols=(raw.table.cols||[]).map(c=>(c.label||'').trim().toLowerCase());
-    const gi=(row,col)=>{const i=cols.indexOf(col);if(i<0)return'';const c=row.c[i];return c?(c.f||c.v||''):''};
+    const gi=(row,col)=>{
+      const i=cols.indexOf(col);if(i<0)return'';
+      const c=row.c[i];return c?(c.f!==null&&c.f!==undefined?String(c.f):c.v!==null&&c.v!==undefined?String(c.v):''):'';
+    };
     scTxnData=(raw.table.rows||[]).filter(r=>r&&r.c).map(r=>({
-      txn_id:gi(r,'txn id'),report_month:gi(r,'report month'),
-      period_start:gi(r,'period start'),period_end:gi(r,'period end'),
-      cluster:gi(r,'cluster'),sc:gi(r,'sc name'),discipline:gi(r,'discipline'),
-      employees:gi(r,'employees'),manhours:gi(r,'manhours'),km_driven:gi(r,'km driven'),
-      fatalities:gi(r,'fatalities'),lti:gi(r,'lti'),mtc:gi(r,'mtc'),rwc:gi(r,'rwc'),
-      mvi:gi(r,'mvi'),smvi:gi(r,'smvi'),fac:gi(r,'fac'),nwr:gi(r,'nwr'),nad:gi(r,'nad'),
-      sq_obs:gi(r,'safety qube observations'),sq_nm:gi(r,'safety qube near miss'),pdo_hpi:gi(r,'pdo ihtimam plus (hpi)'),
-      lsr_pdo:gi(r,'lsr violation pdo'),lsr_int:gi(r,'lsr violation internal'),
-      rs_counsel:gi(r,'rs counselling'),rs_warn:gi(r,'rs warning letters'),
-      rs_final:gi(r,'rs final warning'),rs_dismiss:gi(r,'rs dismissal'),
-      ivms_red_jan:gi(r,'red-jan'),ivms_red_feb:gi(r,'red-feb'),ivms_red_mar:gi(r,'red-mar'),
-      ivms_red_apr:gi(r,'red-apr'),ivms_red_may:gi(r,'red-may'),ivms_red_jun:gi(r,'red-jun'),
-      ivms_red_jul:gi(r,'red-jul'),ivms_red_aug:gi(r,'red-aug'),ivms_red_sep:gi(r,'red-sep'),
-      ivms_red_oct:gi(r,'red-oct'),ivms_red_nov:gi(r,'red-nov'),ivms_red_dec:gi(r,'red-dec'),
+      txn_id:     gi(r,'txn id'),
+      report_month:gi(r,'report month'),
+      period_start:gi(r,'period start'),
+      period_end:  gi(r,'period end'),
+      cluster:    gi(r,'cluster'),
+      sc:         gi(r,'sc name'),
+      discipline: gi(r,'discipline'),
+      employees:  gi(r,'employees'),
+      manhours:   gi(r,'manhours'),
+      km_driven:  gi(r,'km driven'),
+      fatalities: gi(r,'fatalities'),
+      lti:        gi(r,'lti'),
+      mtc:        gi(r,'mtc'),
+      rwc:        gi(r,'rwc'),
+      fac:        gi(r,'fac'),
+      sq_obs:     gi(r,'safety qube observations'),
+      sq_nm:      gi(r,'safety qube near miss'),
+      pdo_hpi:    gi(r,'pdo ihtimam plus (hpi)'),
+      ivms_red_jan:gi(r,'red-jan'), ivms_red_feb:gi(r,'red-feb'), ivms_red_mar:gi(r,'red-mar'),
+      ivms_red_apr:gi(r,'red-apr'), ivms_red_may:gi(r,'red-may'), ivms_red_jun:gi(r,'red-jun'),
+      ivms_red_jul:gi(r,'red-jul'), ivms_red_aug:gi(r,'red-aug'), ivms_red_sep:gi(r,'red-sep'),
+      ivms_red_oct:gi(r,'red-oct'), ivms_red_nov:gi(r,'red-nov'), ivms_red_dec:gi(r,'red-dec'),
     })).filter(r=>r.txn_id||r.manhours);
+
+    if(sb)sb.style.display='none';
     populateHseStatsSCDropdown();
     renderHseStats();
-    console.log('SC_HSE_TXN loaded: '+scTxnData.length+' records');
-  } catch(e) {
-    console.warn('loadHseStatsData:', e);
-    // Still render even on error (will show empty state)
+    console.log('SC_HSE_TXN loaded: '+scTxnData.length+' records. Cols detected: '+cols.join(', '));
+  }catch(e){
+    console.warn('loadHseStatsData error:',e);
+    if(sb){sb.style.display='block';sb.textContent='Error loading SC_HSE_TXN: '+e.message+'. Ensure sheet is shared publicly.';}
     populateHseStatsSCDropdown();
     renderHseStats();
   }
 }
 
-function exportHseStatsXL(){
-  const rows=getHseFiltered();if(!rows.length){toast('No data to export',2000,'warn');return;}
-  const h=['SC Name','Cluster','Discipline','Month','Employees','Manhours','LTI','Fatalities','MTC','RWC','FAC','SQ Obs','SQ NM','HPI'];
-  const r=rows.map(x=>[x.sc,x.cluster,x.discipline,x.report_month,hn(x.employees),hn(x.manhours),hn(x.lti),hn(x.fatalities),hn(x.mtc),hn(x.rwc),hn(x.fac),hn(x.sq_obs),hn(x.sq_nm),hn(x.pdo_hpi)]);
-  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([h,...r]);
-  ws['!cols']=[{wch:28},{wch:16},{wch:14},{wch:14},...Array(10).fill({wch:10})];
-  XLSX.utils.book_append_sheet(wb,ws,'HSE Stats');
-  XLSX.writeFile(wb,'ATNM-HSE-Stats-'+new Date().toISOString().split('T')[0]+'.xlsx');
-  toast('✅ Excel downloaded');
-}
-
-function exportHseStatsPDF(){
-  const rows=getHseFiltered();if(!rows.length){toast('No data to export',2000,'warn');return;}
-  let h='<h2 style="color:#21409a;">ATNM Subcontractor HSE Statistics</h2><p style="font-size:11px;color:#666;margin-bottom:12px;">'+new Date().toLocaleDateString()+' | '+rows.length+' records</p>';
-  h+='<table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#21409a;color:#fff;">';
-  ['Subcontractor','Cluster','Discipline','Month','Manhours','LTI','Fatal','MTC','RWC','SQ Obs'].forEach(c=>h+=`<th style="padding:5px 7px;text-align:left;">${c}</th>`);
-  h+='</tr></thead><tbody>';
-  rows.forEach((r,i)=>{h+=`<tr style="background:${i%2===0?'#f9f9f9':'#fff'};"><td style="padding:4px 7px;">${r.sc||'—'}</td><td>${r.cluster||'—'}</td><td>${r.discipline||'—'}</td><td>${r.report_month||'—'}</td><td style="text-align:right;">${hn(r.manhours).toLocaleString()}</td><td style="text-align:right;${hn(r.lti)>0?'color:red;font-weight:700;':''}">${hn(r.lti)}</td><td style="text-align:right;${hn(r.fatalities)>0?'color:red;font-weight:700;':''}">${hn(r.fatalities)}</td><td style="text-align:right;">${hn(r.mtc)}</td><td style="text-align:right;">${hn(r.rwc)}</td><td style="text-align:right;">${hn(r.sq_obs)}</td></tr>`;});
-  h+='</tbody></table>';openPW('HSE Statistics',h);
-}
 
 // ════════ SUBCON HSE FORM MODULE ════════
 // All module-level vars and functions declared at top level (not inside scInit)
