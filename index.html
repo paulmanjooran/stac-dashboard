@@ -1470,6 +1470,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
     <div id="view-hse-stats" class="view" style="width:100%;min-height:100vh;background:#F0F2F7;">
+      <!-- Loading overlay for HSE Stats -->
+      <div id="hse-stats-loading" style="display:none;position:absolute;inset:0;background:rgba(240,242,247,.92);z-index:50;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
+        <div style="width:38px;height:38px;border:3px solid #d8dff0;border-top-color:#21409a;border-radius:50%;animation:sc-spin .7s linear infinite;"></div>
+        <div style="font-size:13px;font-weight:600;color:#21409a;">Loading HSE Stats...</div>
+      </div>
       <div style="width:100%;margin:0;padding:112px 24px 40px 24px;box-sizing:border-box;min-height:100%;">
       <div class="fbar" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;align-items:center;">
         <span class="fl">From</span>
@@ -3624,11 +3629,19 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
-    populateHseStatsSCDropdown();
-    renderHseStats();
-    // If no data yet, trigger a fresh load (async — will re-render when done)
-    if(typeof scTxnData !== 'undefined' && scTxnData.length === 0) {
-      loadHseStatsData();
+    if(typeof scTxnData !== 'undefined' && scTxnData.length > 0){
+      // Data already loaded — render immediately
+      populateHseStatsSCDropdown();
+      renderHseStats();
+    } else {
+      // Show loading overlay and fetch
+      const ld=document.getElementById('hse-stats-loading');
+      if(ld){ ld.style.display='flex'; }
+      loadHseStatsData().then(()=>{
+        if(ld){ ld.style.display='none'; }
+      }).catch(()=>{
+        if(ld){ ld.style.display='none'; }
+      });
     }
   }
 }
@@ -4071,10 +4084,18 @@ window.addEventListener('DOMContentLoaded',()=>{
     updateDraftBadge();
     startHealthCheck();
   },100);
-  setTimeout(()=>{
-    loadHseStatsData();
-    // Populate all HSE Stats dropdowns from subconData (available after loadData)
-    setTimeout(()=>populateHseStatsSCDropdown(), 1200);
+  setTimeout(async ()=>{
+    const ld=document.getElementById('hse-stats-loading');
+    await loadHseStatsData();
+    // If user is currently on hse-stats view, refresh it
+    const statsView=document.getElementById('view-hse-stats');
+    if(statsView&&statsView.classList.contains('active')){
+      if(ld)ld.style.display='none';
+      populateHseStatsSCDropdown();
+      renderHseStats();
+    }
+    // Populate dropdowns even if not on that view
+    setTimeout(()=>populateHseStatsSCDropdown(), 200);
   }, 600);
 });
 
