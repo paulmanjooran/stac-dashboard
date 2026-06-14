@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subcontractor HSE Statistics — ATNM PDO ODC</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#f0f2f7;color:#2b3a5e;min-height:100vh;}
+button,select,input{font-family:inherit;}
+/* ── HSE STATISTICS DASHBOARD ────────────────────────────── */
+#view-hse-stats { padding: 0; margin: 0; background: #f0f2f7; text-align: left; }
+
+/* KPI grids */
+.hs-kgrid { display: grid; gap: 12px; margin: 0 0 14px 0; width: 100%; box-sizing: border-box; }
+.hs-k5    { grid-template-columns: repeat(5, 1fr); }
+.hs-k4    { grid-template-columns: repeat(4, 1fr); }
+.hs-k3    { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 1100px) { .hs-k5 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px)  { .hs-k4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px)  { .hs-k5, .hs-k4, .hs-k3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px)  { .hs-k5, .hs-k4, .hs-k3 { grid-template-columns: 1fr; } }
+
+/* KPI cards */
+.hs-kpi  { background: #fff; border-radius: 10px; padding: 14px 16px; border: 1px solid #e8ecf5; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.hs-klbl { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6b7a9a; margin-bottom: 6px; }
+.hs-kval { font-size: 24px; font-weight: 800; font-family: 'DM Mono', monospace; line-height: 1.1; color: #2b3a5e; }
+.hs-ksub { font-size: 10px; color: #9aa3b8; margin-top: 3px; }
+.hs-kbl  { border-left: 3px solid #21409a; } .hs-kbl .hs-kval { color: #21409a; }
+.hs-kor  { border-left: 3px solid #f58220; } .hs-kor .hs-kval { color: #f58220; }
+.hs-krd  { border-left: 3px solid #c62828; } .hs-krd .hs-kval { color: #c62828; }
+.hs-kam  { border-left: 3px solid #e65100; } .hs-kam .hs-kval { color: #e65100; }
+.hs-kgr  { border-left: 3px solid #2e7d32; } .hs-kgr .hs-kval { color: #2e7d32; }
+.hs-kpu  { border-left: 3px solid #6a1b9a; } .hs-kpu .hs-kval { color: #6a1b9a; }
+
+/* Chart grid */
+.hs-ch2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 14px 0; width: 100%; box-sizing: border-box; }
+@media (max-width: 800px) { .hs-ch2 { grid-template-columns: 1fr; } }
+
+/* Cards */
+.hs-card { background: #fff; border-radius: 12px; border: 1px solid #e8ecf5; box-shadow: 0 1px 4px rgba(0,0,0,.05); overflow: hidden; margin: 0 0 14px 0; box-sizing: border-box; width: 100%; }
+.hs-ch2 .hs-card { margin: 0; }
+.hs-chd { padding: 12px 18px; border-bottom: 1px solid #edf0f8; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to right, #f7f9ff, #fff); }
+.hs-chd h3 { font-size: 13px; font-weight: 700; color: #2b3a5e; margin: 0; }
+.hs-cbd { padding: 16px 18px; }
+
+/* Table */
+.hs-tw  { overflow-x: auto; padding: 0; }
+.hs-tbl { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 700px; }
+.hs-tbl thead tr { background: #21409a; }
+.hs-tbl thead th { padding: 9px 10px; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #fff; text-align: left; white-space: nowrap; }
+.hs-tbl tbody td { padding: 8px 10px; border-top: 1px solid #edf0f8; color: #2b3a5e; font-size: 11px; vertical-align: middle; }
+.hs-tbl tbody tr:nth-child(even) td { background: #fafbfd; }
+.hs-tbl tbody tr:hover td { background: #f0f3fb; }
+
+/* Filter bar */
+.hs-fbar { background: #fff; border-radius: 10px; padding: 12px 16px; margin: 0 0 16px 0; border: 1px solid #e8ecf5; box-shadow: 0 1px 4px rgba(0,0,0,.05); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; width: 100%; box-sizing: border-box; }
+.hs-fl   { font-size: 11px; font-weight: 700; color: #4d5a7a; letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; }
+#view-hse-stats input[type="date"], .hs-fbar select { font-size: 12px; color: #2b3a5e; background: #fafbfd; border: 1.5px solid #d8dff0; border-radius: 7px; padding: 7px 11px; outline: none; }
+#view-hse-stats input[type="date"]:focus, .hs-fbar select:focus { border-color: #21409a; box-shadow: 0 0 0 3px rgba(33,64,154,.08); background: #fff; }
+
+/* Topbar */
+.topbar{background:#21409a;padding:0 24px;height:54px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:50;
+  border-bottom:3px solid #f58220;box-shadow:0 2px 10px rgba(33,64,154,.3);}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.topbar-logo{width:36px;height:36px;background:#f58220;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0;}
+.topbar-title{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.2px;}
+.topbar-sub{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px;}
+.btn-top{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);
+  border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+.btn-top:hover{background:rgba(255,255,255,.22);}
+.btn-top.orange{background:#f58220;border-color:#f58220;}
+.wrap{padding:20px 24px 48px;max-width:1600px;}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">AT</div>
+    <div>
+      <div class="topbar-title">Subcontractor HSE Statistics Dashboard</div>
+      <div class="topbar-sub">Al Tasnim Enterprises LLC &middot; PDO ODC &middot; Live from SC_HSE_TXN</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span id="hse-conn" style="font-size:11px;color:rgba(255,255,255,.7);"></span>
+    <button class="btn-top" onclick="hseRefresh()">&#8635; Refresh</button>
+    <button class="btn-top" onclick="exportHseStatsXL()">&#8595; CSV</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Status bar -->
+  <div id="hse-status-bar" style="display:none;background:#fff3cd;border:1px solid #ffc107;
+    border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#856404;font-weight:600;"></div>
+
+  <!-- Filter bar -->
+  <div class="hs-fbar">
+    <span class="hs-fl">Period</span>
+    <input type="date" id="hse-fr" onchange="renderHseStats()">
+    <span style="color:#9aa3b8;">&#8594;</span>
+    <input type="date" id="hse-to" onchange="renderHseStats()">
+    <span class="hs-fl">Cluster</span>
+    <select id="hse-cl" onchange="renderHseStats()"><option value="">All</option></select>
+    <span class="hs-fl">Discipline</span>
+    <select id="hse-di" onchange="renderHseStats()"><option value="">All</option></select>
+    <span class="hs-fl">Subcontractor</span>
+    <select id="hse-sc" onchange="renderHseStats()" style="min-width:180px;"><option value="">All</option></select>
+    <button onclick="resetHseFilters()" style="background:transparent;border:1.5px solid #d8dff0;
+      border-radius:6px;padding:5px 12px;font-size:11px;color:#6b7a9a;cursor:pointer;">&#10005; Reset</button>
+    <span id="hse-rec-count" style="font-size:11px;color:#9aa3b8;margin-left:4px;"></span>
+  </div>
+
+  <!-- KPI Row 1 -->
+  <div class="hs-kgrid hs-k5">
+    <div class="hs-kpi hs-kbl"><div class="hs-klbl">Manhours</div><div class="hs-kval" id="hk-mh">&#8212;</div><div class="hs-ksub">Total exposure hrs</div></div>
+    <div class="hs-kpi hs-kbl"><div class="hs-klbl">Employees</div><div class="hs-kval" id="hk-emp">&#8212;</div><div class="hs-ksub">Headcount</div></div>
+    <div class="hs-kpi hs-kbl"><div class="hs-klbl">KM Driven</div><div class="hs-kval" id="hk-km">&#8212;</div><div class="hs-ksub">Total km</div></div>
+    <div class="hs-kpi hs-kor"><div class="hs-klbl">TRIR</div><div class="hs-kval" id="hk-trir">&#8212;</div><div class="hs-ksub">per 200,000 MH</div></div>
+    <div class="hs-kpi hs-kor"><div class="hs-klbl">LTIFR</div><div class="hs-kval" id="hk-ltifr">&#8212;</div><div class="hs-ksub">per 1,000,000 MH</div></div>
+  </div>
+
+  <!-- KPI Row 2 -->
+  <div class="hs-kgrid hs-k5">
+    <div class="hs-kpi hs-krd"><div class="hs-klbl">Fatalities</div><div class="hs-kval" id="hk-fat">0</div></div>
+    <div class="hs-kpi hs-krd"><div class="hs-klbl">LTI</div><div class="hs-kval" id="hk-lti">0</div></div>
+    <div class="hs-kpi hs-kam"><div class="hs-klbl">MTC</div><div class="hs-kval" id="hk-mtc">0</div></div>
+    <div class="hs-kpi hs-kam"><div class="hs-klbl">RWC</div><div class="hs-kval" id="hk-rwc">0</div></div>
+    <div class="hs-kpi hs-kam"><div class="hs-klbl">FAC</div><div class="hs-kval" id="hk-fac">0</div></div>
+  </div>
+
+  <!-- KPI Row 3 -->
+  <div class="hs-kgrid hs-k5">
+    <div class="hs-kpi hs-kgr"><div class="hs-klbl">SQ Observations</div><div class="hs-kval" id="hk-sqobs">0</div></div>
+    <div class="hs-kpi hs-kgr"><div class="hs-klbl">SQ Near Miss</div><div class="hs-kval" id="hk-sqnm">0</div></div>
+    <div class="hs-kpi hs-kgr"><div class="hs-klbl">PDO HPI</div><div class="hs-kval" id="hk-hpi">0</div></div>
+    <div class="hs-kpi hs-kpu"><div class="hs-klbl">IVMS Red YTD</div><div class="hs-kval" id="hk-red">0</div></div>
+    <div class="hs-kpi hs-kbl"><div class="hs-klbl">RS Warning Letters</div><div class="hs-kval" id="hk-rswl">0</div></div>
+  </div>
+
+  <!-- KPI Row 4 -->
+  <div class="hs-kgrid hs-k4">
+    <div class="hs-kpi"><div class="hs-klbl">LSR Violations (PDO)</div><div class="hs-kval" id="hk-lsrpdo">0</div></div>
+    <div class="hs-kpi"><div class="hs-klbl">LSR Violations (Int)</div><div class="hs-kval" id="hk-lsrint">0</div></div>
+    <div class="hs-kpi"><div class="hs-klbl">RS Counselling</div><div class="hs-kval" id="hk-rscounsel">0</div></div>
+    <div class="hs-kpi"><div class="hs-klbl">RS Final Warning</div><div class="hs-kval" id="hk-rsfinal">0</div></div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="hs-ch2">
+    <div class="hs-card"><div class="hs-chd"><h3>&#128202; Manhours by Subcontractor</h3></div><div class="hs-cbd"><canvas id="hse-ch-sc" height="220"></canvas></div></div>
+    <div class="hs-card"><div class="hs-chd"><h3>&#128205; Manhours by Cluster</h3></div><div class="hs-cbd"><canvas id="hse-ch-cl" height="220"></canvas></div></div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="hs-ch2">
+    <div class="hs-card"><div class="hs-chd"><h3>&#128200; Monthly Manhours Trend</h3></div><div class="hs-cbd"><canvas id="hse-ch-mo" height="200"></canvas></div></div>
+    <div class="hs-card"><div class="hs-chd"><h3>&#9888; Incident Breakdown</h3></div><div class="hs-cbd"><canvas id="hse-ch-inc" height="200"></canvas></div></div>
+  </div>
+
+  <!-- Charts Row 3 -->
+  <div class="hs-ch2">
+    <div class="hs-card"><div class="hs-chd"><h3>&#128308; IVMS Red by Month</h3></div><div class="hs-cbd"><canvas id="hse-ch-ivms" height="200"></canvas></div></div>
+    <div class="hs-card"><div class="hs-chd"><h3>&#128119; Manhours by Discipline</h3></div><div class="hs-cbd"><canvas id="hse-ch-disc" height="200"></canvas></div></div>
+  </div>
+
+  <!-- Detail Table -->
+  <div class="hs-card">
+    <div class="hs-chd">
+      <h3>&#128269; Transaction Detail</h3>
+      <span id="hse-tbl-count" style="font-size:11px;color:#9aa3b8;"></span>
+    </div>
+    <div class="hs-tw">
+      <table class="hs-tbl">
+        <thead><tr>
+          <th>TXN ID</th><th>Subcontractor</th><th>Cluster</th><th>Discipline</th><th>Month</th>
+          <th style="text-align:right">Employees</th><th style="text-align:right">Manhours</th>
+          <th style="text-align:right">KM</th><th style="text-align:right">TRIR</th>
+          <th style="text-align:right">LTIFR</th><th style="text-align:right">Fatal</th>
+          <th style="text-align:right">LTI</th><th style="text-align:right">MTC</th>
+          <th style="text-align:right">RWC</th><th style="text-align:right">FAC</th>
+          <th style="text-align:right">SQ Obs</th><th style="text-align:right">SQ NM</th>
+          <th style="text-align:right">HPI</th><th style="text-align:right">IVMS Red</th>
+          <th>DQ</th>
+        </tr></thead>
+        <tbody id="hse-drill-body">
+          <tr><td colspan="20" style="text-align:center;padding:40px;color:#9aa3b8;">Loading data&#8230;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+const CFG={sheetId:'18Tr6xLT9_2yuHbUaJELGeeSJAAanncBipmlvBbMqxMo'};
+let subconData=[], charts={};
+let scTxnData=[];
+
+
+
+function mkChart(id,type,labels,vals,colors,isDoughnut,onClick,borderColor){
+  const el=document.getElementById(id);if(!el)return;
+  if(charts[id]){charts[id].destroy();charts[id]=null;}
+  if(!labels.length)return;
+  const cfg={type,
+    data:{labels,datasets:[{data:vals,backgroundColor:colors,
+      borderColor:isDoughnut?'#fff':(borderColor||'transparent'),borderWidth:isDoughnut?2:1.5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:isDoughnut,position:'right',labels:{font:{size:10},padding:6,boxWidth:10}}},
+      scales:isDoughnut?{}:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}}},x:{ticks:{font:{size:9},maxRotation:40}}},
+      onClick:(e,els)=>{if(els.length&&onClick){const i=els[0].index;onClick(labels[i],i);}}}};
+  try{charts[id]=new Chart(el,cfg);}catch(e){console.warn('Chart error',id,e);}
+}
+
+async function fetchGvizData(sheetId,gid,sheetName,headers){
+  const h=headers||1; // default headers=1 (most sheets have 1 header row)
+  const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
+  const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=${h}&${param}&_=${Date.now()}`;
+  try{
+    // mode:'cors' required — gviz is a public CORS endpoint, no-cors returns opaque response
+    const r=await fetch(url,{mode:'cors',cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const text=await r.text();
+    // gviz wraps response: google.visualization.Query.setResponse({...})
+    const m=text.match(/setResponse\(([\s\S]+?)\)\s*;?\s*$/);
+    if(!m)throw new Error('gviz parse failed');
+    const data=JSON.parse(m[1]);
+    if(data.status==='error')throw new Error('gviz error: '+JSON.stringify(data.errors));
+    return data;
+  }catch(e){
+    console.warn('fetchGvizData failed ['+(sheetName||gid)+']:',e.message,'URL:',url);
+    console.warn('Fix: Google Sheet → Share → Anyone with link → Viewer');
+    // JSONP fallback
+    return await loadSheetGvizJSONP(sheetId,gid,sheetName,h);
+  }
+}
+
+function loadSheetGvizJSONP(sheetId,gid,sheetName,h){
+  h=h||1;
+  return new Promise(resolve=>{
+    const cb='_gviz_'+Math.random().toString(36).substr(2,9);
+    const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
+    const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;handler:${cb}&${param}&headers=${h}&_=${Date.now()}`;
+    const timeout=setTimeout(()=>{delete window[cb];resolve(null);},8000);
+    window[cb]=data=>{clearTimeout(timeout);delete window[cb];resolve(data&&data.status!=='error'?data:null);};
+    const s=document.createElement('script');
+    s.onerror=()=>{clearTimeout(timeout);delete window[cb];resolve(null);};
+    s.src=url;document.head.appendChild(s);
+  });
+}
+
+function gv2(id){const el=document.getElementById(id);return el?el.value:'';}
+
+function getHseFiltered(){
+  const fr=gv2('hse-fr'),to=gv2('hse-to'),
+        cl=gv2('hse-cl').trim().toLowerCase(),
+        di=gv2('hse-di').trim().toLowerCase(),
+        sc=gv2('hse-sc').trim().toLowerCase();
+  return scTxnData.filter(r=>{
+    if(fr&&r.period_start&&r.period_start<fr)return false;
+    if(to&&r.period_end&&r.period_end>to)return false;
+    if(cl&&(r.cluster||'').trim().toLowerCase()!==cl)return false;
+    if(di&&(r.discipline||'').trim().toLowerCase()!==di)return false;
+    if(sc&&(r.sc||'').trim().toLowerCase()!==sc)return false;
+    return true;
+  });
+}
+
+function resetHseFilters(){
+  ['hse-fr','hse-to','hse-cl','hse-di','hse-sc'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  renderHseStats();
+}
+
+function hseRefresh(){
+  scTxnData=[];
+  const sb=document.getElementById('hse-status-bar');
+  if(sb){sb.style.display='block';sb.textContent='Refreshing data from SC_HSE_TXN…';}
+  loadHseStatsData();
+}
+
+function populateHseStatsSCDropdown(){
+  function fillSel(id,opts,ph){
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">'+ph+'</option>';
+    opts.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});
+    if(cur&&Array.from(el.options).some(o=>o.value===cur))el.value=cur;
+  }
+  function dedup(arr){
+    const seen=new Set();
+    return arr.filter(v=>{
+      const s=String(v||'').trim();if(s.length<2)return false;
+      const k=s.toLowerCase().replace(/[^a-z0-9]/g,'');
+      if(seen.has(k))return false;seen.add(k);return true;
+    }).sort((a,b)=>String(a).localeCompare(String(b)));
+  }
+  const sub=(typeof subconData!=='undefined'&&subconData.length)?subconData:[];
+  fillSel('hse-sc',dedup([...scTxnData.map(r=>r.sc),...sub.map(s=>s.company)]),'All Subcontractors');
+  const clBase=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
+  fillSel('hse-cl',dedup([...scTxnData.map(r=>r.cluster),...clBase]),'All Clusters');
+  const diBase=['Civil','Mechanical','Electrical','Third Party Inspection','Plant & Logistics'];
+  fillSel('hse-di',dedup([...scTxnData.map(r=>r.discipline),...diBase]),'All Disciplines');
+}
+
+function renderHseStats(){
+  const rows=getHseFiltered();
+  const MO=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+  // Aggregates
+  let mh=0,emp=0,km=0,fat=0,lti=0,mtc=0,rwc=0,fac=0;
+  let sqObs=0,sqNm=0,hpi=0,red=0;
+  let lsrPdo=0,lsrInt=0,rsCounsel=0,rsWarn=0,rsFinal=0;
+  rows.forEach(r=>{
+    mh+=hn(r.manhours);emp+=hn(r.employees);km+=hn(r.km_driven);
+    fat+=hn(r.fatalities);lti+=hn(r.lti);mtc+=hn(r.mtc);rwc+=hn(r.rwc);fac+=hn(r.fac);
+    sqObs+=hn(r.sq_obs);sqNm+=hn(r.sq_nm);hpi+=hn(r.pdo_hpi);
+    MO.forEach(m=>red+=hn(r['ivms_red_'+m]));
+    lsrPdo+=hn(r.lsr_pdo);lsrInt+=hn(r.lsr_int);
+    rsCounsel+=hn(r.rs_counsel);rsWarn+=hn(r.rs_warn);rsFinal+=hn(r.rs_final);
+  });
+  const trir=mh>0?((lti+mtc+rwc+fac)*200000/mh).toFixed(2):'—';
+  const ltifr=mh>0?(lti*1000000/mh).toFixed(2):'—';
+
+  // KPI update helper
+  function sv(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+  sv('hse-rec-count',rows.length+' record'+(rows.length!==1?'s':''));
+  sv('hk-mh',mh.toLocaleString());sv('hk-emp',emp.toLocaleString());
+  sv('hk-km',km.toLocaleString());sv('hk-trir',trir);sv('hk-ltifr',ltifr);
+  sv('hk-fat',fat);sv('hk-lti',lti);sv('hk-mtc',mtc);sv('hk-rwc',rwc);sv('hk-fac',fac);
+  sv('hk-sqobs',sqObs);sv('hk-sqnm',sqNm);sv('hk-hpi',hpi);sv('hk-red',red);
+  sv('hk-rswl',rsWarn);sv('hk-lsrpdo',lsrPdo);sv('hk-lsrint',lsrInt);
+  sv('hk-rscounsel',rsCounsel);sv('hk-rsfinal',rsFinal);
+
+  // Chart 1: Manhours by SC (bar)
+  const scMap={};
+  rows.forEach(r=>{if(!r.sc)return;scMap[r.sc]=(scMap[r.sc]||0)+hn(r.manhours);});
+  const scTop=Object.entries(scMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mkChart('hse-ch-sc','bar',
+    scTop.map(([k])=>k.length>24?k.substring(0,24)+'…':k),
+    scTop.map(([,v])=>v),
+    scTop.map(()=>'#21409a99'),false,null,'#21409a');
+
+  // Chart 2: Manhours by Cluster (doughnut)
+  const clMap={};
+  rows.forEach(r=>{if(!r.cluster)return;clMap[r.cluster]=(clMap[r.cluster]||0)+hn(r.manhours);});
+  const clE=Object.entries(clMap).sort((a,b)=>b[1]-a[1]);
+  mkChart('hse-ch-cl','doughnut',
+    clE.map(([k])=>k),clE.map(([,v])=>v),
+    ['#21409a','#f58220','#2e7d32','#c62828','#6a1b9a','#0277bd'].slice(0,clE.length),
+    true,null,null);
+
+  // Chart 3: Monthly Manhours trend (line)
+  const moMap={};
+  rows.forEach(r=>{if(!r.report_month)return;moMap[r.report_month]=(moMap[r.report_month]||0)+hn(r.manhours);});
+  const moKeys=Object.keys(moMap).sort();
+  if(moKeys.length){
+    const el=document.getElementById('hse-ch-mo');if(el){
+      if(charts['hse-ch-mo']){charts['hse-ch-mo'].destroy();charts['hse-ch-mo']=null;}
+      try{charts['hse-ch-mo']=new Chart(el,{type:'line',data:{labels:moKeys,
+        datasets:[{data:moKeys.map(k=>moMap[k]),borderColor:'#21409a',backgroundColor:'#21409a22',
+          borderWidth:2,pointRadius:4,fill:true,tension:.3}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:9},maxRotation:40}}}}});}
+      catch(e){console.warn('hse-ch-mo chart error',e);}
+    }
+  }
+
+  // Chart 4: Incident breakdown (doughnut)
+  const iL=['Fatal','LTI','MTC','RWC','FAC'],iV=[fat,lti,mtc,rwc,fac];
+  const iC=['#c62828','#e53935','#e65100','#f57c00','#2e7d32'];
+  const iLf=iL.filter((_,i)=>iV[i]>0),iVf=iV.filter(v=>v>0),iCf=iC.filter((_,i)=>iV[i]>0);
+  if(iVf.length){
+    mkChart('hse-ch-inc','doughnut',iLf,iVf,iCf,true,null,null);
+  } else {
+    const cv=document.getElementById('hse-ch-inc');
+    if(cv){if(charts['hse-ch-inc']){charts['hse-ch-inc'].destroy();charts['hse-ch-inc']=null;}
+      const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+      ctx.fillStyle='#c8d0e0';ctx.font='12px sans-serif';ctx.textAlign='center';
+      ctx.fillText('No incidents recorded',cv.width/2,cv.height/2);}
+  }
+
+  // Chart 5: IVMS Red by month (bar) — sum across all records
+  const ivmsMonthly=MO.map(m=>rows.reduce((s,r)=>s+hn(r['ivms_red_'+m]),0));
+  const hasIvms=ivmsMonthly.some(v=>v>0);
+  if(hasIvms){
+    mkChart('hse-ch-ivms','bar',
+      ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      ivmsMonthly,ivmsMonthly.map(v=>v>0?'#c62828aa':'#e2e6f0'),false,null,'#c62828');
+  } else {
+    const cv=document.getElementById('hse-ch-ivms');
+    if(cv){if(charts['hse-ch-ivms']){charts['hse-ch-ivms'].destroy();charts['hse-ch-ivms']=null;}
+      const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+      ctx.fillStyle='#c8d0e0';ctx.font='12px sans-serif';ctx.textAlign='center';
+      ctx.fillText('No IVMS red violations recorded',cv.width/2,cv.height/2);}
+  }
+
+  // Chart 6: Manhours by Discipline (doughnut)
+  const diMap={};
+  rows.forEach(r=>{if(!r.discipline)return;diMap[r.discipline]=(diMap[r.discipline]||0)+hn(r.manhours);});
+  const diE=Object.entries(diMap).sort((a,b)=>b[1]-a[1]);
+  mkChart('hse-ch-disc','doughnut',
+    diE.map(([k])=>k),diE.map(([,v])=>v),
+    ['#21409a','#f58220','#2e7d32','#c62828','#6a1b9a','#0277bd','#4d5a7a'].slice(0,diE.length),
+    true,null,null);
+
+  // Detail table
+  const tbody=document.getElementById('hse-drill-body');
+  const tblCount=document.getElementById('hse-tbl-count');
+  if(!tbody)return;
+  if(!rows.length){
+    const msg=scTxnData.length===0
+      ?'No data loaded — click ↻ Refresh. Ensure SC_HSE_TXN sheet is shared (Anyone → Viewer).'
+      :'No records match the selected filters.';
+    tbody.innerHTML='<tr><td colspan="20" style="text-align:center;padding:40px;color:#9aa3b8;font-size:13px;">'+msg+'</td></tr>';
+    if(tblCount)tblCount.textContent='';return;
+  }
+  if(tblCount)tblCount.textContent=rows.length+' row'+(rows.length!==1?'s':'');
+  const sorted=[...rows].sort((a,b)=>hn(b.manhours)-hn(a.manhours));
+  const td='padding:8px 10px;border-top:1px solid #edf0f8;color:#2b3a5e;font-size:11px;vertical-align:middle;';
+  const tdr=td+'text-align:right;';
+  tbody.innerHTML=sorted.map((r,idx)=>{
+    const hasInc=hn(r.fatalities)>0||hn(r.lti)>0;
+    const bg=hasInc?'background:#fdecea;':(idx%2===0?'':'background:#f9fafb;');
+    const mhR=hn(r.manhours);
+    const rTrir=mhR>0?((hn(r.lti)+hn(r.mtc)+hn(r.rwc)+hn(r.fac))*200000/mhR).toFixed(2):'—';
+    const rLtifr=mhR>0?(hn(r.lti)*1000000/mhR).toFixed(2):'—';
+    const rRed=MO.reduce((s,m)=>s+hn(r['ivms_red_'+m]),0);
+    const inc=v=>v>0?'color:#c62828;font-weight:700;':'';
+    const dqStyle=r.dq_flag&&r.dq_flag.includes('[!')
+      ?'background:#fff3cd;color:#856404;font-size:9px;padding:2px 5px;border-radius:4px;white-space:nowrap;'
+      :'color:#9aa3b8;font-size:9px;';
+    return '<tr style="'+bg+'">'
+      +'<td style="'+td+'white-space:nowrap;font-family:DM Mono,monospace;font-size:10px;color:#6b7a9a;">'+( r.txn_id||'—')+'</td>'
+      +'<td style="'+td+'max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(r.sc||'').replace(/"/g,'&quot;')+'">'+(r.sc||'—').substring(0,28)+'</td>'
+      +'<td style="'+td+'white-space:nowrap;">'+(r.cluster||'—')+'</td>'
+      +'<td style="'+td+'white-space:nowrap;">'+(r.discipline||'—')+'</td>'
+      +'<td style="'+td+'white-space:nowrap;">'+(r.report_month||'—')+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.employees).toLocaleString()+'</td>'
+      +'<td style="'+tdr+'font-weight:600;">'+mhR.toLocaleString()+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.km_driven).toLocaleString()+'</td>'
+      +'<td style="'+tdr+'">'+rTrir+'</td>'
+      +'<td style="'+tdr+'">'+rLtifr+'</td>'
+      +'<td style="'+tdr+inc(hn(r.fatalities))+'">'+hn(r.fatalities)+'</td>'
+      +'<td style="'+tdr+inc(hn(r.lti))+'">'+hn(r.lti)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.mtc)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.rwc)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.fac)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.sq_obs)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.sq_nm)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.pdo_hpi)+'</td>'
+      +'<td style="'+tdr+'">'+rRed+'</td>'
+      +'<td style="'+td+'"><span style="'+dqStyle+'">'+(r.dq_flag||'')+'</span></td>'
+      +'</tr>';
+  }).join('');
+}
+
+async function loadHseStatsData(){
+  const sid=(typeof CFG!=='undefined')?CFG.sheetId:'';
+  if(!sid){console.warn('loadHseStatsData: no sheetId');return;}
+  const sb=document.getElementById('hse-status-bar');
+  try{
+    if(sb){sb.style.display='block';sb.textContent='Loading SC_HSE_TXN…';}
+    const raw=await fetchGvizData(sid,null,'SC_HSE_TXN',3);
+    if(!raw||!raw.table){
+      if(sb)sb.textContent='⚠ SC_HSE_TXN: no data. Check sheet name and sharing (Anyone → Viewer).';
+      populateHseStatsSCDropdown();renderHseStats();return;
+    }
+    // gviz returns column labels lowercased exactly as written in row 3
+    const cols=(raw.table.cols||[]).map(c=>(c.label||'').trim().toLowerCase());
+    console.log('[HSE Stats] gviz cols:',cols.join(' | '));
+    const gi=(row,col)=>{
+      const i=cols.indexOf(col);if(i<0)return'';
+      const cell=row.c[i];if(!cell)return'';
+      if(cell.f!==null&&cell.f!==undefined)return String(cell.f);
+      if(cell.v!==null&&cell.v!==undefined)return String(cell.v);
+      return'';
+    };
+    // Map every column from SC_HSE_TXN row 3 headers (lowercased by gviz)
+    scTxnData=(raw.table.rows||[]).filter(r=>r&&r.c).map(r=>({
+      txn_id:       gi(r,'txn id'),
+      timestamp:    gi(r,'timestamp'),
+      report_month: gi(r,'report month'),
+      period_start: gi(r,'period start'),
+      period_end:   gi(r,'period end'),
+      cluster:      gi(r,'cluster'),
+      sc:           gi(r,'sc name'),
+      contract_no:  gi(r,'contract no'),
+      discipline:   gi(r,'discipline'),
+      submitted_by: gi(r,'submitted by'),
+      // Workforce
+      employees:    gi(r,'employees'),
+      manhours:     gi(r,'manhours'),
+      km_driven:    gi(r,'km driven'),
+      veh_lt4t:     gi(r,'veh 0-4t'),
+      veh_gt4t:     gi(r,'veh >4t'),
+      // Incidents
+      fatalities:   gi(r,'fatalities'),
+      lti:          gi(r,'lti'),
+      mtc:          gi(r,'mtc'),
+      rwc:          gi(r,'rwc'),
+      mvi:          gi(r,'mvi'),
+      smvi:         gi(r,'smvi'),
+      fac:          gi(r,'fac'),
+      nwr:          gi(r,'nwr'),
+      nad:          gi(r,'nad'),
+      // Observations
+      sq_obs:       gi(r,'sq observations'),
+      sq_nm:        gi(r,'sq near miss'),
+      pdo_hpi:      gi(r,'pdo ihtimam+ (hpi)'),
+      // LSR
+      lsr_pdo:      gi(r,'lsr pdo'),
+      lsr_int:      gi(r,'lsr int'),
+      cla_pdo:      gi(r,'cla pdo'),
+      cla_int:      gi(r,'cla int'),
+      // Road Safety
+      rs_lsr_pdo:   gi(r,'rs lsr pdo'),
+      rs_lsr_int:   gi(r,'rs lsr int'),
+      rs_counsel:   gi(r,'rs counselling'),
+      rs_warn:      gi(r,'rs warning'),
+      rs_final:     gi(r,'rs final'),
+      rs_dismiss:   gi(r,'rs dismiss'),
+      // IVMS Red
+      ivms_red_jan: gi(r,'red-jan'),ivms_red_feb:gi(r,'red-feb'),ivms_red_mar:gi(r,'red-mar'),
+      ivms_red_apr: gi(r,'red-apr'),ivms_red_may:gi(r,'red-may'),ivms_red_jun:gi(r,'red-jun'),
+      ivms_red_jul: gi(r,'red-jul'),ivms_red_aug:gi(r,'red-aug'),ivms_red_sep:gi(r,'red-sep'),
+      ivms_red_oct: gi(r,'red-oct'),ivms_red_nov:gi(r,'red-nov'),ivms_red_dec:gi(r,'red-dec'),
+      // KPIs (from sheet formulas)
+      trir_sheet:   gi(r,'trir'),
+      ltifr_sheet:  gi(r,'ltifr'),
+      remarks:      gi(r,'remarks'),
+      dup_flag:     gi(r,'dup flag'),
+      dq_flag:      gi(r,'dq flag'),
+    })).filter(r=>r.txn_id||r.manhours||r.sc);
+    if(sb)sb.style.display='none';
+    populateHseStatsSCDropdown();
+    renderHseStats();
+    console.log('[HSE Stats] Loaded',scTxnData.length,'records');
+  }catch(e){
+    console.error('[HSE Stats] loadHseStatsData error:',e);
+    if(sb){sb.style.display='block';sb.textContent='❌ '+e.message+' — check sheet is shared (Anyone → Viewer).';}
+    populateHseStatsSCDropdown();renderHseStats();
+  }
+}
+
+function exportHseStatsXL(){
+  const rows=getHseFiltered();if(!rows.length){alert('No data to export.');return;}
+  const MO=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const hdrs=['TXN ID','SC Name','Cluster','Discipline','Report Month','Employees','Manhours',
+    'KM Driven','TRIR','LTIFR','Fatalities','LTI','MTC','RWC','FAC',
+    'SQ Observations','SQ Near Miss','PDO HPI','IVMS Red YTD',
+    'LSR PDO','LSR Int','RS Counselling','RS Warning','RS Final','Remarks'];
+  const NL='\r\n',Q='"',esc=v=>Q+String(v||'').replace(/"/g,'""')+Q;
+  let csv=hdrs.map(esc).join(',')+NL;
+  rows.forEach(r=>{
+    const mh=hn(r.manhours);
+    const trir=mh>0?((hn(r.lti)+hn(r.mtc)+hn(r.rwc)+hn(r.fac))*200000/mh).toFixed(2):'';
+    const ltifr=mh>0?(hn(r.lti)*1000000/mh).toFixed(2):'';
+    const red=MO.reduce((s,m)=>s+hn(r['ivms_red_'+m]),0);
+    csv+=[r.txn_id,r.sc,r.cluster,r.discipline,r.report_month,
+      hn(r.employees),mh,hn(r.km_driven),trir,ltifr,
+      hn(r.fatalities),hn(r.lti),hn(r.mtc),hn(r.rwc),hn(r.fac),
+      hn(r.sq_obs),hn(r.sq_nm),hn(r.pdo_hpi),red,
+      hn(r.lsr_pdo),hn(r.lsr_int),hn(r.rs_counsel),hn(r.rs_warn),hn(r.rs_final),
+      r.remarks||''
+    ].map(esc).join(',')+NL;
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='HSE_Stats_'+new Date().toISOString().substring(0,10)+'.csv';
+  a.click();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadHseStatsData();
+});
+</script>
+</body></html>
