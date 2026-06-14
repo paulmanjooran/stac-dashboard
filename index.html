@@ -650,7 +650,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #view-hse-form  { display: none !important; }
 #view-hse-stats { display: none !important; }
 #view-hse-form.active  { display: block !important; width: 100%; box-sizing: border-box; }
-#view-hse-stats.active { display: block !important; width: 100%; box-sizing: border-box; }
+#view-hse-stats.active { display: block !important; width: 100%; min-height: calc(100vh - 50px); box-sizing: border-box; }
 /* #cnt.hse-active padding handled above */
 </style>
 </head><body>
@@ -686,9 +686,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
     <div class="tb-r"><div style="display:flex;align-items:center;gap:5px;margin-right:10px;font-size:11px;"><span id="health-dot" style="width:8px;height:8px;border-radius:50%;background:#1b7a3e;display:inline-block;flex-shrink:0;"></span><span id="health-lbl" style="color:#1b7a3e;font-weight:600;">Live</span><span id="health-ts" style="color:var(--t3);font-size:10px;margin-left:4px;"></span></div><span id="draft-badge" onclick="retryDrafts()" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;cursor:pointer;margin-right:8px;" title="Pending drafts — click to retry"></span><span id="admin-status" style="display:none;"></span><span id="admin-badge" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.4px;margin-right:4px;">ADMIN</span>
       <span id="dsrc" class="bdg bgy" style="font-size:10px;">⏳ Loading...</span>
-      <button class="btn bk bsm" onclick="loadData()">🔄 Refresh</button>
-      <button class="btn bk bsm" onclick="exportFilteredExcel()">⬇ Excel</button>
-      <button class="btn bk bsm" onclick="exportFilteredPDF()">🖨 PDF</button>
+      <span id="stac-topbar-btns"><button class="btn bk bsm" onclick="loadData()">🔄 Refresh</button> <button class="btn bk bsm" onclick="exportFilteredExcel()">⬇ Excel</button> <button class="btn bk bsm" onclick="exportFilteredPDF()">🖨 PDF</button></span>
+      <span id="hse-topbar-btns" style="display:none;"><button class="btn bk bsm" onclick="hseRefresh()">🔄 Refresh</button> <button class="btn bk bsm" onclick="exportHseStatsXL()">⬇ CSV</button></span>
       <button class="btn bo bsm" onclick="nav('new-stac')">+ New STAC Form</button>
       <div style="font-size:10px;color:var(--t3);" id="lu">—</div>
     </div>
@@ -1317,7 +1316,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
     <div id="view-hse-stats" class="view">
-<div style="padding:20px 24px 48px;min-height:100%;box-sizing:border-box;">
+<div style="padding:20px 24px 48px;box-sizing:border-box;">
 
   <!-- Status bar -->
   <div id="hse-status-bar" style="display:none;background:#fff3cd;border:1px solid #ffc107;
@@ -3531,6 +3530,11 @@ function nav(v){
       cnt.classList.remove('hse-active');
       cnt.style.padding='';
       if(typeof scInitialized !== 'undefined') scInitialized = false;
+      // Restore STAC topbar buttons
+      var _stacB2=document.getElementById('stac-topbar-btns');
+      var _hseB2=document.getElementById('hse-topbar-btns');
+      if(_stacB2)_stacB2.style.display='inline';
+      if(_hseB2)_hseB2.style.display='none';
     }
   }
   const ve=document.getElementById('view-'+v);
@@ -3557,6 +3561,11 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
+    // Show HSE topbar buttons, hide STAC ones
+    var _stacB=document.getElementById('stac-topbar-btns');
+    var _hseB=document.getElementById('hse-topbar-btns');
+    if(_stacB)_stacB.style.display='none';
+    if(_hseB)_hseB.style.display='inline';
     // Clear stale status bar on every visit
     const _sb=document.getElementById('hse-status-bar');
     if(_sb&&scTxnData.length>0){_sb.style.display='none';}
