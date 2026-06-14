@@ -1937,9 +1937,10 @@ const RISK_LEVELS={
 // ============================================================
 // SHEET FETCHER — fetch() with JSONP fallback
 // ============================================================
-async function fetchGvizData(sheetId,gid,sheetName){
+async function fetchGvizData(sheetId,gid,sheetName,headers){
+  const h=headers||1; // default headers=1 (most sheets have 1 header row)
   const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
-  const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=2&${param}&_=${Date.now()}`;
+  const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=${h}&${param}&_=${Date.now()}`;
   try{
     // mode:'cors' required — gviz is a public CORS endpoint, no-cors returns opaque response
     const r=await fetch(url,{mode:'cors',cache:'no-store'});
@@ -1955,15 +1956,16 @@ async function fetchGvizData(sheetId,gid,sheetName){
     console.warn('fetchGvizData failed ['+(sheetName||gid)+']:',e.message,'URL:',url);
     console.warn('Fix: Google Sheet → Share → Anyone with link → Viewer');
     // JSONP fallback
-    return await loadSheetGvizJSONP(sheetId,gid,sheetName);
+    return await loadSheetGvizJSONP(sheetId,gid,sheetName,h);
   }
 }
 
-function loadSheetGvizJSONP(sheetId,gid,sheetName){
+function loadSheetGvizJSONP(sheetId,gid,sheetName,h){
+  h=h||1;
   return new Promise(resolve=>{
     const cb='_gviz_'+Math.random().toString(36).substr(2,9);
     const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
-    const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;handler:${cb}&${param}&headers=2&_=${Date.now()}`;
+    const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;handler:${cb}&${param}&headers=${h}&_=${Date.now()}`;
     const timeout=setTimeout(()=>{delete window[cb];resolve(null);},8000);
     window[cb]=data=>{clearTimeout(timeout);delete window[cb];resolve(data&&data.status!=='error'?data:null);};
     const s=document.createElement('script');
@@ -2130,9 +2132,9 @@ async function loadData(force){
   let live=false;
   try{
     const [stacRaw,subconRaw,matrixRaw]=await Promise.all([
-      fetchGvizData(sid,'342483107',null),
-      fetchGvizData(sid,null,su),
-      fetchGvizData(sid,null,'Vendor HSE Scoring Matrix')
+      fetchGvizData(sid,'342483107',null,1),
+      fetchGvizData(sid,null,su,1),
+      fetchGvizData(sid,null,'Vendor HSE Scoring Matrix',1)
     ]);
     if(stacRaw){const p=parseGVizTable(stacRaw);if(p.length>0){stacData=p;live=true;
       try{localStorage.setItem(CACHE_KEY_STAC,JSON.stringify(stacData));localStorage.setItem(CACHE_KEY_TS_STAC,String(Date.now()));}catch(e){}
@@ -2204,7 +2206,7 @@ async function checkAdminAccess(){
   }
   if(!adminEmail){ updateAdminUI(); return; }
   try{
-    const data = await fetchGvizData(CFG.sheetId, null, 'Users List');
+    const data = await fetchGvizData(CFG.sheetId,null,'Users List',1);
     if(!data||!data.table){ updateAdminUI(); return; }
     const cols = (data.table.cols||[]).map(c=>(c.label||c.id||'').trim().toLowerCase());
     const emailIdx = cols.findIndex(c=>c.includes('email'));
@@ -4334,7 +4336,7 @@ async function loadHseStatsData(){
   const sb=document.getElementById('hse-status-bar');
   try{
     if(sb){sb.style.display='block';sb.textContent='Loading SC_HSE_TXN data…';}
-    const raw=await fetchGvizData(sid,null,'SC_HSE_TXN');
+    const raw=await fetchGvizData(sid,null,'SC_HSE_TXN',3);
     if(!raw||!raw.table){
       if(sb){sb.style.display='block';sb.textContent='⚠ No data returned. Ensure SC_HSE_TXN sheet exists and is shared: Anyone with link → Viewer.';}
       populateHseStatsSCDropdown();renderHseStats();return;
