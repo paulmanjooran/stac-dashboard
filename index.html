@@ -4178,6 +4178,23 @@ window.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>{
     loadHseStatsData(); // fires populateHseStatsSCDropdown + renderHseStats on completion
   }, 600);
+  // Hash routing: support direct deep-links e.g. index.html#hse-stats
+  const _hash=(window.location.hash||'').replace('#','').trim();
+  const _validViews=['dashboard','tracker','fines','performance','scorecards',
+    'warning-letter','new-stac','setup','hse-form','hse-stats'];
+  if(_hash&&_validViews.includes(_hash)){
+    nav(_hash);
+  }
+  // Update hash on nav so browser back/forward works
+  const _origNav=nav;
+  window.nav=function(v){
+    _origNav(v);
+    if(history.replaceState){history.replaceState(null,'','#'+v);}
+  };
+  window.addEventListener('hashchange',()=>{
+    const h=(window.location.hash||'').replace('#','').trim();
+    if(h&&_validViews.includes(h))_origNav(h);
+  });
 });
 
 
