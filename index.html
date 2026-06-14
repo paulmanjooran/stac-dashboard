@@ -801,7 +801,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sbi" onclick="nav('fines')"><span class="ic">💰</span>Fines & Penalties</div>
     <div class="sbi" onclick="nav('scorecards')"><span class="ic">🏅</span>Subcon Scorecards</div>
     <div class="sbi" onclick="nav('performance')"><span class="ic">📋</span>Performance Report</div>
-    <div class="sbi" onclick="nav('analytics')"><span class="ic">📈</span>Analytics</div>
     <div class="sb-sec">HSE Stats</div>
     <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
     <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Stats Dashboard</div>
@@ -868,7 +867,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div class="ch2">
         <div class="card"><div class="chd"><h3>📅 Monthly Trend</h3></div>
           <div class="cbd" style="position:relative;height:200px;"><canvas id="ch-tr"></canvas></div><div class="ch-hint">💡 Click a bar to see that month</div></div>
-        <div class="card"><div class="chd"><h3>🏆 Top Violators (YTD)</h3><button class="btn bk bsm" onclick="nav('analytics')">Full →</button></div>
+        <div class="card"><div class="chd"><h3>🏆 Top Violators (YTD)</h3></div>
           <div class="cbd" id="top-viol">Loading...</div></div>
       </div>
       <!-- 3-INSTANCE MONITOR -->
@@ -1126,25 +1125,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3);">Loading...</td></tr>
           </tbody>
         </table></div>
-      </div>
-    </div>
-
-    <!-- ANALYTICS -->
-    <div id="view-analytics" class="view">
-      <div class="ch2">
-        <div class="card"><div class="chd"><h3>📊 WL Type Distribution</h3></div>
-          <div class="cbd" style="position:relative;height:240px;"><canvas id="ch-wlt"></canvas></div><div class="ch-hint">💡 Click to drill down</div></div>
-        <div class="card"><div class="chd"><h3>📅 Monthly Volume</h3></div>
-          <div class="cbd" style="position:relative;height:240px;"><canvas id="ch-mo"></canvas></div><div class="ch-hint">💡 Click to drill down</div></div>
-      </div>
-      <div class="card" style="margin-bottom:14px;">
-        <div class="chd"><h3>🏗️ Top Companies — Instance Ranking (YTD)</h3></div>
-        <div class="cbd" style="position:relative;height:300px;"><canvas id="ch-rk"></canvas></div><div class="ch-hint">💡 Click to drill down</div>
-      </div>
-      <div class="card">
-        <div class="chd"><h3>📊 YTD 3-Instance Full Breakdown</h3></div>
-        <div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>YTD Total</th><th>1st</th><th>2nd</th><th>3rd+</th><th>YTD Penalty</th><th>Demerit</th><th>Escalation</th></tr></thead>
-        <tbody id="a3-body"></tbody></table></div>
       </div>
     </div>
 
@@ -2849,48 +2829,6 @@ function openSC(co){
   const mb=document.getElementById('m-sc-body');if(mb)mb.innerHTML=h;
   openModal('m-sc');
 }
-
-// ============================================================
-// ANALYTICS
-// ============================================================
-function renderAnalytics(){
-  if(!dataLoaded)return;
-  // FIX v5: respect global filters (FS) when active; else default to CY scope
-  const hasFilter=FS.cl||FS.co||FS.cat||FS.inst||FS.fr||FS.to;
-  const ytd=hasFilter?filteredData:stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  const wl={'1st Warning':0,'2nd Warning':0,'Final Warning':0,'No Letter':0};
-  ytd.forEach(d=>{const w=(d.wlType||'').toLowerCase();
-    if(w.includes('final'))wl['Final Warning']++;
-    else if(w.includes('2nd'))wl['2nd Warning']++;
-    else if(w.includes('1st')||w.includes('quarter'))wl['1st Warning']++;
-    else wl['No Letter']++;});
-  mkChart('ch-wlt','doughnut',Object.keys(wl),Object.values(wl),['#1b7a3e','#d68910','#c0392b','#8b95a1'],true,(label)=>{
-    let d=[];
-    if(label==='1st Warning')d=ytd.filter(x=>x.wlType&&(x.wlType.toLowerCase().includes('1st')||x.wlType.toLowerCase().includes('quarter')));
-    else if(label==='2nd Warning')d=ytd.filter(x=>x.wlType&&x.wlType.toLowerCase().includes('2nd'));
-    else if(label==='Final Warning')d=ytd.filter(x=>x.wlType&&x.wlType.toLowerCase().includes('final'));
-    else d=ytd.filter(x=>!x.wlType);
-    showDrill('WL Type: '+label,d);
-  });
-  const m={};ytd.forEach(d=>{if(!d.date)return;const k=d.date.substring(0,7);m[k]=(m[k]||0)+1;});
-  const mk=Object.keys(m).sort();
-  mkChart('ch-mo','bar',mk.map(k=>{const[y,mo]=k.split('-');return['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(mo)]+" '"+y.substring(2);}),mk.map(k=>m[k]),Array(mk.length).fill('#21409a88'),false,(label,idx)=>{const k=mk[idx];showDrill('Month: '+label,ytd.filter(x=>x.date&&x.date.startsWith(k)));},'#21409a');
-  const co={};ytd.forEach(d=>co[d.company]=(co[d.company]||0)+1);
-  const top=Object.entries(co).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  mkChart('ch-rk','bar',top.map(([k])=>k.length>24?k.substring(0,24)+'…':k),top.map(([,v])=>v),top.map(([,v])=>v>=3?'#c0392b88':v===2?'#f5822088':'#21409a88'),false,(label,idx)=>{const co2=top[idx][0];showDrill('Company: '+co2,ytd.filter(x=>x.company===co2));},'transparent');
-  const instM={};
-  ytd.forEach(d=>{if(!instM[d.company])instM[d.company]={t:0,f:0,s:0,th:0,p:0};instM[d.company].t++;const n=getYTDInst(d);if(n===1)instM[d.company].f++;else if(n===2)instM[d.company].s++;else instM[d.company].th++;instM[d.company].p+=d.penalty||0;});
-  let h='';
-  Object.entries(instM).sort((a,b)=>b[1].t-a[1].t).slice(0,15).forEach(([co,x])=>{
-    const badge=x.t>=3?'<span class="bdg brd">ESCALATE</span>':x.t===2?'<span class="bdg bor">2nd</span>':'<span class="bdg bgr">Compliant</span>';
-    h+=`<tr><td>${co.length>28?co.substring(0,28)+'…':co}</td><td style="text-align:center;font-weight:700;">${x.t}</td><td style="text-align:center;">${x.f}</td><td style="text-align:center;">${x.s}</td><td style="text-align:center;font-weight:700;color:var(--red);">${x.th}</td><td style="font-weight:600;color:var(--red);">OMR ${x.p}</td><td style="text-align:center;">${x.th*-10} pts</td><td>${badge}</td></tr>`;
-  });
-  const a3b=document.getElementById('a3-body');if(a3b)a3b.innerHTML=h||'<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--t3);">No YTD data</td></tr>';
-}
-
-// ============================================================
-// FORM LOGIC
-// ============================================================
 function onCategory(){
   const cat=gv('fa-cat'),co=gv('fa-co');
   const rule=lookupRule(cat);
@@ -3584,7 +3522,6 @@ const PAGES={
   'performance':{t:'Performance Report',s:'Full subcontractor HSE compliance ranking — score out of 100'},
   'scorecards':{t:'Subcontractor Scorecards',s:'YTD compliance score per subcontractor'},
   'warning-letter':{t:'Warning Letters',s:'Generate, preview, download and issue warning letters'},
-  'analytics':{t:'Analytics & Trends',s:'YTD performance data and 3-instance breakdown'},
   'setup':{t:'Setup',s:'Google Sheets connection and Apps Script deployment'},
   'hse-form':{t:'Subcontractor HSE Data Entry Form',s:'Monthly subcontractor HSE statistics submission — MTC, RWC, IVMS, Safety Qube'},
   'hse-stats':{t:'Subcontractor HSE Stats Dashboard',s:'Manhour, incident and compliance analytics — all filter permutations'}
@@ -3696,7 +3633,6 @@ function nav(v){
   else if(v==='fines')renderFines();
   else if(v==='performance')renderPerformance();
   else if(v==='scorecards')renderScores();
-  else if(v==='analytics')renderAnalytics();
   else if(v==='warning-letter')populateWLSel();
   else if(v==='new-stac'){initForm();}
   else if(v==='setup'){const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;}
@@ -3729,7 +3665,6 @@ function renderAll(){
   else if(document.querySelector('#view-fines.active'))renderFines();
   else if(document.querySelector('#view-performance.active'))renderPerformance();
   else if(document.querySelector('#view-scorecards.active'))renderScores();
-  else if(document.querySelector('#view-analytics.active'))renderAnalytics();
   else if(document.querySelector('#view-warning-letter.active'))populateWLSel();
   else if(document.querySelector('#view-hse-stats.active'))renderHseStats();
   else if(document.querySelector('#view-hse-form.active')){/* form — no re-render needed */}
@@ -3742,7 +3677,6 @@ function refreshCurrentView(){
   else if(id==='tracker')renderTracker();
   else if(id==='fines')renderFines();
   else if(id==='scorecards')renderScores();
-  else if(id==='analytics')renderAnalytics();
   else if(id==='warning-letter')populateWLSel();
 }
 
