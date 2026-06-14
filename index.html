@@ -591,25 +591,25 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* ── HSE STATS — FULL LEFT ALIGNMENT OVERRIDES ──────────────── */
 #view-hse-stats { text-align: left; }
-#view-hse-stats .kgrid {
+#view-hse-stats .hs-kgrid {
   display: grid;
   gap: 12px;
   margin: 0 0 14px 0;
   width: 100%;
 }
-#view-hse-stats .k5 { grid-template-columns: repeat(5, 1fr); }
-#view-hse-stats .k4 { grid-template-columns: repeat(4, 1fr); }
-#view-hse-stats .k3 { grid-template-columns: repeat(3, 1fr); }
+#view-hse-stats .hs-k5 { grid-template-columns: repeat(5, 1fr); }
+#view-hse-stats .hs-k4 { grid-template-columns: repeat(4, 1fr); }
+#view-hse-stats .hs-k3 { grid-template-columns: repeat(3, 1fr); }
 @media(max-width:900px) {
-  #view-hse-stats .k5 { grid-template-columns: repeat(3, 1fr); }
-  #view-hse-stats .k4 { grid-template-columns: repeat(2, 1fr); }
+  #view-hse-stats .hs-k5 { grid-template-columns: repeat(3, 1fr); }
+  #view-hse-stats .hs-k4 { grid-template-columns: repeat(2, 1fr); }
 }
 @media(max-width:600px) {
-  #view-hse-stats .k5,
-  #view-hse-stats .k4,
-  #view-hse-stats .k3 { grid-template-columns: repeat(2, 1fr); }
+  #view-hse-stats .hs-k5,
+  #view-hse-stats .hs-k4,
+  #view-hse-stats .hs-k3 { grid-template-columns: repeat(2, 1fr); }
 }
-#view-hse-stats .kpi {
+#view-hse-stats .hs-kpi {
   background: #fff;
   border-radius: 10px;
   padding: 14px 16px;
@@ -617,7 +617,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
   text-align: left;
 }
-#view-hse-stats .klbl {
+#view-hse-stats .hs-klbl {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .5px;
@@ -625,31 +625,31 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   color: #6b7a9a;
   margin-bottom: 6px;
 }
-#view-hse-stats .kval {
+#view-hse-stats .hs-kval {
   font-size: 24px;
   font-weight: 800;
   font-family: 'DM Mono', monospace;
   line-height: 1.1;
   color: #2b3a5e;
 }
-#view-hse-stats .ksub {
+#view-hse-stats .hs-ksub {
   font-size: 10px;
   color: #9aa3b8;
   margin-top: 3px;
 }
-#view-hse-stats .kbl .kval { color: #21409a; }
-#view-hse-stats .kor .kval { color: #f58220; }
-#view-hse-stats .krd .kval { color: #c62828; }
-#view-hse-stats .kam .kval { color: #e65100; }
-#view-hse-stats .kgr .kval { color: #2e7d32; }
-#view-hse-stats .kpu .kval { color: #6a1b9a; }
-#view-hse-stats .kbl { border-left: 3px solid #21409a; }
-#view-hse-stats .kor { border-left: 3px solid #f58220; }
-#view-hse-stats .krd { border-left: 3px solid #c62828; }
-#view-hse-stats .kam { border-left: 3px solid #e65100; }
-#view-hse-stats .kgr { border-left: 3px solid #2e7d32; }
-#view-hse-stats .kpu { border-left: 3px solid #6a1b9a; }
-#view-hse-stats .ch2 {
+#view-hse-stats .hs-kbl .kval { color: #21409a; }
+#view-hse-stats .hs-kor .kval { color: #f58220; }
+#view-hse-stats .hs-krd .kval { color: #c62828; }
+#view-hse-stats .hs-kam .kval { color: #e65100; }
+#view-hse-stats .hs-kgr .kval { color: #2e7d32; }
+#view-hse-stats .hs-kpu .kval { color: #6a1b9a; }
+#view-hse-stats .hs-kbl { border-left: 3px solid #21409a; }
+#view-hse-stats .hs-kor { border-left: 3px solid #f58220; }
+#view-hse-stats .hs-krd { border-left: 3px solid #c62828; }
+#view-hse-stats .hs-kam { border-left: 3px solid #e65100; }
+#view-hse-stats .hs-kgr { border-left: 3px solid #2e7d32; }
+#view-hse-stats .hs-kpu { border-left: 3px solid #6a1b9a; }
+#view-hse-stats .hs-ch2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
@@ -657,9 +657,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   width: 100%;
 }
 @media(max-width:700px) {
-  #view-hse-stats .ch2 { grid-template-columns: 1fr; }
+  #view-hse-stats .hs-ch2 { grid-template-columns: 1fr; }
 }
-#view-hse-stats .card {
+#view-hse-stats .hs-card {
   background: #fff;
   border-radius: 12px;
   border: 1px solid #e8ecf5;
@@ -669,8 +669,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   width: 100%;
   box-sizing: border-box;
 }
-#view-hse-stats .ch2 .card { margin: 0; }
-#view-hse-stats .chd {
+#view-hse-stats .hs-ch2 .card { margin: 0; }
+#view-hse-stats .hs-chd {
   padding: 12px 18px;
   border-bottom: 1px solid #edf0f8;
   display: flex;
@@ -678,29 +678,29 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   justify-content: space-between;
   background: linear-gradient(to right, #f7f9ff, #fff);
 }
-#view-hse-stats .chd h3 {
+#view-hse-stats .hs-chd h3 {
   font-size: 13px;
   font-weight: 700;
   color: #2b3a5e;
   margin: 0;
 }
-#view-hse-stats .cbd {
+#view-hse-stats .hs-cbd {
   padding: 16px 18px;
 }
-#view-hse-stats .tw {
+#view-hse-stats .hs-tw {
   overflow-x: auto;
   padding: 0;
 }
-#view-hse-stats .tbl {
+#view-hse-stats .hs-tbl {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
   min-width: 700px;
 }
-#view-hse-stats .tbl thead tr {
+#view-hse-stats .hs-tbl thead tr {
   background: #21409a;
 }
-#view-hse-stats .tbl thead th {
+#view-hse-stats .hs-tbl thead th {
   padding: 9px 10px;
   font-size: 10px;
   font-weight: 700;
@@ -710,20 +710,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   text-align: left;
   white-space: nowrap;
 }
-#view-hse-stats .tbl tbody td {
+#view-hse-stats .hs-tbl tbody td {
   padding: 8px 10px;
   border-top: 1px solid #edf0f8;
   color: #2b3a5e;
   font-size: 11px;
   vertical-align: middle;
 }
-#view-hse-stats .tbl tbody tr:nth-child(even) td {
+#view-hse-stats .hs-tbl tbody tr:nth-child(even) td {
   background: #fafbfd;
 }
-#view-hse-stats .tbl tbody tr:hover td {
+#view-hse-stats .hs-tbl tbody tr:hover td {
   background: #f0f3fb;
 }
-#view-hse-stats .fbar {
+#view-hse-stats .hs-fbar {
   background: #fff;
   border-radius: 10px;
   padding: 12px 16px;
@@ -737,7 +737,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   width: 100%;
   box-sizing: border-box;
 }
-#view-hse-stats .fl {
+#view-hse-stats .hs-fl {
   font-size: 11px;
   font-weight: 700;
   color: #4d5a7a;
@@ -745,12 +745,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   text-transform: uppercase;
   white-space: nowrap;
 }
-#view-hse-stats .fdiv {
+#view-hse-stats .hs-fdiv {
   flex: 1;
   min-width: 8px;
 }
 #view-hse-stats input[type="date"],
-#view-hse-stats .fbar select {
+#view-hse-stats .hs-fbar select {
   font-size: 12px;
   color: #2b3a5e;
   background: #fafbfd;
@@ -762,7 +762,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   transition: border-color .15s, box-shadow .15s;
 }
 #view-hse-stats input[type="date"]:focus,
-#view-hse-stats .fbar select:focus {
+#view-hse-stats .hs-fbar select:focus {
   border-color: #21409a;
   box-shadow: 0 0 0 3px rgba(33,64,154,.08);
   background: #fff;
@@ -1472,17 +1472,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   <div style="padding:20px 24px 40px 24px;min-height:100vh;background:#f0f2f7;box-sizing:border-box;">
 
     <!-- ── Filter Bar ── -->
-    <div class="fbar">
-      <span class="fl">From</span>
+    <div class="hs-fbar">
+      <span class="hs-fl">From</span>
       <input type="date" id="hse-fr" onchange="renderHseStats()">
-      <span class="fl">To</span>
+      <span class="hs-fl">To</span>
       <input type="date" id="hse-to" onchange="renderHseStats()">
-      <div class="fdiv"></div>
-      <span class="fl">Cluster</span>
+      <div class="hs-fdiv"></div>
+      <span class="hs-fl">Cluster</span>
       <select id="hse-cl" onchange="renderHseStats()"><option value="">All Clusters</option></select>
-      <span class="fl">Discipline</span>
+      <span class="hs-fl">Discipline</span>
       <select id="hse-di" onchange="renderHseStats()"><option value="">All Disciplines</option></select>
-      <span class="fl">Subcontractor</span>
+      <span class="hs-fl">Subcontractor</span>
       <select id="hse-sc" onchange="renderHseStats()"><option value="">All Subcontractors</option></select>
       <button onclick="resetHseFilters()" style="background:transparent;border:1.5px solid #d8dff0;border-radius:6px;padding:5px 12px;font-size:11px;color:#6b7a9a;cursor:pointer;font-family:inherit;">✕ Reset</button>
       <span id="hse-rec-count" style="font-size:11px;color:#9aa3b8;"></span>
@@ -1496,79 +1496,79 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div id="hse-status-bar" style="display:none;padding:6px 0 10px 0;font-size:12px;color:#9aa3b8;"></div>
 
     <!-- ── KPI Row 1: Exposure (5 cards) ── -->
-    <div class="kgrid k5">
-      <div class="kpi kbl">
-        <div class="klbl">Total Manhours</div>
-        <div class="kval" id="hk-mh">—</div>
-        <div class="ksub">Exposure hrs</div>
+    <div class="hs-kgrid hs-k5">
+      <div class="hs-kpi hs-kbl">
+        <div class="hs-klbl">Total Manhours</div>
+        <div class="hs-kval" id="hk-mh">—</div>
+        <div class="hs-ksub">Exposure hrs</div>
       </div>
-      <div class="kpi kbl">
-        <div class="klbl">Total Employees</div>
-        <div class="kval" id="hk-emp">—</div>
-        <div class="ksub">Headcount</div>
+      <div class="hs-kpi hs-kbl">
+        <div class="hs-klbl">Total Employees</div>
+        <div class="hs-kval" id="hk-emp">—</div>
+        <div class="hs-ksub">Headcount</div>
       </div>
-      <div class="kpi kbl">
-        <div class="klbl">KM Driven</div>
-        <div class="kval" id="hk-km">—</div>
-        <div class="ksub">Total km</div>
+      <div class="hs-kpi hs-kbl">
+        <div class="hs-klbl">KM Driven</div>
+        <div class="hs-kval" id="hk-km">—</div>
+        <div class="hs-ksub">Total km</div>
       </div>
-      <div class="kpi kor">
-        <div class="klbl">TRIR</div>
-        <div class="kval" id="hk-trir">—</div>
-        <div class="ksub">per 200,000 MH</div>
+      <div class="hs-kpi hs-kor">
+        <div class="hs-klbl">TRIR</div>
+        <div class="hs-kval" id="hk-trir">—</div>
+        <div class="hs-ksub">per 200,000 MH</div>
       </div>
-      <div class="kpi kor">
-        <div class="klbl">LTIFR</div>
-        <div class="kval" id="hk-ltifr">—</div>
-        <div class="ksub">per 1,000,000 MH</div>
+      <div class="hs-kpi hs-kor">
+        <div class="hs-klbl">LTIFR</div>
+        <div class="hs-kval" id="hk-ltifr">—</div>
+        <div class="hs-ksub">per 1,000,000 MH</div>
       </div>
     </div>
 
     <!-- ── KPI Row 2: Incidents (9 cards) ── -->
-    <div class="kgrid k5" style="grid-template-columns:repeat(9,1fr);">
-      <div class="kpi krd"><div class="klbl">Fatalities</div><div class="kval" id="hk-fat">0</div></div>
-      <div class="kpi krd"><div class="klbl">LTI</div><div class="kval" id="hk-lti">0</div></div>
-      <div class="kpi kam"><div class="klbl">MTC</div><div class="kval" id="hk-mtc">0</div></div>
-      <div class="kpi kam"><div class="klbl">RWC</div><div class="kval" id="hk-rwc">0</div></div>
-      <div class="kpi kam"><div class="klbl">FAC</div><div class="kval" id="hk-fac">0</div></div>
-      <div class="kpi kgr"><div class="klbl">SQ Obs</div><div class="kval" id="hk-sqobs">0</div></div>
-      <div class="kpi kgr"><div class="klbl">SQ Near Miss</div><div class="kval" id="hk-sqnm">0</div></div>
-      <div class="kpi kgr"><div class="klbl">PDO HPI</div><div class="kval" id="hk-hpi">0</div></div>
-      <div class="kpi kpu"><div class="klbl">IVMS Red</div><div class="kval" id="hk-red">0</div></div>
+    <div class="hs-kgrid hs-k5" style="grid-template-columns:repeat(9,1fr);">
+      <div class="hs-kpi hs-krd"><div class="hs-klbl">Fatalities</div><div class="hs-kval" id="hk-fat">0</div></div>
+      <div class="hs-kpi hs-krd"><div class="hs-klbl">LTI</div><div class="hs-kval" id="hk-lti">0</div></div>
+      <div class="hs-kpi hs-kam"><div class="hs-klbl">MTC</div><div class="hs-kval" id="hk-mtc">0</div></div>
+      <div class="hs-kpi hs-kam"><div class="hs-klbl">RWC</div><div class="hs-kval" id="hk-rwc">0</div></div>
+      <div class="hs-kpi hs-kam"><div class="hs-klbl">FAC</div><div class="hs-kval" id="hk-fac">0</div></div>
+      <div class="hs-kpi hs-kgr"><div class="hs-klbl">SQ Obs</div><div class="hs-kval" id="hk-sqobs">0</div></div>
+      <div class="hs-kpi hs-kgr"><div class="hs-klbl">SQ Near Miss</div><div class="hs-kval" id="hk-sqnm">0</div></div>
+      <div class="hs-kpi hs-kgr"><div class="hs-klbl">PDO HPI</div><div class="hs-kval" id="hk-hpi">0</div></div>
+      <div class="hs-kpi hs-kpu"><div class="hs-klbl">IVMS Red</div><div class="hs-kval" id="hk-red">0</div></div>
     </div>
 
     <!-- ── Charts Row 1 ── -->
-    <div class="ch2">
-      <div class="card">
-        <div class="chd"><h3>📊 Manhours by Subcontractor</h3></div>
-        <div class="cbd"><canvas id="hse-ch-sc" height="200"></canvas></div>
+    <div class="hs-ch2">
+      <div class="hs-card">
+        <div class="hs-chd"><h3>📊 Manhours by Subcontractor</h3></div>
+        <div class="hs-cbd"><canvas id="hse-ch-sc" height="200"></canvas></div>
       </div>
-      <div class="card">
-        <div class="chd"><h3>📍 Manhours by Cluster</h3></div>
-        <div class="cbd"><canvas id="hse-ch-cl" height="200"></canvas></div>
+      <div class="hs-card">
+        <div class="hs-chd"><h3>📍 Manhours by Cluster</h3></div>
+        <div class="hs-cbd"><canvas id="hse-ch-cl" height="200"></canvas></div>
       </div>
     </div>
 
     <!-- ── Charts Row 2 ── -->
-    <div class="ch2">
-      <div class="card">
-        <div class="chd"><h3>📈 Monthly Manhours Trend</h3></div>
-        <div class="cbd"><canvas id="hse-ch-mo" height="180"></canvas></div>
+    <div class="hs-ch2">
+      <div class="hs-card">
+        <div class="hs-chd"><h3>📈 Monthly Manhours Trend</h3></div>
+        <div class="hs-cbd"><canvas id="hse-ch-mo" height="180"></canvas></div>
       </div>
-      <div class="card">
-        <div class="chd"><h3>⚠ Incident Breakdown</h3></div>
-        <div class="cbd"><canvas id="hse-ch-inc" height="180"></canvas></div>
+      <div class="hs-card">
+        <div class="hs-chd"><h3>⚠ Incident Breakdown</h3></div>
+        <div class="hs-cbd"><canvas id="hse-ch-inc" height="180"></canvas></div>
       </div>
     </div>
 
     <!-- ── Drill Table ── -->
-    <div class="card" style="margin-top:14px;">
-      <div class="chd" style="justify-content:space-between;">
+    <div class="hs-card" style="margin-top:14px;">
+      <div class="hs-chd" style="justify-content:space-between;">
         <h3>🔍 SC × Cluster × Discipline Breakdown</h3>
         <button onclick="exportHseStatsPDF()" style="background:#fff;border:1.5px solid #d8dff0;border-radius:6px;padding:4px 11px;font-size:11px;color:#4d5a7a;cursor:pointer;font-family:inherit;">⬇ PDF</button>
       </div>
-      <div class="tw">
-        <table class="tbl" id="hse-drill-tbl">
+      <div class="hs-tw">
+        <table class="hs-tbl" id="hse-drill-tbl">
           <thead>
             <tr>
               <th style="text-align:left;">Subcontractor</th>
