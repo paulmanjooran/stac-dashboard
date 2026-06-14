@@ -1156,7 +1156,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div class="card" style="margin-bottom:14px;border-left:4px solid var(--orange);">
           <div class="chd"><h3>📋 STEP 1 — Add New Column Headers to Google Sheet</h3><span class="bdg bor">Do this first</span></div>
           <div class="cbd"><span id="cfg-nid" style="display:none;"></span><input id="cfg-usr" type="email" style="display:none;" autocomplete="off">
-          <div class="card" style="margin-top:14px;"><div class="chd"><h3>Master Data Management</h3><div style="display:flex;gap:6px;"><button class="btn bg bsm" onclick="loadMasters(true)">Refresh Masters</button><button class="btn bk bsm" onclick="clearMastersCache()">Clear Masters Cache</button><button class="btn bk bsm" onclick="clearAllCache()" style="color:var(--red);">Clear All Cache</button></div></div><div class="cbd" id="master-panel-body" style="font-size:12px;color:var(--t3);">Loading…</div></div>
+          <div class="card" style="margin-top:14px;"><div class="chd"><h3>Master Data Management</h3><div style="display:flex;gap:6px;"><button class="btn bg bsm" onclick="loadMasters(true)">Refresh Masters</button><button class="btn bk bsm" onclick="clearMastersCache()">Clear Masters Cache</button><button class="btn bk bsm" onclick="clearAllCache()" style="color:var(--red);">Clear All Cache</button><button class="btn bk bsm" onclick="diagSheetAccess()" style="color:#1b7a3e;">🔍 Test Sheet Access</button><button class="btn bk bsm" onclick="loadData(true)">↻ Force Reload</button></div></div><div class="cbd" id="master-panel-body" style="font-size:12px;color:var(--t3);">Loading…</div></div>
           <div class="card" style="margin-top:14px;"><div class="chd"><h3>System Diagnostics</h3><div style="display:flex;gap:6px;"><button class="btn bg bsm" onclick="runDiagnostics()">Run Diagnostics</button><button class="btn bk bsm" onclick="retryDrafts()">Retry Pending Drafts</button></div></div><div class="cbd"><pre id="diag-output" style="font-size:11px;font-family:monospace;background:#f7f8fa;padding:12px;border-radius:6px;white-space:pre-wrap;border:1px solid var(--bdr);min-height:60px;">Click Run Diagnostics.</pre></div></div>
           
             <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Your sheet currently has columns <strong>A–R</strong>. Add these headers in row 1, columns <strong>S to AF</strong>. Existing data in A–R is <strong>never touched</strong>.</div>
@@ -1678,7 +1678,8 @@ let liveCategories=[];
 const MASTERS={companies:[],clusters:[],disciplines:[],contracts:[],_loadedAt:0,
   _ttl:60*60*1000,isStale(){return Date.now()-this._loadedAt>this._ttl;},
   markLoaded(){this._loadedAt=Date.now();}};
-const CACHE_TTL_STAC=5*60*1000,CACHE_TTL_MASTERS=60*60*1000;
+const CACHE_TTL_STAC=5*60*1000, // 5-minute cache — use clearAllCache() to force reload
+    CACHE_TTL_MASTERS=60*60*1000;  // 1-hour master data cache
 const CACHE_KEY_STAC='stac_cache_v6',CACHE_KEY_MASTERS='stac_masters_v6';
 const CACHE_KEY_TS_STAC='stac_cache_ts_v6',CACHE_KEY_TS_MST='stac_masters_ts_v6';
 let _lastSuccessfulSync=0,_consecutiveFailures=0,_healthInterval=null;
@@ -1951,9 +1952,9 @@ async function fetchGvizData(sheetId,gid,sheetName){
     if(data.status==='error')throw new Error('gviz error: '+JSON.stringify(data.errors));
     return data;
   }catch(e){
-    console.warn('fetchGvizData cors failed ('+sheetName||gid+'):',e.message,
-      '— if sheet is not public, set Share → Anyone with link → Viewer');
-    // JSONP fallback for environments where cors is blocked
+    console.warn('fetchGvizData failed ['+(sheetName||gid)+']:',e.message,'URL:',url);
+    console.warn('Fix: Google Sheet → Share → Anyone with link → Viewer');
+    // JSONP fallback
     return await loadSheetGvizJSONP(sheetId,gid,sheetName);
   }
 }
@@ -1962,7 +1963,7 @@ function loadSheetGvizJSONP(sheetId,gid,sheetName){
   return new Promise(resolve=>{
     const cb='_gviz_'+Math.random().toString(36).substr(2,9);
     const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
-    const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;responseHandler:${cb}&${param}&_=${Date.now()}`;
+    const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;handler:${cb}&${param}&headers=2&_=${Date.now()}`;
     const timeout=setTimeout(()=>{delete window[cb];resolve(null);},8000);
     window[cb]=data=>{clearTimeout(timeout);delete window[cb];resolve(data&&data.status!=='error'?data:null);};
     const s=document.createElement('script');
@@ -2154,7 +2155,14 @@ async function loadData(force){
       }
     }
     if(matrixRaw)parseScoringMatrixSheet(matrixRaw);
-  }catch(e){console.error('loadData error:',e);_consecutiveFailures++;}
+  }catch(e){
+    console.error('loadData error:',e);
+    _consecutiveFailures++;
+    // Show the actual error so user knows exactly what's wrong
+    const _errEl=document.getElementById('dsrc');
+    if(_errEl){_errEl.textContent='❌ '+e.message.substring(0,60);_errEl.className='bdg brd';}
+    console.warn('gviz fetch failed — check: 1) Sheet shared Anyone→Viewer 2) GID 342483107 correct 3) No corporate firewall blocking docs.google.com');
+  }
   if(!live)stacData=[...RAW];
   if(!subconData.length)subconData=[...RAW_SC];
   populateCategoryDropdown();
@@ -3777,13 +3785,27 @@ async function checkAndSaveAdmin(){
 }
 function copyScript(){navigator.clipboard.writeText(SCRIPT_CODE).then(()=>toast('✅ Apps Script copied!',2000));}
 function testConnection(){
-  // Clear stale cache then force fresh load
   try{
     localStorage.removeItem(CACHE_KEY_STAC);
     localStorage.removeItem(CACHE_KEY_TS_STAC);
   }catch(e){}
   toast('⏳ Connecting to Google Sheet…',3000);
-  loadData(true); // force=true bypasses cache
+  loadData(true);
+}
+
+function diagSheetAccess(){
+  // Opens raw gviz URL in new tab — user can see if sheet is accessible
+  const sid=CFG.sheetId;
+  const url='https://docs.google.com/spreadsheets/d/'+sid+'/gviz/tq?tqx=out:json&headers=2&gid=342483107&_='+Date.now();
+  const w=window.open(url,'_blank');
+  if(!w)toast('⚠️ Popup blocked — allow popups and retry',3000,'warn');
+  else toast('✅ Opened gviz test URL — if you see JSON data, sheet access is OK. If error, check sharing settings.',6000);
+}
+
+function diagSheetUrl(){
+  const sid=CFG.sheetId;
+  const url='https://docs.google.com/spreadsheets/d/'+sid+'/edit#gid=342483107';
+  window.open(url,'_blank');
 }
 
 function checkScriptUrl(){
