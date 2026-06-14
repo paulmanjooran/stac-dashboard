@@ -70,7 +70,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #pg-title{font-size:14px;font-weight:600;}
 #pg-sub{font-size:11px;color:var(--t3);margin-left:8px;}
 .tb-r{display:flex;align-items:center;gap:8px;}
-#cnt{padding:18px;flex:1;}#cnt.hse-active{padding:0 !important;display:block;width:100%;}
+#cnt{padding:18px;flex:1;overflow-y:auto;}#cnt.hse-active{padding:0 !important;width:100%;}
 .view{display:none;}.view.active{display:block;}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit;white-space:nowrap;}
@@ -771,9 +771,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 /* ══════════════════════════════════════════════════════
    HSE SCREENS — DEFINITIVE LAYOUT RULES
    ══════════════════════════════════════════════════════ */
-#cnt.hse-active {
-  padding: 0 !important;
-}
+
 /* Force views to fill full available width below topbar */
 
 /* === HSE VIEWS — SINGLE AUTHORITATIVE DISPLAY RULE === */
@@ -781,9 +779,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #view-hse-stats { display: none !important; }
 #view-hse-form.active  { display: block !important; width: 100%; box-sizing: border-box; }
 #view-hse-stats.active { display: block !important; width: 100%; box-sizing: border-box; }
-#cnt.hse-active {
-  padding: 0;
-}
+/* #cnt.hse-active padding handled above */
 </style>
 </head><body>
 <nav id="sb">
@@ -3678,12 +3674,9 @@ function nav(v){
     if(v==='hse-form'||v==='hse-stats'){
       cnt.classList.add('hse-active');
       cnt.style.padding='0';
-      cnt.style.width='100%';
     } else {
       cnt.classList.remove('hse-active');
       cnt.style.padding='';
-      cnt.style.width='';
-      // Reset scInitialized so HSE form fully re-inits on next visit
       if(typeof scInitialized !== 'undefined') scInitialized = false;
     }
   }
