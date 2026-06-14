@@ -4815,6 +4815,9 @@ async function scHandleSubmit(e) {
   const txtEl = document.getElementById('contract_no_txt');
   data['contract_no'] = (selEl.style.display !== 'none') ? selEl.value : txtEl.value;
 
+  // Always set action so GS doPost routes correctly to recordTransaction
+  data['action'] = 'hse_stats';
+
   // Date validation
   if (data.period_start && data.period_end && data.period_start > data.period_end) {
     scShowToast('Period End must be after Period Start.', true);
