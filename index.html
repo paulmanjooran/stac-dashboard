@@ -1938,7 +1938,7 @@ const RISK_LEVELS={
 // ============================================================
 async function fetchGvizData(sheetId,gid,sheetName){
   const param=gid?`gid=${gid}`:`sheet=${encodeURIComponent(sheetName)}`;
-  const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&${param}&_=${Date.now()}`;
+  const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&headers=2&${param}&_=${Date.now()}`;
   try{
     // mode:'cors' required — gviz is a public CORS endpoint, no-cors returns opaque response
     const r=await fetch(url,{mode:'cors',cache:'no-store'});
