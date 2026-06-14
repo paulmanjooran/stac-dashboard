@@ -204,6 +204,13 @@ const CFG={sheetId:'18Tr6xLT9_2yuHbUaJELGeeSJAAanncBipmlvBbMqxMo'};
 let subconData=[], charts={};
 let scTxnData=[];
 
+// Parse any value to a safe number
+function hn(v){
+  if(v===null||v===undefined||v==='')return 0;
+  const n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));
+  return isNaN(n)?0:n;
+}
+
 
 
 function mkChart(id,type,labels,vals,colors,isDoughnut,onClick,borderColor){
