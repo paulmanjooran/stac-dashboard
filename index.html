@@ -803,7 +803,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sbi" onclick="nav('performance')"><span class="ic">📋</span>Performance Report</div>
     <div class="sb-sec">HSE Stats</div>
     <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
-    <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Stats Dashboard</div>
+    <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Statistics Dashboard</div>
     <div class="sb-sec">Tools</div>
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
@@ -1450,38 +1450,38 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
     <div id="view-hse-stats" class="view" style="min-height:100vh;background:#f0f2f7;padding:20px 24px 48px;box-sizing:border-box;">
 
-  <!-- Page header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+  <!-- ── Page Header ── -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
     <div>
-      <div style="font-size:17px;font-weight:800;color:#1a2a52;letter-spacing:-.2px;">Subcontractor HSE Statistics</div>
-      <div style="font-size:11px;color:#6b7a9a;margin-top:2px;">Manhour exposure · Incident rates · IVMS · Observations — live from SC_HSE_TXN</div>
+      <div style="font-size:18px;font-weight:800;color:#1a2a52;letter-spacing:-.3px;">Subcontractor HSE Statistics</div>
+      <div style="font-size:11px;color:#6b7a9a;margin-top:3px;">Live from SC_HSE_TXN · Manhours · Incidents · IVMS · Observations · Road Safety</div>
     </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="hseRefresh()" style="background:#21409a;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.2px;">↻ Refresh</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span id="hse-rec-count" style="font-size:11px;color:#9aa3b8;"></span>
+      <button onclick="hseRefresh()" style="background:#21409a;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;">↻ Refresh</button>
       <button onclick="exportHseStatsXL()" style="background:#fff;border:1.5px solid #d0d7ea;border-radius:7px;padding:7px 14px;font-size:12px;color:#4d5a7a;cursor:pointer;">⬇ Export CSV</button>
     </div>
   </div>
 
-  <!-- Status bar -->
+  <!-- ── Status bar ── -->
   <div id="hse-status-bar" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#856404;font-weight:600;"></div>
 
-  <!-- Filter bar -->
+  <!-- ── Filter Bar ── -->
   <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;padding:12px 18px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-    <label style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">From</label>
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Period</span>
     <input type="date" id="hse-fr" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;">
-    <label style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">To</label>
+    <span style="font-size:11px;color:#9aa3b8;">→</span>
     <input type="date" id="hse-to" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;">
-    <label style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Cluster</label>
-    <select id="hse-cl" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;"><option value="">All Clusters</option></select>
-    <label style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Discipline</label>
-    <select id="hse-di" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;"><option value="">All Disciplines</option></select>
-    <label style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Subcontractor</label>
-    <select id="hse-sc" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;min-width:180px;"><option value="">All Subcontractors</option></select>
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Cluster</span>
+    <select id="hse-cl" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;"><option value="">All</option></select>
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Discipline</span>
+    <select id="hse-di" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;"><option value="">All</option></select>
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Subcontractor</span>
+    <select id="hse-sc" onchange="renderHseStats()" style="border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 9px;font-size:12px;color:#2b3a5e;background:#fafbfd;min-width:180px;"><option value="">All</option></select>
     <button onclick="resetHseFilters()" style="background:transparent;border:1.5px solid #d0d7ea;border-radius:6px;padding:5px 13px;font-size:11px;color:#6b7a9a;cursor:pointer;">✕ Reset</button>
-    <span id="hse-rec-count" style="font-size:11px;color:#9aa3b8;margin-left:4px;"></span>
   </div>
 
-  <!-- KPI Row 1: Exposure metrics -->
+  <!-- ── Row 1: Exposure KPIs ── -->
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;">
     <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;border-left:4px solid #21409a;padding:15px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">Manhours</div>
@@ -1491,7 +1491,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;border-left:4px solid #21409a;padding:15px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">Employees</div>
       <div id="hk-emp" style="font-size:26px;font-weight:800;font-family:'DM Mono',monospace;color:#21409a;line-height:1;">—</div>
-      <div style="font-size:10px;color:#9aa3b8;margin-top:4px;">Headcount (peak)</div>
+      <div style="font-size:10px;color:#9aa3b8;margin-top:4px;">Headcount</div>
     </div>
     <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;border-left:4px solid #21409a;padding:15px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">KM Driven</div>
@@ -1510,60 +1510,92 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
   </div>
 
-  <!-- KPI Row 2: Incidents + observations -->
-  <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:10px;margin-bottom:16px;">
-    <div style="background:#fff;border-radius:10px;border:1px solid #fde8e8;border-left:4px solid #c62828;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">Fatalities</div>
-      <div id="hk-fat" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#c62828;">0</div>
+  <!-- ── Row 2: Incident + Observation KPIs ── -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;">
+    <div style="background:#fff;border-radius:10px;border:1px solid #fde8e8;border-left:4px solid #c62828;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">Fatalities</div>
+      <div id="hk-fat" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#c62828;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #fde8e8;border-left:4px solid #c62828;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">LTI</div>
-      <div id="hk-lti" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#c62828;">0</div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #fde8e8;border-left:4px solid #c62828;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">LTI</div>
+      <div id="hk-lti" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#c62828;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #fef3e6;border-left:4px solid #e65100;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">MTC</div>
-      <div id="hk-mtc" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;">0</div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #fef3e6;border-left:4px solid #e65100;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">MTC</div>
+      <div id="hk-mtc" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #fef3e6;border-left:4px solid #e65100;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">RWC</div>
-      <div id="hk-rwc" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;">0</div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #fef3e6;border-left:4px solid #e65100;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">RWC</div>
+      <div id="hk-rwc" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #fef3e6;border-left:4px solid #e65100;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">FAC</div>
-      <div id="hk-fac" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;">0</div>
-    </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #e6f4ea;border-left:4px solid #2e7d32;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">SQ Obs</div>
-      <div id="hk-sqobs" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;">0</div>
-    </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #e6f4ea;border-left:4px solid #2e7d32;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">SQ NM</div>
-      <div id="hk-sqnm" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;">0</div>
-    </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #e6f4ea;border-left:4px solid #2e7d32;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">PDO HPI</div>
-      <div id="hk-hpi" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;">0</div>
-    </div>
-    <div style="background:#fff;border-radius:10px;border:1px solid #ede7f6;border-left:4px solid #6a1b9a;padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7a9a;margin-bottom:5px;">IVMS Red</div>
-      <div id="hk-red" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#6a1b9a;">0</div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #fef3e6;border-left:4px solid #e65100;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">FAC</div>
+      <div id="hk-fac" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#e65100;">0</div>
     </div>
   </div>
 
-  <!-- Charts: 2x2 grid -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+  <!-- ── Row 3: Observations + IVMS + Road Safety KPIs ── -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;">
+    <div style="background:#fff;border-radius:10px;border:1px solid #e6f4ea;border-left:4px solid #2e7d32;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">SQ Observations</div>
+      <div id="hk-sqobs" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;">0</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #e6f4ea;border-left:4px solid #2e7d32;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">SQ Near Miss</div>
+      <div id="hk-sqnm" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;">0</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #e6f4ea;border-left:4px solid #2e7d32;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">PDO HPI</div>
+      <div id="hk-hpi" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#2e7d32;">0</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #ede7f6;border-left:4px solid #6a1b9a;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">IVMS Red (YTD)</div>
+      <div id="hk-red" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#6a1b9a;">0</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #e3f2fd;border-left:4px solid #0277bd;padding:14px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:5px;">RS Warning Letters</div>
+      <div id="hk-rswl" style="font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:#0277bd;">0</div>
+    </div>
+  </div>
+
+  <!-- ── Row 4: Road Safety detail KPIs ── -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+    <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;border-left:3px solid #4d5a7a;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">LSR Violations (PDO)</div>
+      <div id="hk-lsrpdo" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#4d5a7a;">0</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;border-left:3px solid #4d5a7a;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">LSR Violations (Int)</div>
+      <div id="hk-lsrint" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#4d5a7a;">0</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;border-left:3px solid #4d5a7a;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">RS Counselling</div>
+      <div id="hk-rscounsel" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#4d5a7a;">0</div>
+    </div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;border-left:3px solid #4d5a7a;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7a9a;margin-bottom:4px;">RS Final Warning</div>
+      <div id="hk-rsfinal" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:#4d5a7a;">0</div>
+    </div>
+  </div>
+
+  <!-- ── Charts Row 1 ── -->
+  <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px;">
     <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
       <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;">
-        <span style="font-size:13px;font-weight:700;color:#2b3a5e;">📊 Manhours by Subcontractor</span>
+        <span style="font-size:13px;font-weight:700;color:#2b3a5e;">📊 Manhours by Subcontractor (Top 10)</span>
       </div>
-      <div style="padding:16px;"><canvas id="hse-ch-sc" height="200"></canvas></div>
+      <div style="padding:16px;"><canvas id="hse-ch-sc" height="220"></canvas></div>
     </div>
     <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
       <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;">
         <span style="font-size:13px;font-weight:700;color:#2b3a5e;">📍 Manhours by Cluster</span>
       </div>
-      <div style="padding:16px;"><canvas id="hse-ch-cl" height="200"></canvas></div>
+      <div style="padding:16px;"><canvas id="hse-ch-cl" height="220"></canvas></div>
     </div>
+  </div>
+
+  <!-- ── Charts Row 2 ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
     <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
       <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;">
         <span style="font-size:13px;font-weight:700;color:#2b3a5e;">📈 Monthly Manhours Trend</span>
@@ -1578,33 +1610,56 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
   </div>
 
-  <!-- Detail table -->
+  <!-- ── Charts Row 3 ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;">
+        <span style="font-size:13px;font-weight:700;color:#2b3a5e;">🔴 IVMS Red Trend (Monthly)</span>
+      </div>
+      <div style="padding:16px;"><canvas id="hse-ch-ivms" height="200"></canvas></div>
+    </div>
+    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;">
+        <span style="font-size:13px;font-weight:700;color:#2b3a5e;">👷 Manhours by Discipline</span>
+      </div>
+      <div style="padding:16px;"><canvas id="hse-ch-disc" height="200"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Detail Table ── -->
   <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
     <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:13px;font-weight:700;color:#2b3a5e;">🔍 Detail: SC × Cluster × Discipline</span>
-      <span id="hse-rec-count2" style="font-size:11px;color:#9aa3b8;"></span>
+      <span style="font-size:13px;font-weight:700;color:#2b3a5e;">🔍 Transaction Detail — SC × Cluster × Discipline</span>
+      <span id="hse-tbl-count" style="font-size:11px;color:#9aa3b8;"></span>
     </div>
     <div style="overflow-x:auto;">
-      <table id="hse-drill-tbl" style="width:100%;border-collapse:collapse;font-size:11px;min-width:860px;">
+      <table id="hse-drill-tbl" style="width:100%;border-collapse:collapse;font-size:11px;min-width:1000px;">
         <thead>
           <tr style="background:#21409a;">
-            <th style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Subcontractor</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Cluster</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Discipline</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Month</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Employees</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Manhours</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">TRIR</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">LTI</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Fatal</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">MTC</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">RWC</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">SQ Obs</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">IVMS Red</th>
+            <th style="padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">TXN ID</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Subcontractor</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Cluster</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Discipline</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Report Month</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Employees</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Manhours</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">KM Driven</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">TRIR</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">LTIFR</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">Fatal</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">LTI</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">MTC</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">RWC</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">FAC</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">SQ Obs</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">SQ NM</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">HPI</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">IVMS Red</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">DQ</th>
           </tr>
         </thead>
         <tbody id="hse-drill-body">
-          <tr><td colspan="13" style="text-align:center;padding:40px;color:#9aa3b8;font-size:13px;">Click ↻ Refresh to load live data from Google Sheet</td></tr>
+          <tr><td colspan="20" style="text-align:center;padding:40px;color:#9aa3b8;font-size:13px;">Click ↻ Refresh to load live data from Google Sheet</td></tr>
         </tbody>
       </table>
     </div>
@@ -3536,7 +3591,7 @@ const PAGES={
   'warning-letter':{t:'Warning Letters',s:'Generate, preview, download and issue warning letters'},
   'setup':{t:'Setup',s:'Google Sheets connection and Apps Script deployment'},
   'hse-form':{t:'Subcontractor HSE Data Entry Form',s:'Monthly subcontractor HSE statistics submission — MTC, RWC, IVMS, Safety Qube'},
-  'hse-stats':{t:'Subcontractor HSE Stats Dashboard',s:'Manhour, incident and compliance analytics — all filter permutations'}
+  'hse-stats':{t:'Subcontractor HSE Statistics Dashboard',s:'Manhour exposure · Incident rates · IVMS · Observations — live from SC_HSE_TXN'}
 };
 
 // ════════════════════════════════════════════════════════════
@@ -4131,275 +4186,322 @@ window.addEventListener('DOMContentLoaded',()=>{
 // ════════ HSE STATS DASHBOARD MODULE ════════
 let scTxnData = [];
 
-// Safe number parser
-function hn(v){const n=parseFloat(String(v||'').replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;}
-
-// Get value of a filter element
 function gv2(id){const el=document.getElementById(id);return el?el.value:'';}
 
-// ── Filter ────────────────────────────────────────────────────────────────
 function getHseFiltered(){
-  const fr=gv2('hse-fr'), to=gv2('hse-to'),
+  const fr=gv2('hse-fr'),to=gv2('hse-to'),
         cl=gv2('hse-cl').trim().toLowerCase(),
         di=gv2('hse-di').trim().toLowerCase(),
         sc=gv2('hse-sc').trim().toLowerCase();
   return scTxnData.filter(r=>{
-    if(fr && r.period_start && r.period_start < fr) return false;
-    if(to && r.period_end   && r.period_end   > to) return false;
-    if(cl && (r.cluster||'').trim().toLowerCase()    !== cl) return false;
-    if(di && (r.discipline||'').trim().toLowerCase() !== di) return false;
-    if(sc && (r.sc||'').trim().toLowerCase()         !== sc) return false;
+    if(fr&&r.period_start&&r.period_start<fr)return false;
+    if(to&&r.period_end&&r.period_end>to)return false;
+    if(cl&&(r.cluster||'').trim().toLowerCase()!==cl)return false;
+    if(di&&(r.discipline||'').trim().toLowerCase()!==di)return false;
+    if(sc&&(r.sc||'').trim().toLowerCase()!==sc)return false;
     return true;
   });
 }
 
-// ── Reset filters ─────────────────────────────────────────────────────────
 function resetHseFilters(){
   ['hse-fr','hse-to','hse-cl','hse-di','hse-sc'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
+    const el=document.getElementById(id);if(el)el.value='';
   });
   renderHseStats();
 }
 
-// ── Refresh — clears cache, re-fetches ───────────────────────────────────
 function hseRefresh(){
   scTxnData=[];
   const sb=document.getElementById('hse-status-bar');
-  if(sb){sb.style.display='block'; sb.textContent='Refreshing data from sheet…';}
+  if(sb){sb.style.display='block';sb.textContent='Refreshing data from SC_HSE_TXN…';}
   loadHseStatsData();
 }
 
-// ── Populate filter dropdowns ─────────────────────────────────────────────
 function populateHseStatsSCDropdown(){
-  function dedup(arr){
-    const seen=new Set();
-    return arr.filter(v=>{
-      const s=String(v||'').trim(); if(s.length<2) return false;
-      const k=s.toLowerCase().replace(/[^a-z0-9]/g,'');
-      if(seen.has(k)) return false; seen.add(k); return true;
-    }).sort((a,b)=>String(a).localeCompare(String(b)));
-  }
-  function fill(id, opts, ph){
-    const el=document.getElementById(id); if(!el) return;
+  function fillSel(id,opts,ph){
+    const el=document.getElementById(id);if(!el)return;
     const cur=el.value;
     el.innerHTML='<option value="">'+ph+'</option>';
     opts.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});
-    if(cur && Array.from(el.options).some(o=>o.value===cur)) el.value=cur;
+    if(cur&&Array.from(el.options).some(o=>o.value===cur))el.value=cur;
+  }
+  function dedup(arr){
+    const seen=new Set();
+    return arr.filter(v=>{
+      const s=String(v||'').trim();if(s.length<2)return false;
+      const k=s.toLowerCase().replace(/[^a-z0-9]/g,'');
+      if(seen.has(k))return false;seen.add(k);return true;
+    }).sort((a,b)=>String(a).localeCompare(String(b)));
   }
   const sub=(typeof subconData!=='undefined'&&subconData.length)?subconData:[];
-  fill('hse-sc', dedup([...scTxnData.map(r=>r.sc),    ...sub.map(s=>s.company)]),                            'All Subcontractors');
-  fill('hse-cl', dedup([...scTxnData.map(r=>r.cluster),...sub.map(s=>s.cluster||''),
-    'Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba']),                                            'All Clusters');
-  fill('hse-di', dedup([...scTxnData.map(r=>r.discipline),
-    'Civil','Mechanical','Electrical','Inspection/Testing','Plant & Logistics']),                              'All Disciplines');
+  fillSel('hse-sc',dedup([...scTxnData.map(r=>r.sc),...sub.map(s=>s.company)]),'All Subcontractors');
+  const clBase=['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'];
+  fillSel('hse-cl',dedup([...scTxnData.map(r=>r.cluster),...clBase]),'All Clusters');
+  const diBase=['Civil','Mechanical','Electrical','Third Party Inspection','Plant & Logistics'];
+  fillSel('hse-di',dedup([...scTxnData.map(r=>r.discipline),...diBase]),'All Disciplines');
 }
 
-// ── Main render ───────────────────────────────────────────────────────────
 function renderHseStats(){
-  const rows = getHseFiltered();
-  const MO = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const rows=getHseFiltered();
+  const MO=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 
-  // Record count badge (both filter bar + table header)
-  const cntTxt = rows.length + ' record' + (rows.length!==1?'s':'');
-  ['hse-rec-count','hse-rec-count2'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.textContent=cntTxt;
-  });
-
-  // ── Aggregate KPIs
-  let mh=0,emp=0,km=0,fat=0,lti=0,mtc=0,rwc=0,fac=0,sqObs=0,sqNm=0,hpi=0,red=0;
+  // Aggregates
+  let mh=0,emp=0,km=0,fat=0,lti=0,mtc=0,rwc=0,fac=0;
+  let sqObs=0,sqNm=0,hpi=0,red=0;
+  let lsrPdo=0,lsrInt=0,rsCounsel=0,rsWarn=0,rsFinal=0;
   rows.forEach(r=>{
-    mh+=hn(r.manhours);  emp+=hn(r.employees);  km+=hn(r.km_driven);
-    fat+=hn(r.fatalities); lti+=hn(r.lti); mtc+=hn(r.mtc); rwc+=hn(r.rwc); fac+=hn(r.fac);
-    sqObs+=hn(r.sq_obs); sqNm+=hn(r.sq_nm); hpi+=hn(r.pdo_hpi);
+    mh+=hn(r.manhours);emp+=hn(r.employees);km+=hn(r.km_driven);
+    fat+=hn(r.fatalities);lti+=hn(r.lti);mtc+=hn(r.mtc);rwc+=hn(r.rwc);fac+=hn(r.fac);
+    sqObs+=hn(r.sq_obs);sqNm+=hn(r.sq_nm);hpi+=hn(r.pdo_hpi);
     MO.forEach(m=>red+=hn(r['ivms_red_'+m]));
+    lsrPdo+=hn(r.lsr_pdo);lsrInt+=hn(r.lsr_int);
+    rsCounsel+=hn(r.rs_counsel);rsWarn+=hn(r.rs_warn);rsFinal+=hn(r.rs_final);
   });
-  const trir  = mh>0 ? ((lti+mtc+rwc+fac)*200000/mh).toFixed(2) : '—';
-  const ltifr = mh>0 ? (lti*1000000/mh).toFixed(2)               : '—';
+  const trir=mh>0?((lti+mtc+rwc+fac)*200000/mh).toFixed(2):'—';
+  const ltifr=mh>0?(lti*1000000/mh).toFixed(2):'—';
 
-  // ── Set KPI elements
-  function hkSet(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
-  hkSet('hk-mh',   mh.toLocaleString());
-  hkSet('hk-emp',  emp.toLocaleString());
-  hkSet('hk-km',   km.toLocaleString());
-  hkSet('hk-trir', trir);
-  hkSet('hk-ltifr',ltifr);
-  hkSet('hk-fat',  fat);   const fatEl=document.getElementById('hk-fat');
-  hkSet('hk-lti',  lti);   const ltiEl=document.getElementById('hk-lti');
-  hkSet('hk-mtc',  mtc);
-  hkSet('hk-rwc',  rwc);
-  hkSet('hk-fac',  fac);
-  hkSet('hk-sqobs',sqObs);
-  hkSet('hk-sqnm', sqNm);
-  hkSet('hk-hpi',  hpi);
-  hkSet('hk-red',  red);
+  // KPI update helper
+  function sv(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+  sv('hse-rec-count',rows.length+' record'+(rows.length!==1?'s':''));
+  sv('hk-mh',mh.toLocaleString());sv('hk-emp',emp.toLocaleString());
+  sv('hk-km',km.toLocaleString());sv('hk-trir',trir);sv('hk-ltifr',ltifr);
+  sv('hk-fat',fat);sv('hk-lti',lti);sv('hk-mtc',mtc);sv('hk-rwc',rwc);sv('hk-fac',fac);
+  sv('hk-sqobs',sqObs);sv('hk-sqnm',sqNm);sv('hk-hpi',hpi);sv('hk-red',red);
+  sv('hk-rswl',rsWarn);sv('hk-lsrpdo',lsrPdo);sv('hk-lsrint',lsrInt);
+  sv('hk-rscounsel',rsCounsel);sv('hk-rsfinal',rsFinal);
 
-  // Flash red cards if actual fatalities/LTI
-  if(fatEl) fatEl.style.color = fat>0 ? '#c62828' : '#c62828'; // always red styling from card
-  if(ltiEl) ltiEl.style.color = lti>0 ? '#c62828' : '#c62828';
-
-  // ── Chart 1: Top 10 SCs by manhours (horizontal-ish bar)
+  // Chart 1: Manhours by SC (bar)
   const scMap={};
-  rows.forEach(r=>{if(!r.sc)return; scMap[r.sc]=(scMap[r.sc]||0)+hn(r.manhours);});
+  rows.forEach(r=>{if(!r.sc)return;scMap[r.sc]=(scMap[r.sc]||0)+hn(r.manhours);});
   const scTop=Object.entries(scMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
   mkChart('hse-ch-sc','bar',
     scTop.map(([k])=>k.length>24?k.substring(0,24)+'…':k),
     scTop.map(([,v])=>v),
-    scTop.map(()=>'#21409a99'), false, null, '#21409a');
+    scTop.map(()=>'#21409a99'),false,null,'#21409a');
 
-  // ── Chart 2: Manhours by cluster (doughnut)
+  // Chart 2: Manhours by Cluster (doughnut)
   const clMap={};
-  rows.forEach(r=>{if(!r.cluster)return; clMap[r.cluster]=(clMap[r.cluster]||0)+hn(r.manhours);});
-  const clE=Object.entries(clMap);
+  rows.forEach(r=>{if(!r.cluster)return;clMap[r.cluster]=(clMap[r.cluster]||0)+hn(r.manhours);});
+  const clE=Object.entries(clMap).sort((a,b)=>b[1]-a[1]);
   mkChart('hse-ch-cl','doughnut',
-    clE.map(([k])=>k), clE.map(([,v])=>v),
-    ['#21409a','#f58220','#1b7a3e','#c0392b','#8e44ad','#00838f'].slice(0,clE.length),
-    true, null, null);
+    clE.map(([k])=>k),clE.map(([,v])=>v),
+    ['#21409a','#f58220','#2e7d32','#c62828','#6a1b9a','#0277bd'].slice(0,clE.length),
+    true,null,null);
 
-  // ── Chart 3: Monthly manhours trend (bar)
+  // Chart 3: Monthly Manhours trend (line)
   const moMap={};
-  rows.forEach(r=>{if(!r.report_month)return; moMap[r.report_month]=(moMap[r.report_month]||0)+hn(r.manhours);});
+  rows.forEach(r=>{if(!r.report_month)return;moMap[r.report_month]=(moMap[r.report_month]||0)+hn(r.manhours);});
   const moKeys=Object.keys(moMap).sort();
-  mkChart('hse-ch-mo','bar',
-    moKeys, moKeys.map(k=>moMap[k]),
-    Array(moKeys.length).fill('#21409a66'), false, null, '#21409a');
+  if(moKeys.length){
+    const el=document.getElementById('hse-ch-mo');if(el){
+      if(charts['hse-ch-mo']){charts['hse-ch-mo'].destroy();charts['hse-ch-mo']=null;}
+      try{charts['hse-ch-mo']=new Chart(el,{type:'line',data:{labels:moKeys,
+        datasets:[{data:moKeys.map(k=>moMap[k]),borderColor:'#21409a',backgroundColor:'#21409a22',
+          borderWidth:2,pointRadius:4,fill:true,tension:.3}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:9},maxRotation:40}}}}});}
+      catch(e){console.warn('hse-ch-mo chart error',e);}
+    }
+  }
 
-  // ── Chart 4: Incident breakdown (doughnut — only shows non-zero)
-  const iLabels=['Fatal','LTI','MTC','RWC','FAC'];
-  const iVals  =[fat,lti,mtc,rwc,fac];
-  const iColors=['#c62828','#e53935','#d68910','#f58220','#1b7a3e'];
-  const iLf=iLabels.filter((_,i)=>iVals[i]>0);
-  const iVf=iVals.filter(v=>v>0);
-  const iCf=iColors.filter((_,i)=>iVals[i]>0);
+  // Chart 4: Incident breakdown (doughnut)
+  const iL=['Fatal','LTI','MTC','RWC','FAC'],iV=[fat,lti,mtc,rwc,fac];
+  const iC=['#c62828','#e53935','#e65100','#f57c00','#2e7d32'];
+  const iLf=iL.filter((_,i)=>iV[i]>0),iVf=iV.filter(v=>v>0),iCf=iC.filter((_,i)=>iV[i]>0);
   if(iVf.length){
     mkChart('hse-ch-inc','doughnut',iLf,iVf,iCf,true,null,null);
   } else {
     const cv=document.getElementById('hse-ch-inc');
-    if(cv){
-      if(charts['hse-ch-inc']){charts['hse-ch-inc'].destroy();charts['hse-ch-inc']=null;}
-      const ctx=cv.getContext('2d');
-      ctx.clearRect(0,0,cv.width,cv.height);
-      ctx.fillStyle='#c8d0e0';
-      ctx.font='600 13px sans-serif';
-      ctx.textAlign='center';
-      ctx.textBaseline='middle';
-      ctx.fillText('No incidents in selection',cv.width/2,cv.height/2);
-    }
+    if(cv){if(charts['hse-ch-inc']){charts['hse-ch-inc'].destroy();charts['hse-ch-inc']=null;}
+      const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+      ctx.fillStyle='#c8d0e0';ctx.font='12px sans-serif';ctx.textAlign='center';
+      ctx.fillText('No incidents recorded',cv.width/2,cv.height/2);}
   }
 
-  // ── Drill-down table
-  const tbody=document.getElementById('hse-drill-body'); if(!tbody) return;
-  if(!rows.length){
-    const msg = scTxnData.length===0
-      ? 'No data loaded — click ↻ Refresh above'
-      : 'No records match the selected filters.';
-    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:40px;color:#9aa3b8;font-size:13px;">'+msg+'</td></tr>';
-    return;
+  // Chart 5: IVMS Red by month (bar) — sum across all records
+  const ivmsMonthly=MO.map(m=>rows.reduce((s,r)=>s+hn(r['ivms_red_'+m]),0));
+  const hasIvms=ivmsMonthly.some(v=>v>0);
+  if(hasIvms){
+    mkChart('hse-ch-ivms','bar',
+      ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      ivmsMonthly,ivmsMonthly.map(v=>v>0?'#c62828aa':'#e2e6f0'),false,null,'#c62828');
+  } else {
+    const cv=document.getElementById('hse-ch-ivms');
+    if(cv){if(charts['hse-ch-ivms']){charts['hse-ch-ivms'].destroy();charts['hse-ch-ivms']=null;}
+      const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
+      ctx.fillStyle='#c8d0e0';ctx.font='12px sans-serif';ctx.textAlign='center';
+      ctx.fillText('No IVMS red violations recorded',cv.width/2,cv.height/2);}
   }
+
+  // Chart 6: Manhours by Discipline (doughnut)
+  const diMap={};
+  rows.forEach(r=>{if(!r.discipline)return;diMap[r.discipline]=(diMap[r.discipline]||0)+hn(r.manhours);});
+  const diE=Object.entries(diMap).sort((a,b)=>b[1]-a[1]);
+  mkChart('hse-ch-disc','doughnut',
+    diE.map(([k])=>k),diE.map(([,v])=>v),
+    ['#21409a','#f58220','#2e7d32','#c62828','#6a1b9a','#0277bd','#4d5a7a'].slice(0,diE.length),
+    true,null,null);
+
+  // Detail table
+  const tbody=document.getElementById('hse-drill-body');
+  const tblCount=document.getElementById('hse-tbl-count');
+  if(!tbody)return;
+  if(!rows.length){
+    const msg=scTxnData.length===0
+      ?'No data loaded — click ↻ Refresh. Ensure SC_HSE_TXN sheet is shared (Anyone → Viewer).'
+      :'No records match the selected filters.';
+    tbody.innerHTML='<tr><td colspan="20" style="text-align:center;padding:40px;color:#9aa3b8;font-size:13px;">'+msg+'</td></tr>';
+    if(tblCount)tblCount.textContent='';return;
+  }
+  if(tblCount)tblCount.textContent=rows.length+' row'+(rows.length!==1?'s':'');
   const sorted=[...rows].sort((a,b)=>hn(b.manhours)-hn(a.manhours));
-  const tdB='padding:8px 12px;border-top:1px solid #edf0f8;color:#2b3a5e;font-size:11px;vertical-align:middle;';
-  const tdR=tdB+'text-align:right;';
-  tbody.innerHTML=sorted.map((r,i)=>{
+  const td='padding:8px 10px;border-top:1px solid #edf0f8;color:#2b3a5e;font-size:11px;vertical-align:middle;';
+  const tdr=td+'text-align:right;';
+  tbody.innerHTML=sorted.map((r,idx)=>{
     const hasInc=hn(r.fatalities)>0||hn(r.lti)>0;
-    const rowBg=hasInc?'background:#fdecea;':(i%2===0?'':'background:#f9fafb;');
-    const mhV=hn(r.manhours);
-    const rTrir=mhV>0?((hn(r.lti)+hn(r.mtc)+hn(r.rwc)+hn(r.fac))*200000/mhV).toFixed(2):'—';
+    const bg=hasInc?'background:#fdecea;':(idx%2===0?'':'background:#f9fafb;');
+    const mhR=hn(r.manhours);
+    const rTrir=mhR>0?((hn(r.lti)+hn(r.mtc)+hn(r.rwc)+hn(r.fac))*200000/mhR).toFixed(2):'—';
+    const rLtifr=mhR>0?(hn(r.lti)*1000000/mhR).toFixed(2):'—';
     const rRed=MO.reduce((s,m)=>s+hn(r['ivms_red_'+m]),0);
-    const iSt=v=>v>0?'color:#c62828;font-weight:700;':'';
-    return '<tr style="'+rowBg+'">'
-      +'<td style="'+tdB+'max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(r.sc||'').replace(/"/g,'&quot;')+'">'+(r.sc||'—').substring(0,30)+'</td>'
-      +'<td style="'+tdB+'">'+(r.cluster||'—')+'</td>'
-      +'<td style="'+tdB+'">'+(r.discipline||'—')+'</td>'
-      +'<td style="'+tdB+'white-space:nowrap;">'+(r.report_month||'—')+'</td>'
-      +'<td style="'+tdR+'">'+hn(r.employees).toLocaleString()+'</td>'
-      +'<td style="'+tdR+'font-weight:600;">'+mhV.toLocaleString()+'</td>'
-      +'<td style="'+tdR+'">'+rTrir+'</td>'
-      +'<td style="'+tdR+iSt(hn(r.lti))+'">'+hn(r.lti)+'</td>'
-      +'<td style="'+tdR+iSt(hn(r.fatalities))+'">'+hn(r.fatalities)+'</td>'
-      +'<td style="'+tdR+'">'+hn(r.mtc)+'</td>'
-      +'<td style="'+tdR+'">'+hn(r.rwc)+'</td>'
-      +'<td style="'+tdR+'">'+hn(r.sq_obs)+'</td>'
-      +'<td style="'+tdR+'">'+rRed+'</td>'
+    const inc=v=>v>0?'color:#c62828;font-weight:700;':'';
+    const dqStyle=r.dq_flag&&r.dq_flag.includes('[!')
+      ?'background:#fff3cd;color:#856404;font-size:9px;padding:2px 5px;border-radius:4px;white-space:nowrap;'
+      :'color:#9aa3b8;font-size:9px;';
+    return '<tr style="'+bg+'">'
+      +'<td style="'+td+'white-space:nowrap;font-family:DM Mono,monospace;font-size:10px;color:#6b7a9a;">'+( r.txn_id||'—')+'</td>'
+      +'<td style="'+td+'max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(r.sc||'').replace(/"/g,'&quot;')+'">'+(r.sc||'—').substring(0,28)+'</td>'
+      +'<td style="'+td+'white-space:nowrap;">'+(r.cluster||'—')+'</td>'
+      +'<td style="'+td+'white-space:nowrap;">'+(r.discipline||'—')+'</td>'
+      +'<td style="'+td+'white-space:nowrap;">'+(r.report_month||'—')+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.employees).toLocaleString()+'</td>'
+      +'<td style="'+tdr+'font-weight:600;">'+mhR.toLocaleString()+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.km_driven).toLocaleString()+'</td>'
+      +'<td style="'+tdr+'">'+rTrir+'</td>'
+      +'<td style="'+tdr+'">'+rLtifr+'</td>'
+      +'<td style="'+tdr+inc(hn(r.fatalities))+'">'+hn(r.fatalities)+'</td>'
+      +'<td style="'+tdr+inc(hn(r.lti))+'">'+hn(r.lti)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.mtc)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.rwc)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.fac)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.sq_obs)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.sq_nm)+'</td>'
+      +'<td style="'+tdr+'">'+hn(r.pdo_hpi)+'</td>'
+      +'<td style="'+tdr+'">'+rRed+'</td>'
+      +'<td style="'+td+'"><span style="'+dqStyle+'">'+(r.dq_flag||'')+'</span></td>'
       +'</tr>';
   }).join('');
 }
 
-// ── Load SC_HSE_TXN from Google Sheet via gviz ───────────────────────────
 async function loadHseStatsData(){
   const sid=(typeof CFG!=='undefined')?CFG.sheetId:'';
-  if(!sid){console.warn('[HSE Stats] no sheetId in CFG'); return;}
+  if(!sid){console.warn('loadHseStatsData: no sheetId');return;}
   const sb=document.getElementById('hse-status-bar');
   try{
-    if(sb){sb.style.display='block'; sb.textContent='Loading SC_HSE_TXN…';}
-    // SC_HSE_TXN has 3 header rows: row1=title, row2=group names, row3=column names
+    if(sb){sb.style.display='block';sb.textContent='Loading SC_HSE_TXN…';}
     const raw=await fetchGvizData(sid,null,'SC_HSE_TXN',3);
     if(!raw||!raw.table){
-      if(sb){sb.style.display='block';
-        sb.textContent='⚠ SC_HSE_TXN returned no data. Check: 1) Sheet tab named exactly "SC_HSE_TXN"  2) Sheet shared: Anyone → Viewer';}
-      populateHseStatsSCDropdown(); renderHseStats(); return;
+      if(sb)sb.textContent='⚠ SC_HSE_TXN: no data. Check sheet name and sharing (Anyone → Viewer).';
+      populateHseStatsSCDropdown();renderHseStats();return;
     }
+    // gviz returns column labels lowercased exactly as written in row 3
     const cols=(raw.table.cols||[]).map(c=>(c.label||'').trim().toLowerCase());
-    console.log('[HSE Stats] gviz columns detected:', cols.join(' | '));
+    console.log('[HSE Stats] gviz cols:',cols.join(' | '));
     const gi=(row,col)=>{
-      const i=cols.indexOf(col); if(i<0) return '';
-      const cell=row.c[i]; if(!cell) return '';
-      if(cell.f!==null&&cell.f!==undefined) return String(cell.f);
-      if(cell.v!==null&&cell.v!==undefined) return String(cell.v);
-      return '';
+      const i=cols.indexOf(col);if(i<0)return'';
+      const cell=row.c[i];if(!cell)return'';
+      if(cell.f!==null&&cell.f!==undefined)return String(cell.f);
+      if(cell.v!==null&&cell.v!==undefined)return String(cell.v);
+      return'';
     };
+    // Map every column from SC_HSE_TXN row 3 headers (lowercased by gviz)
     scTxnData=(raw.table.rows||[]).filter(r=>r&&r.c).map(r=>({
       txn_id:       gi(r,'txn id'),
+      timestamp:    gi(r,'timestamp'),
       report_month: gi(r,'report month'),
       period_start: gi(r,'period start'),
       period_end:   gi(r,'period end'),
       cluster:      gi(r,'cluster'),
       sc:           gi(r,'sc name'),
+      contract_no:  gi(r,'contract no'),
       discipline:   gi(r,'discipline'),
+      submitted_by: gi(r,'submitted by'),
+      // Workforce
       employees:    gi(r,'employees'),
       manhours:     gi(r,'manhours'),
       km_driven:    gi(r,'km driven'),
+      veh_lt4t:     gi(r,'veh 0-4t'),
+      veh_gt4t:     gi(r,'veh >4t'),
+      // Incidents
       fatalities:   gi(r,'fatalities'),
       lti:          gi(r,'lti'),
       mtc:          gi(r,'mtc'),
       rwc:          gi(r,'rwc'),
+      mvi:          gi(r,'mvi'),
+      smvi:         gi(r,'smvi'),
       fac:          gi(r,'fac'),
+      nwr:          gi(r,'nwr'),
+      nad:          gi(r,'nad'),
+      // Observations
       sq_obs:       gi(r,'sq observations'),
       sq_nm:        gi(r,'sq near miss'),
       pdo_hpi:      gi(r,'pdo ihtimam+ (hpi)'),
-      ivms_red_jan: gi(r,'red-jan'),  ivms_red_feb: gi(r,'red-feb'),  ivms_red_mar: gi(r,'red-mar'),
-      ivms_red_apr: gi(r,'red-apr'),  ivms_red_may: gi(r,'red-may'),  ivms_red_jun: gi(r,'red-jun'),
-      ivms_red_jul: gi(r,'red-jul'),  ivms_red_aug: gi(r,'red-aug'),  ivms_red_sep: gi(r,'red-sep'),
-      ivms_red_oct: gi(r,'red-oct'),  ivms_red_nov: gi(r,'red-nov'),  ivms_red_dec: gi(r,'red-dec'),
+      // LSR
+      lsr_pdo:      gi(r,'lsr pdo'),
+      lsr_int:      gi(r,'lsr int'),
+      cla_pdo:      gi(r,'cla pdo'),
+      cla_int:      gi(r,'cla int'),
+      // Road Safety
+      rs_lsr_pdo:   gi(r,'rs lsr pdo'),
+      rs_lsr_int:   gi(r,'rs lsr int'),
+      rs_counsel:   gi(r,'rs counselling'),
+      rs_warn:      gi(r,'rs warning'),
+      rs_final:     gi(r,'rs final'),
+      rs_dismiss:   gi(r,'rs dismiss'),
+      // IVMS Red
+      ivms_red_jan: gi(r,'red-jan'),ivms_red_feb:gi(r,'red-feb'),ivms_red_mar:gi(r,'red-mar'),
+      ivms_red_apr: gi(r,'red-apr'),ivms_red_may:gi(r,'red-may'),ivms_red_jun:gi(r,'red-jun'),
+      ivms_red_jul: gi(r,'red-jul'),ivms_red_aug:gi(r,'red-aug'),ivms_red_sep:gi(r,'red-sep'),
+      ivms_red_oct: gi(r,'red-oct'),ivms_red_nov:gi(r,'red-nov'),ivms_red_dec:gi(r,'red-dec'),
+      // KPIs (from sheet formulas)
+      trir_sheet:   gi(r,'trir'),
+      ltifr_sheet:  gi(r,'ltifr'),
+      remarks:      gi(r,'remarks'),
+      dup_flag:     gi(r,'dup flag'),
+      dq_flag:      gi(r,'dq flag'),
     })).filter(r=>r.txn_id||r.manhours||r.sc);
-
-    if(sb) sb.style.display='none';
+    if(sb)sb.style.display='none';
     populateHseStatsSCDropdown();
     renderHseStats();
     console.log('[HSE Stats] Loaded',scTxnData.length,'records');
-  } catch(e){
-    console.error('[HSE Stats] load error:',e);
-    if(sb){sb.style.display='block';
-      sb.textContent='❌ '+e.message+' — ensure sheet is public (Anyone with link → Viewer)';}
-    populateHseStatsSCDropdown(); renderHseStats();
+  }catch(e){
+    console.error('[HSE Stats] loadHseStatsData error:',e);
+    if(sb){sb.style.display='block';sb.textContent='❌ '+e.message+' — check sheet is shared (Anyone → Viewer).';}
+    populateHseStatsSCDropdown();renderHseStats();
   }
 }
 
-// ── Export filtered data as CSV ───────────────────────────────────────────
 function exportHseStatsXL(){
-  const rows=getHseFiltered();
-  if(!rows.length){alert('No data to export.');return;}
+  const rows=getHseFiltered();if(!rows.length){alert('No data to export.');return;}
   const MO=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-  const hdrs=['TXN ID','Report Month','Cluster','SC Name','Discipline',
-    'Employees','Manhours','KM Driven','Fatalities','LTI','MTC','RWC','FAC',
-    'SQ Obs','SQ Near Miss','PDO HPI','IVMS Red YTD','TRIR'];
-  const NL='\r\n', Q='"', esc=v=>Q+String(v||'').replace(/"/g,'""')+Q;
+  const hdrs=['TXN ID','SC Name','Cluster','Discipline','Report Month','Employees','Manhours',
+    'KM Driven','TRIR','LTIFR','Fatalities','LTI','MTC','RWC','FAC',
+    'SQ Observations','SQ Near Miss','PDO HPI','IVMS Red YTD',
+    'LSR PDO','LSR Int','RS Counselling','RS Warning','RS Final','Remarks'];
+  const NL='\r\n',Q='"',esc=v=>Q+String(v||'').replace(/"/g,'""')+Q;
   let csv=hdrs.map(esc).join(',')+NL;
   rows.forEach(r=>{
     const mh=hn(r.manhours);
     const trir=mh>0?((hn(r.lti)+hn(r.mtc)+hn(r.rwc)+hn(r.fac))*200000/mh).toFixed(2):'';
-    const redYtd=MO.reduce((s,m)=>s+hn(r['ivms_red_'+m]),0);
-    csv+=[r.txn_id,r.report_month,r.cluster,r.sc,r.discipline,
-      hn(r.employees),mh,hn(r.km_driven),hn(r.fatalities),hn(r.lti),
-      hn(r.mtc),hn(r.rwc),hn(r.fac),hn(r.sq_obs),hn(r.sq_nm),hn(r.pdo_hpi),redYtd,trir
+    const ltifr=mh>0?(hn(r.lti)*1000000/mh).toFixed(2):'';
+    const red=MO.reduce((s,m)=>s+hn(r['ivms_red_'+m]),0);
+    csv+=[r.txn_id,r.sc,r.cluster,r.discipline,r.report_month,
+      hn(r.employees),mh,hn(r.km_driven),trir,ltifr,
+      hn(r.fatalities),hn(r.lti),hn(r.mtc),hn(r.rwc),hn(r.fac),
+      hn(r.sq_obs),hn(r.sq_nm),hn(r.pdo_hpi),red,
+      hn(r.lsr_pdo),hn(r.lsr_int),hn(r.rs_counsel),hn(r.rs_warn),hn(r.rs_final),
+      r.remarks||''
     ].map(esc).join(',')+NL;
   });
   const a=document.createElement('a');
