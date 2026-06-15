@@ -672,6 +672,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sb-sec">HSE Stats</div>
     <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
     <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Statistics Dashboard</div>
+    <div style="margin:0 10px 6px;background:rgba(245,130,32,.12);border:1px solid rgba(245,130,32,.3);border-radius:6px;padding:7px 10px;font-size:10px;color:rgba(255,255,255,.75);line-height:1.5;">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;font-weight:700;color:#f58220;">
+        <span>📋</span> Submission Reminder
+      </div>
+      <div>✔ I confirm all data is accurate and complete</div>
+      <div style="margin-top:2px;color:rgba(255,255,255,.5);">Submit by <strong style="color:#f58220;">3rd of following month</strong></div>
+    </div>
     <div class="sb-sec">Tools</div>
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
@@ -1137,7 +1144,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           </div>
           <div class="fg">
             <label>Discipline <span class="req">*</span></label>
-            <select name="discipline" id="discipline" required class="loading"><option value="">Loading…</option></select>
+            <select name="discipline" id="discipline" required>
+              <option value="">— Select Discipline —</option>
+              <option>Civil</option>
+              <option>Mechanical</option>
+              <option>Electrical</option>
+              <option>E&amp;I</option>
+              <option>Plant &amp; Logistics</option>
+              <option>Third Party Inspections/Testing</option>
+              <option>Inspection/Testing</option>
+              <option>HSE</option>
+              <option>Scaffolding</option>
+              <option>Insulation</option>
+            </select>
           </div>
         </div>
         <!-- Contract chain info bar -->
@@ -1284,16 +1303,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
     <!-- SUBMIT -->
     <div class="fsec">
-      <div class="fbd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
-          <input type="checkbox" id="decl_check" name="declaration" required style="width:16px;height:16px;accent-color:var(--blue);">
-          <span>I confirm all data is accurate and complete <span style="color:var(--red);">*</span></span>
-        </label>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <div style="font-size:11px;color:var(--t3);">Submit by <strong>3rd of following month</strong></div>
-          <button type="button" class="btn bk" onclick="scResetForm()">Clear</button>
-          <button type="submit" class="btn bo" id="submitBtn">Submit Report →</button>
-        </div>
+      <div class="fbd" style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;">
+        <button type="button" class="btn bk" onclick="scResetForm()">Clear</button>
+        <button type="submit" class="btn bo" id="submitBtn">Submit Report →</button>
       </div>
     </div>
 
@@ -4577,7 +4589,12 @@ function scPopulateAllDropdowns() {
   // Disciplines
   const dSel = document.getElementById('discipline');
   dSel.innerHTML = '<option value="">— Select Discipline —</option>';
-  const dList = SC_MASTERS.disciplines.map(d => typeof d === 'string' ? d : d.name);
+  // Fixed canonical list — ignore any duplicates/variants from the sheet
+  const _CANONICAL_DISC = ['Civil','Mechanical','Electrical','E&I',
+    'Mechanical/Civil','Civil/Mechanical','Electrical/Civil',
+    'Plant & Logistics','Third Party Inspection',
+    'Inspection/Testing','HSE','Scaffolding','Insulation'];
+  const dList = _CANONICAL_DISC;
   dList.forEach(name => {
     const opt = document.createElement('option');
     opt.value = name; opt.textContent = name;
