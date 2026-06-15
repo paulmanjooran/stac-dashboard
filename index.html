@@ -648,7 +648,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* === HSE VIEWS — SINGLE AUTHORITATIVE DISPLAY RULE === */
 #view-hse-form  { display: none !important; }
-#view-hse-stats { display: none; }
+/* #view-hse-stats display controlled by .view / .view.active */
 #view-hse-form.active  { display: block !important; width: 100%; box-sizing: border-box; }
 #view-hse-stats.active { display: block !important; width: 100%; min-height: calc(100vh - 50px); box-sizing: border-box; }
 /* #cnt.hse-active padding handled above */
@@ -1141,15 +1141,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <select name="discipline" id="discipline" required>
               <option value="">— Select Discipline —</option>
               <option>Civil</option>
-              <option>Mechanical</option>
               <option>Electrical</option>
-              <option>E&amp;I</option>
+              <option>Instrumental</option>
+              <option>Mechanical</option>
+              <option>Third Party Inspections</option>
               <option>Plant &amp; Logistics</option>
-              <option>Third Party Inspections/Testing</option>
-              <option>Inspection/Testing</option>
-              <option>HSE</option>
-              <option>Scaffolding</option>
-              <option>Insulation</option>
+              <option>Third Party Services</option>
             </select>
           </div>
         </div>
@@ -3537,18 +3534,10 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
-    var _ve=document.getElementById('view-hse-stats');
-    if(_ve){
-      // Nuclear option: remove ALL inline styles, add active class
-      _ve.removeAttribute('style');
-      _ve.classList.add('active');
-    }
     var _stacB=document.getElementById('stac-topbar-btns');
     var _hseB=document.getElementById('hse-topbar-btns');
     if(_stacB)_stacB.style.display='none';
     if(_hseB)_hseB.style.display='inline';
-    var _sb=document.getElementById('hse-status-bar');
-    if(_sb&&scTxnData.length>0){_sb.style.display='none';}
     if(scTxnData.length===0){
       loadHseStatsData();
     } else {
@@ -4425,7 +4414,7 @@ function scLoadFallbackMasters() {
       })
       .map(s => ({ name: s.company.trim() }));
     SC_MASTERS.clusters = ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].map(n=>({name:n}));
-    SC_MASTERS.disciplines = ['Civil','Mechanical','Electrical','Inspection/Testing','Plant & Logistics','Third Party Inspection'].map(n=>({name:n}));
+    SC_MASTERS.disciplines = ['Civil','Electrical','Instrumental','Mechanical','Third Party Inspections','Plant & Logistics','Third Party Services'].map(n=>({name:n}));
     // Pull contracts from stacData history
     if(typeof stacData !== 'undefined') {
       const seen = new Set();
@@ -4547,10 +4536,8 @@ function scPopulateAllDropdowns() {
   const dSel = document.getElementById('discipline');
   dSel.innerHTML = '<option value="">— Select Discipline —</option>';
   // Fixed canonical list — ignore any duplicates/variants from the sheet
-  const _CANONICAL_DISC = ['Civil','Mechanical','Electrical','E&I',
-    'Mechanical/Civil','Civil/Mechanical','Electrical/Civil',
-    'Plant & Logistics','Third Party Inspection',
-    'Inspection/Testing','HSE','Scaffolding','Insulation'];
+  const _CANONICAL_DISC = ['Civil','Electrical','Instrumental','Mechanical',
+    'Third Party Inspections','Plant & Logistics','Third Party Services'];
   const dList = _CANONICAL_DISC;
   dList.forEach(name => {
     const opt = document.createElement('option');
@@ -4839,21 +4826,18 @@ function scShowToast(msg, isError = false) {
 // ── scInit: entry point called when HSE Form tab is clicked ──────
 let scInitialized = false;
 async function scInit() {
-  const screen = document.getElementById('sc-loading-screen');
+  // No loading splash — form navigates instantly like all other tabs
   if(scInitialized) {
-    // Already initialised — just re-populate dropdowns and ensure form is ready
     if(typeof scPopulateAllDropdowns === 'function') scPopulateAllDropdowns();
     return;
   }
   scInitialized = true;
-  if(screen) screen.style.display = 'flex';
   try {
     await scInit_inner();
   } catch(err) {
     console.error('scInit error:', err);
-    scInitialized = false; // allow retry
+    scInitialized = false;
   }
-  if(screen) screen.style.display = 'none';
 }
 
 
