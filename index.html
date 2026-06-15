@@ -672,13 +672,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sb-sec">HSE Stats</div>
     <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
     <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Statistics Dashboard</div>
-    <div style="margin:0 10px 6px;background:rgba(245,130,32,.12);border:1px solid rgba(245,130,32,.3);border-radius:6px;padding:7px 10px;font-size:10px;color:rgba(255,255,255,.75);line-height:1.5;">
-      <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;font-weight:700;color:#f58220;">
-        <span>📋</span> Submission Reminder
-      </div>
-      <div>✔ I confirm all data is accurate and complete</div>
-      <div style="margin-top:2px;color:rgba(255,255,255,.5);">Submit by <strong style="color:#f58220;">3rd of following month</strong></div>
-    </div>
+
     <div class="sb-sec">Tools</div>
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
@@ -1327,7 +1321,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
 
-    <div id="view-hse-stats" class="view" style="display:none;width:100%;min-height:calc(100vh - 50px);background:#f0f2f7;box-sizing:border-box;">
+    <div id="view-hse-stats" class="view">
 <div style="padding:20px 24px 40px;box-sizing:border-box;width:100%;">
 
   <!-- ── STATUS BAR ─────────────────────────────────────── -->
@@ -3543,24 +3537,16 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
-    // HARD RESET: force view visible unconditionally
     var _ve=document.getElementById('view-hse-stats');
     if(_ve){
+      // Nuclear option: remove ALL inline styles, add active class
+      _ve.removeAttribute('style');
       _ve.classList.add('active');
-      _ve.removeAttribute('hidden');
-      _ve.style.setProperty('display','block','important');
-      _ve.style.setProperty('visibility','visible','important');
-      _ve.style.setProperty('opacity','1','important');
-      _ve.style.setProperty('width','100%','important');
-      _ve.style.setProperty('min-height','calc(100vh - 50px)','important');
-      _ve.style.setProperty('background','#f0f2f7','important');
     }
-    // Show HSE topbar buttons, hide STAC ones
     var _stacB=document.getElementById('stac-topbar-btns');
     var _hseB=document.getElementById('hse-topbar-btns');
     if(_stacB)_stacB.style.display='none';
     if(_hseB)_hseB.style.display='inline';
-    // Clear stale status bar
     var _sb=document.getElementById('hse-status-bar');
     if(_sb&&scTxnData.length>0){_sb.style.display='none';}
     if(scTxnData.length===0){
@@ -3570,11 +3556,6 @@ function nav(v){
       renderHseStats();
     }
   }
-}
-function renderAll(){
-  filteredData=getFiltered();
-  const fcEl=document.getElementById('fcnt');if(fcEl)fcEl.textContent=filteredData.length+' cases';
-  if(document.querySelector('#view-dashboard.active'))renderDash();
   else if(document.querySelector('#view-tracker.active'))renderTracker();
   else if(document.querySelector('#view-fines.active'))renderFines();
   else if(document.querySelector('#view-performance.active'))renderPerformance();
