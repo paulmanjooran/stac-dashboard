@@ -3561,19 +3561,23 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
+    // Force view visible — belt-and-braces: class + inline style + visibility
+    var _ve=document.getElementById('view-hse-stats');
+    if(_ve){
+      _ve.classList.add('active');
+      _ve.style.cssText='display:block!important;width:100%!important;min-height:calc(100vh - 50px)!important;background:#f0f2f7!important;box-sizing:border-box!important;visibility:visible!important;opacity:1!important;';
+    }
     // Show HSE topbar buttons, hide STAC ones
     var _stacB=document.getElementById('stac-topbar-btns');
     var _hseB=document.getElementById('hse-topbar-btns');
     if(_stacB)_stacB.style.display='none';
     if(_hseB)_hseB.style.display='inline';
-    // Clear stale status bar on every visit
-    const _sb=document.getElementById('hse-status-bar');
+    // Clear stale status bar
+    var _sb=document.getElementById('hse-status-bar');
     if(_sb&&scTxnData.length>0){_sb.style.display='none';}
     if(scTxnData.length===0){
-      // First visit or after refresh — load from sheet (renders on completion)
       loadHseStatsData();
     } else {
-      // Data already loaded — just re-populate dropdowns and render
       hsePopulateDropdowns();
       renderHseStats();
     }
@@ -4119,13 +4123,15 @@ function hsePopulateDropdowns() {
 function hseDrawChart(id, type, labels, vals, colors, isDoughnut) {
   var el=document.getElementById(id); if(!el) return;
   if(!labels||!labels.length) return;
-  if(charts[id]){charts[id].destroy();charts[id]=null;}
+  // Belt-and-braces destroy: both local registry AND Chart.js internal registry
+  if(charts[id]){try{charts[id].destroy();}catch(e){} charts[id]=null;}
+  try{var _ec=Chart.getChart(el);if(_ec){_ec.destroy();}}catch(e){}
   var ds={data:vals,backgroundColor:colors,borderColor:isDoughnut?'#fff':colors,borderWidth:isDoughnut?2:1.5};
   var opts={responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:isDoughnut,position:'right',labels:{font:{size:10},padding:8,boxWidth:12}}},
     scales:isDoughnut?{}:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:9},maxRotation:40}}}};
   try{charts[id]=new Chart(el,{type:type,data:{labels:labels,datasets:[ds]},options:opts});}
-  catch(e){console.warn('chart error',id,e);}
+  catch(e){console.warn('[hseDrawChart] chart error',id,e);}
 }
 
 function renderHseStats() {
@@ -4244,7 +4250,21 @@ async function loadHseStatsData() {
     var cols=(raw.table.cols||[]).map(function(c){return (c.label||'').trim().toLowerCase();});
     console.log('[HSE Stats] cols:', cols.join(' | '));
     function gi(row, col) {
-      var i=cols.indexOf(col); if(i<0) return '';
+      var i=cols.indexOf(col);
+      // Alias fallbacks for gviz label variations
+      if(i<0){
+        var aliases={'manhours':['man hours','man-hours','manhrs'],
+          'sq observations':['sq obs','sq observation'],
+          'sq near miss':['sq nm','sq nearmiss','near miss'],
+          'pdo ihtimam+ (hpi)':['hpi','ihtimam','pdo ihtimam'],
+          'rs warning':['rs warn','rs warnings'],
+          'rs counselling':['rs counsel','rs counseling'],
+          'km driven':['km','kms driven','kilometers driven'],
+          'report month':['month','reporting month']};
+        var alts=aliases[col]||[];
+        for(var ai=0;ai<alts.length;ai++){i=cols.indexOf(alts[ai]);if(i>=0)break;}
+      }
+      if(i<0) return '';
       var cell=row.c[i]; if(!cell) return '';
       if(cell.f!==null&&cell.f!==undefined) return String(cell.f);
       if(cell.v!==null&&cell.v!==undefined) return String(cell.v);
