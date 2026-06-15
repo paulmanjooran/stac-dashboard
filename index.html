@@ -648,7 +648,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* === HSE VIEWS — SINGLE AUTHORITATIVE DISPLAY RULE === */
 #view-hse-form  { display: none !important; }
-#view-hse-stats { display: none !important; }
+#view-hse-stats { display: none; }
 #view-hse-form.active  { display: block !important; width: 100%; box-sizing: border-box; }
 #view-hse-stats.active { display: block !important; width: 100%; min-height: calc(100vh - 50px); box-sizing: border-box; }
 /* #cnt.hse-active padding handled above */
@@ -1327,56 +1327,34 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
 
-    <div id="view-hse-stats" class="view" style="width:100%;">
-<div style="padding:20px 24px 48px;box-sizing:border-box;width:100%;">
+    <div id="view-hse-stats" class="view" style="display:none;width:100%;min-height:calc(100vh - 50px);background:#f0f2f7;box-sizing:border-box;">
+<div style="padding:20px 24px 40px;box-sizing:border-box;width:100%;">
 
-  <!-- Status bar -->
-  <div id="hse-status-bar" style="display:none;background:#fff3cd;border:1px solid #ffc107;
-    border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;
-    color:#856404;font-weight:600;"></div>
+  <!-- ── STATUS BAR ─────────────────────────────────────── -->
+  <div id="hse-status-bar" style="display:none;padding:10px 16px;margin-bottom:16px;font-size:12px;font-weight:600;border-radius:8px;border:1px solid #ffc107;background:#fff3cd;color:#856404;"></div>
 
-  <!-- Filter bar -->
-  <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;padding:12px 18px;
-    margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;
-    box-shadow:0 1px 4px rgba(0,0,0,.04);">
-    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">From</span>
-    <input type="date" id="hse-fr" onchange="renderHseStats()"
-      style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;
-      color:#2b3a5e;background:#fafbfd;outline:none;">
-    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">To</span>
-    <input type="date" id="hse-to" onchange="renderHseStats()"
-      style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;
-      color:#2b3a5e;background:#fafbfd;outline:none;">
-    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Cluster</span>
-    <select id="hse-cl" onchange="renderHseStats()"
-      style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;
-      color:#2b3a5e;background:#fafbfd;outline:none;">
-      <option value="">All Clusters</option></select>
-    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Discipline</span>
-    <select id="hse-di" onchange="renderHseStats()"
-      style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;
-      color:#2b3a5e;background:#fafbfd;outline:none;">
-      <option value="">All Disciplines</option></select>
-    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;letter-spacing:.5px;">Subcontractor</span>
-    <select id="hse-sc" onchange="renderHseStats()"
-      style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;
-      color:#2b3a5e;background:#fafbfd;outline:none;min-width:180px;">
-      <option value="">All Subcontractors</option></select>
-    <button onclick="resetHseFilters()"
-      style="background:transparent;border:1.5px solid #d8dff0;border-radius:6px;
-      padding:6px 12px;font-size:11px;color:#6b7a9a;cursor:pointer;">&#10005; Reset</button>
+  <!-- ── FILTER BAR ─────────────────────────────────────── -->
+  <div style="background:#fff;border-radius:10px;border:1px solid #e2e6f0;padding:12px 18px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;">From</span>
+    <input type="date" id="hse-fr" onchange="renderHseStats()" style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;color:#2b3a5e;background:#fafbfd;">
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;">To</span>
+    <input type="date" id="hse-to" onchange="renderHseStats()" style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;color:#2b3a5e;background:#fafbfd;">
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;">Cluster</span>
+    <select id="hse-cl" onchange="renderHseStats()" style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;color:#2b3a5e;background:#fafbfd;"><option value="">All Clusters</option></select>
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;">Discipline</span>
+    <select id="hse-di" onchange="renderHseStats()" style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;color:#2b3a5e;background:#fafbfd;"><option value="">All Disciplines</option></select>
+    <span style="font-size:10px;font-weight:700;color:#4d5a7a;text-transform:uppercase;">Subcontractor</span>
+    <select id="hse-sc" onchange="renderHseStats()" style="font-size:12px;border:1.5px solid #d8dff0;border-radius:7px;padding:6px 10px;color:#2b3a5e;background:#fafbfd;min-width:180px;"><option value="">All Subcontractors</option></select>
+    <button onclick="resetHseFilters()" style="background:transparent;border:1.5px solid #d8dff0;border-radius:6px;padding:6px 12px;font-size:11px;color:#6b7a9a;cursor:pointer;">✕ Reset</button>
     <span id="hse-rec-count" style="font-size:11px;color:#9aa3b8;margin-left:4px;"></span>
     <div style="margin-left:auto;display:flex;gap:8px;">
-      <button onclick="hseRefresh()"
-        style="background:#21409a;color:#fff;border:none;border-radius:7px;
-        padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;">&#8635; Refresh</button>
-      <button onclick="exportHseStatsXL()"
-        style="background:#fff;border:1.5px solid #d8dff0;border-radius:7px;
-        padding:7px 14px;font-size:12px;color:#4d5a7a;cursor:pointer;">&#8595; CSV</button>
+      <button onclick="hseRefresh()" style="background:#21409a;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;">⟳ Refresh</button>
+      <button onclick="exportHseStatsXL()" style="background:#fff;border:1.5px solid #d8dff0;border-radius:7px;padding:7px 14px;font-size:12px;color:#4d5a7a;cursor:pointer;">↓ CSV</button>
     </div>
   </div>
 
-  <!-- KPI Row 1: Exposure -->
+  <!-- ── KPI SECTION 1: WORKFORCE ───────────────────────── -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#21409a;margin:0 0 8px;padding-left:8px;border-left:3px solid #f58220;">Workforce &amp; Exposure</div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px;">
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #21409a;box-shadow:0 1px 4px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">Manhours</div>
@@ -1388,10 +1366,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div id="hk-emp" style="font-size:24px;font-weight:800;font-family:monospace;color:#21409a;line-height:1.1;">—</div>
       <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">Headcount</div>
     </div>
-    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #21409a;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #f58220;box-shadow:0 1px 4px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">KM Driven</div>
-      <div id="hk-km" style="font-size:24px;font-weight:800;font-family:monospace;color:#21409a;line-height:1.1;">—</div>
-      <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">Total km</div>
+      <div id="hk-km" style="font-size:24px;font-weight:800;font-family:monospace;color:#f58220;line-height:1.1;">—</div>
+      <div style="font-size:10px;color:#9aa3b8;margin-top:3px;">IVMS total km</div>
     </div>
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #f58220;box-shadow:0 1px 4px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">TRIR</div>
@@ -1405,7 +1383,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
   </div>
 
-  <!-- KPI Row 2: Incidents -->
+  <!-- ── KPI SECTION 2: INCIDENTS ──────────────────────── -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#21409a;margin:0 0 8px;padding-left:8px;border-left:3px solid #c62828;">Incident Summary</div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px;">
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #c62828;box-shadow:0 1px 4px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">Fatalities</div>
@@ -1423,13 +1402,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">RWC</div>
       <div id="hk-rwc" style="font-size:24px;font-weight:800;font-family:monospace;color:#e65100;line-height:1.1;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #e65100;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #2e7d32;box-shadow:0 1px 4px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">FAC</div>
-      <div id="hk-fac" style="font-size:24px;font-weight:800;font-family:monospace;color:#e65100;line-height:1.1;">0</div>
+      <div id="hk-fac" style="font-size:24px;font-weight:800;font-family:monospace;color:#2e7d32;line-height:1.1;">0</div>
     </div>
   </div>
 
-  <!-- KPI Row 3: Observations + IVMS -->
+  <!-- ── KPI SECTION 3: OBSERVATIONS ───────────────────── -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#21409a;margin:0 0 8px;padding-left:8px;border-left:3px solid #2e7d32;">Observations &amp; Compliance</div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;">
     <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #2e7d32;box-shadow:0 1px 4px rgba(0,0,0,.04);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">SQ Observations</div>
@@ -1439,67 +1419,59 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">SQ Near Miss</div>
       <div id="hk-sqnm" style="font-size:24px;font-weight:800;font-family:monospace;color:#2e7d32;line-height:1.1;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #2e7d32;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">PDO HPI</div>
-      <div id="hk-hpi" style="font-size:24px;font-weight:800;font-family:monospace;color:#2e7d32;line-height:1.1;">0</div>
+    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #f58220;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">HPI (Ihtimam+)</div>
+      <div id="hk-hpi" style="font-size:24px;font-weight:800;font-family:monospace;color:#f58220;line-height:1.1;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #6a1b9a;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">IVMS Red YTD</div>
-      <div id="hk-red" style="font-size:24px;font-weight:800;font-family:monospace;color:#6a1b9a;line-height:1.1;">0</div>
+    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #c62828;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">RED Cards Total</div>
+      <div id="hk-red" style="font-size:24px;font-weight:800;font-family:monospace;color:#c62828;line-height:1.1;">0</div>
     </div>
-    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #21409a;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">RS Warning Letters</div>
-      <div id="hk-rswl" style="font-size:24px;font-weight:800;font-family:monospace;color:#21409a;line-height:1.1;">0</div>
-    </div>
-  </div>
-
-  <!-- Charts Row 1 -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;font-size:13px;font-weight:700;color:#2b3a5e;">&#128202; Manhours by Subcontractor</div>
-      <div style="padding:16px;"><canvas id="hse-ch-sc" height="220"></canvas></div>
-    </div>
-    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;font-size:13px;font-weight:700;color:#2b3a5e;">&#128205; Manhours by Cluster</div>
-      <div style="padding:16px;"><canvas id="hse-ch-cl" height="220"></canvas></div>
+    <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e2e6f0;border-left:4px solid #c62828;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7a9a;margin-bottom:6px;">RS Warnings</div>
+      <div id="hk-rswl" style="font-size:24px;font-weight:800;font-family:monospace;color:#c62828;line-height:1.1;">0</div>
     </div>
   </div>
 
-  <!-- Charts Row 2 -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;font-size:13px;font-weight:700;color:#2b3a5e;">&#128200; Monthly Manhours Trend</div>
-      <div style="padding:16px;"><canvas id="hse-ch-mo" height="200"></canvas></div>
+  <!-- ── CHARTS 2×3 GRID ───────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e6f0;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;font-weight:700;color:#2b3a5e;margin-bottom:10px;border-bottom:1px solid #edf0f8;padding-bottom:6px;">📊 Incidents by Type</div>
+      <canvas id="hse-ch-inc" style="max-height:200px;"></canvas>
     </div>
-    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;font-size:13px;font-weight:700;color:#2b3a5e;">&#9888; Incident Breakdown</div>
-      <div style="padding:16px;"><canvas id="hse-ch-inc" height="200"></canvas></div>
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e6f0;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;font-weight:700;color:#2b3a5e;margin-bottom:10px;border-bottom:1px solid #edf0f8;padding-bottom:6px;">🏢 Top SCs — Man-Hours</div>
+      <canvas id="hse-ch-sc" style="max-height:200px;"></canvas>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e6f0;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;font-weight:700;color:#2b3a5e;margin-bottom:10px;border-bottom:1px solid #edf0f8;padding-bottom:6px;">📅 Monthly Manhour Trend</div>
+      <canvas id="hse-ch-mo" style="max-height:200px;"></canvas>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e6f0;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;font-weight:700;color:#2b3a5e;margin-bottom:10px;border-bottom:1px solid #edf0f8;padding-bottom:6px;">🗺 Cluster Distribution</div>
+      <canvas id="hse-ch-cl" style="max-height:200px;"></canvas>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e6f0;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;font-weight:700;color:#2b3a5e;margin-bottom:10px;border-bottom:1px solid #edf0f8;padding-bottom:6px;">🚗 Monthly KM Driven (IVMS)</div>
+      <canvas id="hse-ch-ivms" style="max-height:200px;"></canvas>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e6f0;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="font-size:11px;font-weight:700;color:#2b3a5e;margin-bottom:10px;border-bottom:1px solid #edf0f8;padding-bottom:6px;">🔧 Discipline Breakdown</div>
+      <canvas id="hse-ch-disc" style="max-height:200px;"></canvas>
     </div>
   </div>
 
-  <!-- Charts Row 3 -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;font-size:13px;font-weight:700;color:#2b3a5e;">&#128308; IVMS Red by Month</div>
-      <div style="padding:16px;"><canvas id="hse-ch-ivms" height="200"></canvas></div>
-    </div>
-    <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-      <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;font-size:13px;font-weight:700;color:#2b3a5e;">&#128119; Manhours by Discipline</div>
-      <div style="padding:16px;"><canvas id="hse-ch-disc" height="200"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Detail Table -->
+  <!-- ── DETAIL TABLE ──────────────────────────────────── -->
   <div style="background:#fff;border-radius:12px;border:1px solid #e2e6f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);">
     <div style="padding:12px 18px;border-bottom:1px solid #edf0f8;background:#fafbff;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:13px;font-weight:700;color:#2b3a5e;">&#128269; Transaction Detail</span>
+      <span style="font-size:13px;font-weight:700;color:#2b3a5e;">🔍 Transaction Detail — SC_HSE_TXN</span>
       <span id="hse-tbl-count" style="font-size:11px;color:#9aa3b8;"></span>
     </div>
     <div style="overflow-x:auto;">
-      <table id="hse-drill-tbl" style="width:100%;border-collapse:collapse;font-size:11px;min-width:800px;">
+      <table id="hse-drill-tbl" style="width:100%;border-collapse:collapse;font-size:11px;min-width:900px;">
         <thead>
           <tr style="background:#21409a;">
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#fff;text-align:left;white-space:nowrap;">TXN ID</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">TXN ID</th>
             <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Subcontractor</th>
             <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Cluster</th>
             <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;">Discipline</th>
@@ -1514,11 +1486,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">RWC</th>
             <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">FAC</th>
             <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">SQ Obs</th>
-            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">IVMS Red</th>
+            <th style="padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#fff;text-align:right;white-space:nowrap;">RED YTD</th>
           </tr>
         </thead>
         <tbody id="hse-drill-body">
-          <tr><td colspan="16" style="text-align:center;padding:40px;color:#9aa3b8;">Click &#8635; Refresh to load data</td></tr>
+          <tr><td colspan="16" style="text-align:center;padding:40px;color:#9aa3b8;">Click ⟳ Refresh to load data</td></tr>
         </tbody>
       </table>
     </div>
@@ -1526,8 +1498,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 </div>
 </div>
-</div>
-
 <!-- DRILLDOWN MODAL -->
 <div class="mbg" id="m-drill"><div class="mbox mbox-lg">
   <div class="mhd"><h3 id="m-drill-title">Cases</h3><button class="xbtn" onclick="cm('m-drill')">✕</button></div>
@@ -3573,11 +3543,17 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
-    // Force view visible — belt-and-braces: class + inline style + visibility
+    // HARD RESET: force view visible unconditionally
     var _ve=document.getElementById('view-hse-stats');
     if(_ve){
       _ve.classList.add('active');
-      _ve.style.cssText='display:block!important;width:100%!important;min-height:calc(100vh - 50px)!important;background:#f0f2f7!important;box-sizing:border-box!important;visibility:visible!important;opacity:1!important;';
+      _ve.removeAttribute('hidden');
+      _ve.style.setProperty('display','block','important');
+      _ve.style.setProperty('visibility','visible','important');
+      _ve.style.setProperty('opacity','1','important');
+      _ve.style.setProperty('width','100%','important');
+      _ve.style.setProperty('min-height','calc(100vh - 50px)','important');
+      _ve.style.setProperty('background','#f0f2f7','important');
     }
     // Show HSE topbar buttons, hide STAC ones
     var _stacB=document.getElementById('stac-topbar-btns');
