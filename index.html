@@ -718,9 +718,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
       </div>
       <!-- KPIs — NO PENALTY -->
-      <div class="kgrid k4">
+      <div class="kgrid k3">
         <div class="kpi kbl"><div class="klbl">Total STAC (YTD Filtered)</div><div class="kval" id="k-tot">—</div><div class="ksub" id="k-tot-s">—</div></div>
-        <div class="kpi kam"><div class="klbl">Warning Letters Issued (YTD)</div><div class="kval" id="k-op">—</div><div class="ksub" id="k-op-s">YTD issued</div></div>
         <div class="kpi krd"><div class="klbl">3rd+ Category-Level Escalations</div><div class="kval" id="k-3i">—</div><div class="ksub">Same violation ×3 — escalate</div></div>
         <div class="kpi kgr"><div class="klbl">Unique Categories at 3rd+</div><div class="kval" id="k-cl">—</div><div class="ksub" id="k-cl-s">Company+Category combos</div></div>
       </div>
@@ -865,7 +864,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
       </div>
       <div class="card"><div class="tw"><table class="tbl">
-        <thead><tr><th>STAC ID</th><th>Date</th><th>Cluster</th><th>Subcontractor</th><th>Category</th><th>YTD Inst.</th><th>WL Type</th><th>WL Issued</th><th></th></tr></thead>
+        <thead><tr><th>STAC ID</th><th>Date</th><th>Cluster</th><th>Subcontractor</th><th>Category</th><th>YTD Inst.</th><th>WL Type</th><th></th></tr></thead>
         <tbody id="tr-body"></tbody>
       </table></div></div>
     </div>
@@ -926,13 +925,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <div style="display:flex;gap:7px;padding-bottom:3px;">
               <button class="btn bk bsm" onclick="window.print()">🖨 Print/PDF</button>
               <button class="btn bg bsm" onclick="downloadWordLetter()">📄 Download Word (.doc)</button>
-              <button class="btn bp bsm" onclick="markWLIssued()">✓ Mark Issued</button>
             </div>
           </div>
-          <div style="margin-top:10px;font-size:11px;color:var(--t2);">
-            Sequential WL#: <span class="wl-num-tag" id="wl-next-num">—</span>
-            <span style="margin-left:8px;color:var(--t3);font-size:10px;">Next sequential number from STAC register (last issued + 1)</span>
-          </div>
+
         </div></div>
         <div id="wl-content"><div class="card" style="padding:40px;text-align:center;color:var(--t3);">
           <div style="font-size:30px;margin-bottom:8px;">📄</div><p>Select a STAC case to generate the warning letter.</p>
@@ -2355,7 +2350,8 @@ function renderDash(){
   });
 
   // KPIs — all from filtered+scoped data
-  var wlIssued=ytd.filter(function(d){return d.wlIssued&&d.wlIssued.toLowerCase()==='yes';}).length;
+  // Email trigger count = records where coordinator email was populated (auto-alert fired on submission)
+  var wlIssued=stacData.filter(function(d){return d.coordEmail&&d.coordEmail.trim().length>3;}).length;
   var catMap={};
   ytd.forEach(function(d){var k=d.company+'|||'+d.category;catMap[k]=(catMap[k]||0)+1;});
   var esc3=Object.values(catMap).filter(function(v){return v>=3;}).length;
@@ -2515,7 +2511,6 @@ function renderTracker(){
       <td class="tdc" title="${esc(d.category)}">${d.category}</td>
       <td>${idots(n,true)}</td>
       <td style="font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.wlType||''}">${d.wlType||'—'}</td>
-      <td>${d.wlIssued==='Yes'?'<span class="bdg bgr">✓ Issued</span>':'<span class="bdg bgy">Pending</span>'}</td>
       <td style="display:flex;gap:3px;">
         <button class="btn bk bxs" onclick="openWL('${d.id}')" title="Warning Letter">✉️</button>
         ${isAdmin?`<button class="btn br2 bxs" onclick="deleteSTAC('${d.id}')" title="Delete (Admin)">🗑</button>`:''}
@@ -3190,8 +3185,6 @@ function populateWLSel(){
     sel.appendChild(o);
   });
   // Update next WL number display
-  const nwl=document.getElementById('wl-next-num');
-  if(nwl)nwl.textContent=String(getNextWL()).padStart(3,'0');
 }
 
 function openWL(id){nav('warning-letter');setTimeout(()=>{populateWLSel();const s=document.getElementById('wl-sel');if(s)s.value=id;loadWL(id);},120);}
