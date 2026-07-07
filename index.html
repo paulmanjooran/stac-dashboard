@@ -647,8 +647,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 /* Force views to fill full available width below topbar */
 
 /* === HSE VIEWS — SINGLE AUTHORITATIVE DISPLAY RULE === */
-#view-hse-form  { display: none; }
-/* view-hse-stats show/hide handled by nav() inline style */
+#view-hse-form  { display: none !important; }
+#view-hse-stats { display: none !important; }
 #view-hse-form.active  { display: block !important; width: 100%; box-sizing: border-box; }
 #view-hse-stats.active { display: block !important; width: 100%; min-height: calc(100vh - 50px); box-sizing: border-box; }
 /* #cnt.hse-active padding handled above */
@@ -718,8 +718,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
       </div>
       <!-- KPIs — NO PENALTY -->
-      <div class="kgrid k3">
+      <div class="kgrid k4">
         <div class="kpi kbl"><div class="klbl">Total STAC (YTD Filtered)</div><div class="kval" id="k-tot">—</div><div class="ksub" id="k-tot-s">—</div></div>
+        <div class="kpi kam"><div class="klbl">Warning Letters Issued (YTD)</div><div class="kval" id="k-op">—</div><div class="ksub" id="k-op-s">YTD issued</div></div>
         <div class="kpi krd"><div class="klbl">3rd+ Category-Level Escalations</div><div class="kval" id="k-3i">—</div><div class="ksub">Same violation ×3 — escalate</div></div>
         <div class="kpi kgr"><div class="klbl">Unique Categories at 3rd+</div><div class="kval" id="k-cl">—</div><div class="ksub" id="k-cl-s">Company+Category combos</div></div>
       </div>
@@ -864,7 +865,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
       </div>
       <div class="card"><div class="tw"><table class="tbl">
-        <thead><tr><th>STAC ID</th><th>Date</th><th>Cluster</th><th>Subcontractor</th><th>Category</th><th>YTD Inst.</th><th>WL Type</th><th></th></tr></thead>
+        <thead><tr><th>STAC ID</th><th>Date</th><th>Cluster</th><th>Subcontractor</th><th>Category</th><th>YTD Inst.</th><th>WL Type</th><th>WL Issued</th><th></th></tr></thead>
         <tbody id="tr-body"></tbody>
       </table></div></div>
     </div>
@@ -923,11 +924,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <div class="fg" style="flex:1;min-width:200px;"><label>Select STAC Case</label><select id="wl-sel" onchange="loadWL(this.value)"><option value="">-- Select STAC ID --</option></select></div>
             <div class="fg" style="min-width:170px;"><label>Letter Type</label><select id="wl-type" onchange="loadWL(gv('wl-sel'))"><option value="1">1st Formal Warning Letter</option><option value="2">2nd Warning Letter</option><option value="3">Final Warning / Escalation</option></select></div>
             <div style="display:flex;gap:7px;padding-bottom:3px;">
-              <button class="btn bk bsm" onclick="window.print()">🖨 Print/PDF</button>
+              <button class="btn bk bsm" onclick="printWL()">🖨 Print/PDF</button>
               <button class="btn bg bsm" onclick="downloadWordLetter()">📄 Download Word (.doc)</button>
+              <button class="btn bp bsm" onclick="markWLIssued()">✓ Mark Issued</button>
             </div>
           </div>
-
+          <div style="margin-top:10px;font-size:11px;color:var(--t2);">
+            Sequential WL#: <span class="wl-num-tag" id="wl-next-num">—</span>
+            <span style="margin-left:8px;color:var(--t3);font-size:10px;">Next sequential number from STAC register (last issued + 1)</span>
+          </div>
         </div></div>
         <div id="wl-content"><div class="card" style="padding:40px;text-align:center;color:var(--t3);">
           <div style="font-size:30px;margin-bottom:8px;">📄</div><p>Select a STAC case to generate the warning letter.</p>
@@ -1279,9 +1284,16 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
     <!-- SUBMIT -->
     <div class="fsec">
-      <div class="fbd" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">
-        <button type="button" class="btn bk" onclick="scResetForm()">Clear</button>
-        <button type="submit" class="btn bo" id="submitBtn">Submit Report →</button>
+      <div class="fbd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          <input type="checkbox" id="decl_check" name="declaration" required style="width:16px;height:16px;accent-color:var(--blue);">
+          <span>I confirm all data is accurate and complete <span style="color:var(--red);">*</span></span>
+        </label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="font-size:11px;color:var(--t3);">Submit by <strong>3rd of following month</strong></div>
+          <button type="button" class="btn bk" onclick="scResetForm()">Clear</button>
+          <button type="submit" class="btn bo" id="submitBtn">Submit Report →</button>
+        </div>
       </div>
     </div>
 
@@ -2350,8 +2362,7 @@ function renderDash(){
   });
 
   // KPIs — all from filtered+scoped data
-  // Email trigger count = records where coordinator email was populated (auto-alert fired on submission)
-  var wlIssued=stacData.filter(function(d){return d.coordEmail&&d.coordEmail.trim().length>3;}).length;
+  var wlIssued=ytd.filter(function(d){return d.wlIssued&&d.wlIssued.toLowerCase()==='yes';}).length;
   var catMap={};
   ytd.forEach(function(d){var k=d.company+'|||'+d.category;catMap[k]=(catMap[k]||0)+1;});
   var esc3=Object.values(catMap).filter(function(v){return v>=3;}).length;
@@ -2511,6 +2522,7 @@ function renderTracker(){
       <td class="tdc" title="${esc(d.category)}">${d.category}</td>
       <td>${idots(n,true)}</td>
       <td style="font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.wlType||''}">${d.wlType||'—'}</td>
+      <td>${d.wlIssued==='Yes'?'<span class="bdg bgr">✓ Issued</span>':'<span class="bdg bgy">Pending</span>'}</td>
       <td style="display:flex;gap:3px;">
         <button class="btn bk bxs" onclick="openWL('${d.id}')" title="Warning Letter">✉️</button>
         ${isAdmin?`<button class="btn br2 bxs" onclick="deleteSTAC('${d.id}')" title="Delete (Admin)">🗑</button>`:''}
@@ -3185,6 +3197,8 @@ function populateWLSel(){
     sel.appendChild(o);
   });
   // Update next WL number display
+  const nwl=document.getElementById('wl-next-num');
+  if(nwl)nwl.textContent=String(getNextWL()).padStart(3,'0');
 }
 
 function openWL(id){nav('warning-letter');setTimeout(()=>{populateWLSel();const s=document.getElementById('wl-sel');if(s)s.value=id;loadWL(id);},120);}
@@ -3240,28 +3254,187 @@ function loadWL(stacId){
   </div>`;
 }
 
-function downloadWordLetter(){
-  const stacId=gv('wl-sel');const type=parseInt(gv('wl-type'))||1;
+function printWL(){
   const el=document.getElementById('wl-print-area');
   if(!el){toast('Generate a letter first',2000,'warn');return;}
-  const d=stacData.find(s=>s.id===stacId)||{id:'—',company:'—',cluster:'—',category:'—',owner:'—',date:'—',contractNo:'—',description:'—',penalty:0};
+  const win=window.open('','_blank','width=900,height=700');
+  if(!win){toast('⚠ Popup blocked — allow popups and retry',3000,'warn');return;}
+  // Get all CSS variables and wl- styles from the main page
+  const css=Array.from(document.styleSheets).reduce(function(acc,ss){
+    try{
+      return acc+Array.from(ss.cssRules).map(function(r){
+        return r.cssText;
+      }).join('\n');
+    }catch(e){return acc;}
+  },'');
+  win.document.write(
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>ATNM Warning Letter</title>'+
+    '<style>'+
+    'body{margin:0;padding:30px;font-family:Calibri,Arial,sans-serif;background:#fff;}'+
+    '.wl-letter{background:#fff;padding:36px 44px;line-height:1.7;font-size:13px;}'+
+    css+
+    '@media print{body{margin:0;padding:0;}button,.no-print{display:none!important;}'+
+    '.wl-letter{border:none;box-shadow:none;padding:20px;}}'+
+    '</style></head><body>'+el.outerHTML+
+    '<script>window.onload=function(){window.print();}<\/script>'+
+    '</body></html>'
+  );
+  win.document.close();
+}
+
+function downloadWordLetter(){
+  const stacId=gv('wl-sel');
+  const type=parseInt(gv('wl-type'))||1;
+  const el=document.getElementById('wl-print-area');
+  if(!el){toast('Generate a letter first',2000,'warn');return;}
+  const d=stacData.find(function(s){return s.id===stacId;})||
+    {id:'—',company:'—',cluster:'—',category:'—',owner:'—',date:'—',contractNo:'—',description:'—',penalty:0};
   const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
   const types=['','1st Formal Warning Letter','2nd Warning Letter','Final Warning Letter'];
-  const wordHtml=`<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"><title>STAC ${stacId}</title><style>body{font-family:'Times New Roman',serif;font-size:12pt;margin:2cm;line-height:1.6;}.subject-box{background:#e8edf8;padding:8pt;margin:10pt 0;font-weight:bold;border-left:4pt solid #21409a;}table{width:100%;border-collapse:collapse;margin:10pt 0;}td{padding:5pt 8pt;border:1pt solid #ccc;}td:first-child{background:#f5f5f5;font-weight:bold;width:40%;}ol li{line-height:1.8;}.sig-cell{border-top:1pt solid #000;padding-top:6pt;font-size:10pt;}</style></head>
-  <body><h2 style="color:#21409a;">AL TASNIM ENTERPRISES LLC</h2><p style="color:#f58220;font-weight:bold;">Quality You Can Build On | التسنيم</p>
-  <p><strong>${types[type]}</strong> | STAC Ref: ${d.id}<br>Date: ${today}</p>
-  <p><strong>To:</strong> ${d.company} | <strong>Attn:</strong> ${d.owner||'Subcontract Manager'}</p>
-  <div class="subject-box">SUBJECT: HSE STAC NON-COMPLIANCE — ${types[type].toUpperCase()}</div>
-  <table><tr><td>STAC Reference</td><td>${d.id}</td></tr><tr><td>Date</td><td>${fd(d.date)}</td></tr><tr><td>Cluster</td><td>${d.cluster}</td></tr><tr><td>HSE Violation Category</td><td>${d.category}</td></tr><tr><td>YTD Instance #</td><td>${getYTDInst(d)}</td></tr><tr><td>Contract No.</td><td>${d.contractNo||'N/A'}</td></tr></table>
-  <p><strong>Non-Compliance:</strong><br>${d.description||'—'}</p>
-  ${d.penalty>0?`<p><strong>Penalty: OMR ${d.penalty}</strong></p>`:''}
-  <p><strong>Required Actions:</strong></p><ol><li>Stop non-compliant activity immediately.</li><li>RCA within 48 hours.</li><li>Submit CAPA to ATNM HSE by ${d.closeoutDate||'within 7 days'}.</li><li>Re-induct/retrain personnel.</li><li>Log actions in Safety Qube.</li></ol>
-  <table style="margin-top:40pt;"><tr><td style="border:none;padding-right:30pt;"><div class="sig-cell">HSE Manager<br>Name: ______________________<br>Date: ______________________</div></td><td style="border:none;"><div class="sig-cell">Contract Manager<br>Name: ______________________<br>Date: ______________________</div></td></tr></table>
-  <p style="font-size:9pt;color:#888;">ATNM STAC | ${d.id}</p></body></html>`;
-  const blob=new Blob([wordHtml],{type:'application/msword;charset=utf-8'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download=`STAC-WL-${stacId||'letter'}.doc`;a.click();
-  toast('✅ Word document downloaded',3000);
+  const ytd=getYTDInst(d);
+  const penaltyRow=d.penalty>0?'<tr><td style="background:#f5f5f5;font-weight:bold;border:1pt solid #999;padding:5pt 8pt;">Financial Penalty</td><td style="border:1pt solid #999;padding:5pt 8pt;color:#c0392b;font-weight:bold;">OMR '+Number(d.penalty).toFixed(3)+'</td></tr>':'';
+  const descText=(d.description||'Not specified').replace(/\n/g,'<br>');
+  const closeDate=d.closeoutDate||'within 7 working days';
+
+  const wordHtml=
+'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'+
+'<html xmlns:v="urn:schemas-microsoft-com:vml"'+
+' xmlns:o="urn:schemas-microsoft-com:office:office"'+
+' xmlns:w="urn:schemas-microsoft-com:office:word"'+
+' xmlns="http://www.w3.org/TR/REC-html40">'+
+'<head><meta charset="UTF-8">'+
+'<title>ATNM STAC Warning Letter — '+stacId+'</title>'+
+'<style>'+
+'@page Section1{size:21.0cm 29.7cm;margin:2.5cm 2.5cm 2.5cm 2.5cm;mso-header-margin:1.0cm;mso-footer-margin:1.0cm;}'+
+'div.Section1{page:Section1;}'+
+'body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#222;line-height:1.6;mso-line-height-rule:exactly;}'+
+'p{margin:0 0 8pt 0;text-align:justify;mso-justify-low-priority:0;}'+
+'h1{font-size:14pt;color:#21409a;font-weight:bold;margin:0 0 4pt 0;text-align:left;}'+
+'h2{font-size:12pt;color:#21409a;font-weight:bold;margin:0 0 4pt 0;text-align:left;}'+
+'table{width:100%;border-collapse:collapse;margin:10pt 0;}'+
+'td{padding:5pt 8pt;border:1pt solid #cccccc;font-size:10pt;vertical-align:top;text-align:left;}'+
+'td.lbl{background:#f0f3f8;font-weight:bold;width:38%;color:#333;}'+
+'.hr-blue{border:none;border-top:3pt solid #21409a;margin:8pt 0;}'+
+'.hr-thin{border:none;border-top:0.5pt solid #cccccc;margin:8pt 0;}'+
+'.subject{background:#e8edf8;padding:8pt 12pt;border-left:4pt solid #21409a;margin:10pt 0;font-weight:bold;font-size:11pt;}'+
+'.warning-box{border:1.5pt solid #c0392b;padding:8pt 12pt;margin:10pt 0;background:#fdf0f0;}'+
+'.sig-table{width:100%;border-collapse:collapse;margin-top:40pt;}'+
+'.sig-table td{border:none;padding:0;vertical-align:bottom;width:50%;}'+
+'.sig-line{border-top:1pt solid #333;padding-top:4pt;font-size:9pt;color:#555;margin-top:30pt;}'+
+'ol{margin:6pt 0 6pt 20pt;padding:0;}'+
+'li{margin-bottom:4pt;text-align:justify;}'+
+'.footer{font-size:8pt;color:#888;text-align:center;border-top:0.5pt solid #ccc;margin-top:30pt;padding-top:6pt;}'+
+'</style>'+
+'<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom>'+
+'<w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
+'</head>'+
+'<body><div class="Section1">'+
+
+'<!-- LETTERHEAD -->'+
+'<table style="width:100%;border:none;margin-bottom:0;"><tr>'+
+'<td style="border:none;padding:0;vertical-align:top;">'+
+'<h1>AL TASNIM ENTERPRISES LLC</h1>'+
+'<p style="margin:0;color:#f58220;font-weight:bold;font-size:10pt;">Quality You Can Build On | &#1575;&#1604;&#1578;&#1587;&#1606;&#1610;&#1605;</p>'+
+'<p style="margin:2pt 0 0 0;font-size:9pt;color:#666;">PDO ODC | Marmul &bull; Nimr &bull; Amal &bull; Greater Birba</p>'+
+'</td>'+
+'<td style="border:none;padding:0;text-align:right;vertical-align:top;font-size:10pt;color:#444;">'+
+'<p style="margin:0;font-weight:bold;">STAC Ref: '+stacId+'</p>'+
+'<p style="margin:2pt 0;">Date: '+today+'</p>'+
+'<p style="margin:2pt 0;">Contract No: '+(d.contractNo||'N/A')+'</p>'+
+'</td>'+
+'</tr></table>'+
+'<hr class="hr-blue">'+
+
+'<!-- ADDRESSEE -->'+
+'<p><strong>To:</strong> '+d.company+'</p>'+
+'<p><strong>Attention:</strong> '+(d.owner||'Subcontract Manager / Focal Point')+'</p>'+
+'<p><strong>Cluster:</strong> '+d.cluster+'</p>'+
+'<hr class="hr-thin">'+
+
+'<!-- SUBJECT -->'+
+'<div class="subject">SUBJECT: HSE STAC NON-COMPLIANCE &mdash; '+types[type].toUpperCase()+'</div>'+
+
+'<!-- OPENING -->'+
+'<p>Dear Sir/Madam,</p>'+
+'<p style="text-align:justify;">We refer to the HSE non-compliance identified at your work site under the ATNM PDO ODC programme. This letter constitutes a formal <strong>'+types[type]+'</strong> issued in accordance with the ATNM Subcontractor Tracking and Assurance for Compliance (STAC) procedure and the HSE Vendor Scoring Matrix.</p>'+
+
+'<!-- DETAILS TABLE -->'+
+'<table>'+
+'<tr><td class="lbl">STAC Reference</td><td>'+stacId+'</td></tr>'+
+'<tr><td class="lbl">Instance Date</td><td>'+fd(d.date)+'</td></tr>'+
+'<tr><td class="lbl">Cluster Location</td><td>'+d.cluster+'</td></tr>'+
+'<tr><td class="lbl">HSE Violation Category</td><td>'+d.category+'</td></tr>'+
+'<tr><td class="lbl">YTD Instance No.</td><td>'+ytd+'</td></tr>'+
+'<tr><td class="lbl">Contract / Work Order</td><td>'+(d.contractNo||'N/A')+'</td></tr>'+
+penaltyRow+
+'</table>'+
+
+'<!-- NON-COMPLIANCE -->'+
+'<h2>Non-Compliance Description</h2>'+
+'<p style="text-align:justify;">'+descText+'</p>'+
+
+(d.penalty>0?
+'<div class="warning-box"><p style="margin:0;color:#c0392b;font-weight:bold;">&#9888; FINANCIAL PENALTY APPLIED: OMR '+Number(d.penalty).toFixed(3)+'</p>'+
+'<p style="margin:4pt 0 0 0;font-size:10pt;">This penalty will be deducted from your progress payment in accordance with the ATNM Subcontractor Agreement and PDO ODC Consequences Management Matrix.</p></div>':'')+
+
+'<!-- REQUIRED ACTIONS -->'+
+'<h2>Required Corrective Actions</h2>'+
+'<ol>'+
+'<li>Immediately stop the non-compliant activity and secure the work site.</li>'+
+'<li>Conduct a Root Cause Analysis (RCA) within <strong>48 hours</strong> and submit to ATNM HSE.</li>'+
+'<li>Submit a Corrective and Preventive Action Plan (CAPA) to ATNM HSE by <strong>'+closeDate+'</strong>.</li>'+
+'<li>Re-induct and/or retrain all involved personnel before resuming work.</li>'+
+'<li>Log all observations and corrective actions in the <strong>Safety Qube</strong> system.</li>'+
+'<li>Ensure full compliance with ATNM HSE requirements, PDO SP-2329, and all applicable Life Saving Rules.</li>'+
+'</ol>'+
+
+'<!-- CONSEQUENCES -->'+
+'<p style="text-align:justify;"><strong>Note:</strong> Continued non-compliance will result in escalation to the next stage of the STAC consequence management process, which may include full financial penalty, demerit points, suspension of work, and/or contract termination as per the ATNM Subcontractor Agreement.</p>'+
+
+'<!-- ACKNOWLEDGEMENT -->'+
+'<p style="text-align:justify;">Please sign and return a copy of this letter to acknowledge receipt and confirm your commitment to the required corrective actions.</p>'+
+
+'<!-- SIGNATURES -->'+
+'<table class="sig-table">'+
+'<tr>'+
+'<td style="padding-right:30pt;border:none;vertical-align:bottom;">'+
+'<div class="sig-line">'+
+'<strong>HSE Manager / Authorised Signatory</strong><br>'+
+'Name: ___________________________<br>'+
+'Designation: _____________________<br>'+
+'Date: ___________________________<br>'+
+'Stamp: __________________________'+
+'</div>'+
+'</td>'+
+'<td style="padding-left:30pt;border:none;vertical-align:bottom;">'+
+'<div class="sig-line">'+
+'<strong>Subcontractor Acknowledgement</strong><br>'+
+'Name: ___________________________<br>'+
+'Designation: _____________________<br>'+
+'Date: ___________________________<br>'+
+'Stamp: __________________________'+
+'</div>'+
+'</td>'+
+'</tr>'+
+'</table>'+
+
+'<!-- FOOTER -->'+
+'<div class="footer">'+
+'AL TASNIM ENTERPRISES LLC | PDO ODC Programme | STAC Ref: '+stacId+' | Generated: '+today+
+'</div>'+
+
+'</div></body></html>';
+
+  const blob=new Blob(['\ufeff'+wordHtml],{type:'application/msword;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='ATNM-STAC-WL-'+(stacId||'letter')+'.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Warning Letter downloaded',3000);
 }
 
 async function markWLIssued(){
@@ -3516,11 +3689,6 @@ function nav(v){
       cnt.classList.remove('hse-active');
       cnt.style.padding='';
       if(typeof scInitialized !== 'undefined') scInitialized = false;
-      // Restore sc-form-wrap if we were on hse-stats
-      var _fw2=document.getElementById('sc-form-wrap');
-      if(_fw2) _fw2.style.display='';
-      var _vf2=document.getElementById('view-hse-form');
-      if(_vf2){ _vf2.style.display=''; _vf2.style.padding=''; _vf2.style.margin=''; _vf2.style.background=''; }
       // Restore STAC topbar buttons
       var _stacB2=document.getElementById('stac-topbar-btns');
       var _hseB2=document.getElementById('hse-topbar-btns');
@@ -3552,36 +3720,21 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
-    // view-hse-stats is nested inside view-hse-form in the DOM.
-    // When nav() hides all .view elements, view-hse-form gets hidden too,
-    // which hides view-hse-stats as its child regardless of its own style.
-    // Fix: force the PARENT (view-hse-form) visible as a transparent shell,
-    // hide its own content (form/success), show only view-hse-stats.
-    var _vf=document.getElementById('view-hse-form');
-    if(_vf){
-      _vf.style.setProperty('display','block','important');
-      _vf.style.padding='0';
-      _vf.style.margin='0';
-      _vf.style.background='#f0f2f7';
-    }
-    var _fw=document.getElementById('sc-form-wrap');
-    if(_fw) _fw.style.display='none';
-    var _ss=document.getElementById('successScreen');
-    if(_ss) _ss.style.display='none';
-    var _ls=document.getElementById('sc-loading-screen');
-    if(_ls) _ls.style.display='none';
+    // Force view visible — bypass all CSS class/specificity issues
     var _ve=document.getElementById('view-hse-stats');
     if(_ve){
-      _ve.style.setProperty('display','block','important');
+      _ve.style.display='block';
       _ve.style.width='100%';
-      _ve.style.minHeight='calc(100vh - 50px)';
+      _ve.style.minHeight='100vh';
       _ve.style.background='#f0f2f7';
       _ve.style.boxSizing='border-box';
     }
+    // Show HSE topbar buttons, hide STAC ones
     var _stacB=document.getElementById('stac-topbar-btns');
     var _hseB=document.getElementById('hse-topbar-btns');
     if(_stacB)_stacB.style.display='none';
     if(_hseB)_hseB.style.display='inline';
+    // Clear stale status bar
     var _sb=document.getElementById('hse-status-bar');
     if(_sb&&scTxnData.length>0){_sb.style.display='none';}
     if(scTxnData.length===0){
@@ -4449,7 +4602,7 @@ function scLoadFallbackMasters() {
       })
       .map(s => ({ name: s.company.trim() }));
     SC_MASTERS.clusters = ['Marmul WD','Marmul Projects','Nimr','Amal','Greater Birba'].map(n=>({name:n}));
-    SC_MASTERS.disciplines = ['Civil','Electrical','Instrumental','Mechanical','Third Party Inspections','Plant & Logistics','Third Party Services'].map(n=>({name:n}));
+    SC_MASTERS.disciplines = ['Civil','Mechanical','Electrical','Inspection/Testing','Plant & Logistics','Third Party Inspection'].map(n=>({name:n}));
     // Pull contracts from stacData history
     if(typeof stacData !== 'undefined') {
       const seen = new Set();
@@ -4570,7 +4723,7 @@ function scPopulateAllDropdowns() {
   // Disciplines
   const dSel = document.getElementById('discipline');
   dSel.innerHTML = '<option value="">— Select Discipline —</option>';
-  const dList = ['Civil','Electrical','Instrumental','Mechanical','Third Party Inspections','Plant & Logistics','Third Party Services'];
+  const dList = SC_MASTERS.disciplines.map(d => typeof d === 'string' ? d : d.name);
   dList.forEach(name => {
     const opt = document.createElement('option');
     opt.value = name; opt.textContent = name;
@@ -4865,12 +5018,14 @@ async function scInit() {
     return;
   }
   scInitialized = true;
+  if(screen) screen.style.display = 'flex';
   try {
     await scInit_inner();
   } catch(err) {
     console.error('scInit error:', err);
-    scInitialized = false;
+    scInitialized = false; // allow retry
   }
+  if(screen) screen.style.display = 'none';
 }
 
 
