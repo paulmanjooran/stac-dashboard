@@ -3327,8 +3327,7 @@ function loadWL(stacId){
 function openWLModal(){
   const el=document.getElementById('wl-print-area');
   if(!el){toast('Generate a letter first',2000,'warn');return;}
-  const modal=document.getElementById('wl-print-modal');
-  if(modal){modal.style.display='flex';}
+  _openWLPreview();
 }
 
 function closeWLModal(){
@@ -3422,42 +3421,69 @@ function _getWLPrintHTML(){
 '</body></html>';
 }
 
+function _getWLFileName(){
+  const stacId=(gv('wl-sel')||'Warning-Letter').replace(/[^a-zA-Z0-9_-]+/g,'-').replace(/^-+|-+$/g,'');
+  return 'ATNM-STAC-WL-'+(stacId||'Warning-Letter')+'.pdf';
+}
 
-function wlExportPDF(){
-  closeWLModal();
+function _openWLPreview(action){
   const html=_getWLPrintHTML();
   if(!html){toast('Generate a letter first',2000,'warn');return;}
-  const win=window.open('','_blank','width=900,height=750');
+  const fileName=_getWLFileName();
+  const win=window.open('','_blank','width=1050,height=820');
   if(!win){toast('⚠ Popup blocked — allow popups and retry',3000,'warn');return;}
+  const safeFile=String(fileName).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const previewCss=
+    '@media screen{'+
+    'html,body{width:auto !important;min-height:100vh;background:#eef2f7 !important;padding:0;margin:0;}'+
+    'body{padding:82px 18px 28px !important;}'+
+    '.wl-preview-toolbar{position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;gap:10px;align-items:center;justify-content:center;background:#fff;border-bottom:1px solid #dde1e6;box-shadow:0 2px 12px rgba(0,0,0,.12);padding:14px 18px;font-family:\"Segoe UI\",Arial,sans-serif;}'+
+    '.wl-preview-title{margin-right:auto;font-size:13px;font-weight:700;color:#21409a;}'+
+    '.wl-preview-note{margin-left:auto;font-size:11px;color:#4d555b;}'+
+    '.wl-preview-btn{border:none;border-radius:6px;padding:9px 15px;font-size:12px;font-weight:700;cursor:pointer;}'+
+    '.wl-preview-primary{background:#21409a;color:#fff;}'+
+    '.wl-preview-secondary{background:#f58220;color:#fff;}'+
+    '.wl-preview-page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:18mm;box-shadow:0 10px 34px rgba(25,47,120,.18);}'+
+    '}'+
+    '@media print{'+
+    '.wl-preview-toolbar{display:none !important;}'+
+    'html,body{width:auto !important;background:#fff !important;padding:0 !important;margin:0 !important;}'+
+    '.wl-preview-page{width:auto !important;min-height:0 !important;margin:0 !important;padding:0 !important;box-shadow:none !important;}'+
+    '}';
+  const toolbar=
+    '<div class="wl-preview-toolbar">'+
+    '<div class="wl-preview-title">Warning Letter Preview</div>'+
+    '<button class="wl-preview-btn wl-preview-primary" onclick="downloadPdf()">Download PDF</button>'+
+    '<button class="wl-preview-btn wl-preview-secondary" onclick="printLetter()">Print</button>'+
+    '<div class="wl-preview-note">PDF download uses your browser Save as PDF option.</div>'+
+    '</div><div class="wl-preview-page">';
+  const previewScript=
+    '<script>'+
+    'document.title=\''+safeFile+'\';'+
+    'function printLetter(){window.focus();window.print();}'+
+    'function downloadPdf(){document.title=\''+safeFile+'\';window.focus();window.print();}'+
+    (action==='print'?'window.addEventListener("load",function(){setTimeout(printLetter,400);});':'')+
+    (action==='pdf'?'window.addEventListener("load",function(){setTimeout(downloadPdf,400);});':'')+
+    '<\/script>';
   win.document.write(
-    html.replace('</body></html>',
-      '<script>'+
-      'window.onload=function(){'+
-      '  setTimeout(function(){window.print();},400);'+
-      '};'+
-      '<\/script>'+
-      '</body></html>')
+    html
+      .replace('<title>ATNM Warning Letter</title>','<title>'+fileName+'</title>')
+      .replace('</style>',previewCss+'</style>')
+      .replace('<body>', '<body>'+toolbar)
+      .replace('</body></html>', '</div>'+previewScript+'</body></html>')
   );
   win.document.close();
 }
 
+
+function wlExportPDF(){
+  closeWLModal();
+  _openWLPreview('pdf');
+}
+
 function wlDoPrint(){
   closeWLModal();
-  const html=_getWLPrintHTML();
-  if(!html){toast('Generate a letter first',2000,'warn');return;}
-  const win=window.open('','_blank','width=900,height=750');
-  if(!win){toast('⚠ Popup blocked — allow popups and retry',3000,'warn');return;}
-  win.document.write(
-    html.replace('</body></html>',
-      '<script>'+
-      'window.onload=function(){'+
-      '  window.focus();'+
-      '  setTimeout(function(){window.print();},400);'+
-      '};'+
-      '<\/script>'+
-      '</body></html>')
-  );
-  win.document.close();
+  _openWLPreview('print');
 }
 
 
