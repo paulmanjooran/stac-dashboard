@@ -3838,7 +3838,7 @@ function checkAdminPwd(viewName) {
 }
 
 function nav(v){
-  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>{x.classList.remove('active');x.style.display='';});
   document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('active'));
   // Apply/remove padding directly via inline style for HSE views
   const cnt=document.getElementById('cnt');
@@ -3881,6 +3881,9 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
+    // Force view visible — belt-and-suspenders with inline style
+    var _ve=document.getElementById('view-hse-stats');
+    if(_ve){_ve.style.display='block';_ve.style.minHeight='calc(100vh - 50px)';_ve.style.background='#f0f2f7';}
     var _stacB=document.getElementById('stac-topbar-btns');
     var _hseB=document.getElementById('hse-topbar-btns');
     if(_stacB)_stacB.style.display='none';
@@ -3890,8 +3893,11 @@ function nav(v){
       var _sb=document.getElementById('hse-status-bar');
       if(_sb){_sb.style.display='block';_sb.style.background='#e8edf8';
         _sb.style.color='#21409a';_sb.style.border='1px solid #b0bde0';
-        _sb.textContent='⏳ Loading data from Google Sheet… If this persists, click ↻ Refresh';}
+        _sb.textContent='⏳ Loading SC_HSE_TXN… Ensure Google Sheet is shared: Anyone → Viewer';}
       loadHseStatsData();
+    } else {
+      hsePopulateDropdowns();
+      renderHseStats();
     }
   }
 }
