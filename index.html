@@ -3269,56 +3269,122 @@ function populateWLSel(){
 
 function openWL(id){nav('warning-letter');setTimeout(()=>{populateWLSel();const s=document.getElementById('wl-sel');if(s)s.value=id;loadWL(id);},120);}
 
-function loadWL(stacId){
-  const wc=document.getElementById('wl-content');
-  if(!stacId){if(wc)wc.innerHTML='<div class="card" style="padding:40px;text-align:center;color:var(--t3);"><div style="font-size:28px;margin-bottom:8px;">📄</div><p>Select a STAC case above.</p></div>';return;}
-  const d=stacData.find(s=>s.id===stacId);if(!d||!wc)return;
-  const type=parseInt(gv('wl-type'))||1;
-  const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-  const types=['','1st Formal Warning Letter','2nd Warning Letter — Mandatory Improvement Plan','Final Warning Letter — Escalation & Commercial Hold'];
-  const bands=['','background:#fef9ec;color:#8b6504;border:1px solid #d68910;','background:#fef3e8;color:#d46b10;border:1px solid #f58220;','background:#fdecea;color:#c0392b;border:1px solid #c0392b;'];
-  const ytdN=getYTDInst(d);
-  let extra='';
-  if(type===3)extra=`<div class="wl-final-warn"><strong style="color:var(--red);font-size:12px;">⚠️ FINAL WARNING — ESCALATION NOTICE</strong><p style="margin-top:6px;font-size:12px;">Continued non-compliance: (1) Commercial Hold, (2) Subcontractor Review Board, (3) Work Suspension per PDO Contract Management procedures.</p></div>`;
-  else if(type===2)extra=`<div class="wl-actions" style="background:var(--abg);border-left-color:var(--amber);"><strong>This is your 2nd Warning.</strong> A Mandatory HSE Improvement Plan (MHIP) must be submitted within 48 hours.</div>`;
-  const penBox=d.penalty>0?`<div class="wl-penalty-box"><strong>⚠️ Financial Penalty:</strong> A contractual penalty of <strong>OMR ${d.penalty}</strong> applied per subcontract agreement Clause [X.X].</div>`:'<div style="background:var(--gbg);padding:10px 14px;border-radius:5px;margin:10px 0;font-size:12px;"><strong>Financial Penalty:</strong> No penalty at this stage. Continued non-compliance triggers escalation.</div>';
-  wc.innerHTML=`<div class="wl-letter" id="wl-print-area"><div class="wl-letterhead">
-    <div style="display:flex;align-items:center;gap:12px;"><img src="data:image/png;base64,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" style="height:58px;width:auto;object-fit:contain;flex-shrink:0;" alt="ATNM Logo"><div><div class="wl-company">AL TASNIM ENTERPRISES LLC</div><div class="wl-tagline">Quality You Can Build On | التسنيم</div><div style="font-size:10px;color:#666;margin-top:3px;">PDO ODC | Marmul / Nimr / Amal / Greater Birba</div></div></div>
-    <div class="wl-ref-block"><span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;${bands[type]}">${types[type]}</span><div style="margin-top:6px;"><strong>STAC Ref: ${d.id}</strong></div><div>Date: ${today}</div><div>Contract: ${d.contractNo||'N/A'}</div></div></div>
-    <p><strong>To:</strong> ${d.company}<br><strong>Attn:</strong> ${d.owner||'The Subcontract Manager'}<br><strong>Cc:</strong> ATNM HSE Manager | ATNM Contract Manager | ATNM Commercial Manager</p>
-    <div class="wl-subject">SUBJECT: HSE STAC NON-COMPLIANCE — ${types[type].toUpperCase()}</div>
-    <p>Dear Sir/Madam,</p>
-    <p>We formally notify you of the following HSE non-compliance recorded on site under the ATNM STAC programme.</p>
-    <table class="wl-table">
-      <tr><td>STAC Reference</td><td><strong>${d.id}</strong></td></tr>
-      <tr><td>Date of Observation</td><td>${fd(d.date)}</td></tr>
-      <tr><td>Cluster / Location</td><td>${d.cluster}</td></tr>
-      <tr><td>HSE Violation Category</td><td>${d.category}</td></tr>
-      <tr><td>YTD Instance #</td><td><strong>#${ytdN}</strong> (YTD ${CY} — same company + same category)</td></tr>
-      <tr><td>Contract No.</td><td>${d.contractNo||'N/A'}</td></tr>
-    </table>
-    <p><strong>Non-Compliance Description:</strong><br>${d.description||'A material breach of HSE requirements. Details in attached HSE Default Form.'}</p>
-    ${penBox}${extra}
-    <div class="wl-actions"><strong>Required Corrective Actions:</strong>
-      <ol style="margin-left:16px;margin-top:8px;line-height:1.9;">
-        <li>Stop non-compliant activity / rectify unsafe condition <strong>immediately</strong>.</li>
-        <li>Root Cause Analysis (RCA) within <strong>48 hours</strong>.</li>
-        <li>Submit CAPA to ATNM HSE by <strong>${d.closeoutDate||'within 7 days'}</strong>.</li>
-        <li>Re-induct / retrain all personnel involved.</li>
-        <li>Implement controls to prevent recurrence.</li>
-        <li>Log and track all actions in <strong>Safety Qube</strong> via Subcontract Coordinator.</li>
-      </ol>
-    </div>
-    <p>Failure to comply by the deadline will result in escalation per STAC three-instance protocol.</p>
-    <p>Acknowledge receipt within <strong>24 hours</strong>.</p>
-    <div class="wl-sig">
-      <div><p style="margin-top:0;font-weight:600;">For Al Tasnim Enterprises LLC:</p><div class="wl-sig-line">HSE Manager<br>Name: ______________________<br>Date: ______________________</div></div>
-      <div><div class="wl-sig-line" style="margin-top:28px;">Contract Manager<br>Name: ______________________<br>Date: ______________________</div></div>
-    </div>
-    <hr style="margin:20px 0;border:none;border-top:1px solid var(--bdr);">
-    <p style="font-size:10px;color:#999;">ATNM STAC Digital Ecosystem | STAC Ref: ${d.id} | Official HSE Record</p>
-  </div>`;
+function limitWords(text, max){
+  if(!text) return '';
+  var words = text.trim().split(/\s+/);
+  if(words.length <= max) return text.trim();
+  return words.slice(0, max).join(' ') + '…';
 }
+
+function loadWL(stacId){
+  var wc=document.getElementById('wl-content');
+  if(!stacId){
+    if(wc) wc.innerHTML='<div class="card" style="padding:40px;text-align:center;color:var(--t3);"><div style="font-size:28px;margin-bottom:8px;">📄</div><p>Select a STAC case above.</p></div>';
+    return;
+  }
+  var d=stacData.find(function(s){return s.id===stacId;});
+  if(!d||!wc) return;
+
+  var type=parseInt(gv('wl-type'))||1;
+  var today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  var typeLabels=['','1st Formal Warning Letter','2nd Warning Letter','Final Warning Letter'];
+  var typeBadge=['',
+    'background:#fef9ec;color:#8b6504;border:1px solid #d68910;',
+    'background:#fef3e8;color:#d46b10;border:1px solid #f58220;',
+    'background:#fdecea;color:#c0392b;border:1px solid #c0392b;'];
+  var ytdN=getYTDInst(d);
+  var desc=limitWords(d.description||'HSE non-compliance details recorded on site.',195);
+
+  // Penalty row
+  var penRow = d.penalty>0
+    ? '<tr style="background:#fff5f5;"><td style="font-weight:600;color:#c0392b;">Financial Penalty</td>'
+      +'<td><strong style="color:#c0392b;">⚠ OMR '+Number(d.penalty).toFixed(3)+'</strong>'
+      +' — per subcontract agreement Clause [X.X].</td></tr>'
+    : '';
+
+  // Type-specific notice
+  var typeNotice='';
+  if(type===2) typeNotice='<div style="background:#fef9ec;border-left:3px solid #d68910;padding:7px 12px;margin:8px 0;font-size:11.5px;border-radius:0 4px 4px 0;">'
+    +'<strong>2nd Warning:</strong> A Mandatory HSE Improvement Plan (MHIP) must be submitted within 48 hours.</div>';
+  if(type===3) typeNotice='<div style="background:#fdecea;border:1.5px solid #c0392b;padding:7px 12px;margin:8px 0;font-size:11.5px;border-radius:4px;">'
+    +'<strong style="color:#c0392b;">⚠ FINAL WARNING — ESCALATION NOTICE:</strong> '
+    +'Continued non-compliance will result in: (1) Commercial Hold, (2) Subcontractor Review Board, (3) Work Suspension.</div>';
+
+  wc.innerHTML='<div class="wl-letter" id="wl-print-area">'
+
+    // ── LETTERHEAD ──
+    +'<div class="wl-letterhead">'
+    +'<div style="display:flex;align-items:center;gap:12px;">'
+    +'<img src="'+LOGO+'" style="height:56px;width:auto;object-fit:contain;" alt="ATNM">'
+    +'</div>'
+    +'<div style="text-align:right;">'
+    +'<span style="display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:700;'+typeBadge[type]+'">'+typeLabels[type]+'</span>'
+    +'<div style="margin-top:7px;font-size:11.5px;line-height:1.6;color:var(--t2);">'
+    +'<strong style="color:var(--text);">STAC Ref: '+d.id+'</strong><br>'
+    +'Date: '+today+'<br>'
+    +'Contract: '+(d.contractNo||'N/A')
+    +'</div></div></div>'
+
+    // ── ADDRESSEE ──
+    +'<p style="margin:10px 0 4px 0;font-size:12px;">'
+    +'<strong>To:</strong> '+d.company+'<br>'
+    +'<strong>Attn:</strong> '+(d.owner||'The Subcontract Manager')+'<br>'
+    +'<strong>Cc:</strong> ATNM HSE Manager | ATNM Contract Manager | ATNM Commercial Manager'
+    +'</p>'
+
+    // ── SUBJECT ──
+    +'<div class="wl-subject">SUBJECT: HSE STAC NON-COMPLIANCE — '+typeLabels[type].toUpperCase()+'</div>'
+
+    // ── OPENING ──
+    +'<p style="font-size:12px;margin:8px 0 6px 0;">Dear Sir/Madam,</p>'
+    +'<p style="font-size:12px;margin:0 0 8px 0;">We formally notify you of the following HSE non-compliance recorded on site under the ATNM STAC programme.</p>'
+
+    // ── DETAILS TABLE ──
+    +'<table class="wl-table">'
+    +'<tr><td>STAC Reference</td><td><strong>'+d.id+'</strong></td></tr>'
+    +'<tr><td>Date of Observation</td><td>'+fd(d.date)+'</td></tr>'
+    +'<tr><td>Cluster / Location</td><td>'+d.cluster+'</td></tr>'
+    +'<tr><td>HSE Violation Category</td><td>'+d.category+'</td></tr>'
+    +'<tr><td>YTD Instance #</td><td><strong>#'+ytdN+'</strong> (YTD '+CY+' — same company + same category)</td></tr>'
+    +'<tr><td>Contract No.</td><td>'+(d.contractNo||'N/A')+'</td></tr>'
+    +penRow
+    +'</table>'
+
+    // ── NON-COMPLIANCE DESCRIPTION ──
+    +'<p style="margin:8px 0 3px 0;font-size:12px;"><strong>Non-Compliance Description:</strong></p>'
+    +'<p style="font-size:12px;margin:0 0 8px 0;text-align:justify;line-height:1.55;">'+desc+'</p>'
+
+    +typeNotice
+
+    // ── CORRECTIVE ACTIONS ──
+    +'<div class="wl-actions"><strong>Required Corrective Actions:</strong>'
+    +'<ol style="margin:5px 0 3px 16px;padding:0;line-height:1.5;">'
+    +'<li>Stop non-compliant activity / rectify unsafe condition <strong>immediately</strong>.</li>'
+    +'<li>Root Cause Analysis (RCA) within <strong>48 hours</strong>.</li>'
+    +'<li>Submit CAPA to ATNM HSE by <strong>'+(d.closeoutDate||'within 7 days')+'</strong>.</li>'
+    +'<li>Re-induct / retrain all personnel involved.</li>'
+    +'<li>Implement controls to prevent recurrence.</li>'
+    +'<li>Log and track all actions in <strong>Safety Qube</strong> via Subcontract Coordinator.</li>'
+    +'</ol></div>'
+
+    // ── CLOSING ──
+    +'<p style="font-size:12px;margin:8px 0 4px 0;">Failure to comply by the deadline will result in escalation per STAC three-instance protocol.</p>'
+    +'<p style="font-size:12px;margin:0 0 10px 0;">Acknowledge receipt within <strong>24 hours</strong>.</p>'
+
+    // ── SIGNATURES ──
+    +'<hr style="border:none;border-top:1px solid var(--bdr);margin:10px 0;">'
+    +'<p style="font-size:12px;font-weight:600;margin:0 0 16px 0;">For Al Tasnim Enterprises LLC:</p>'
+    +'<div class="wl-sig">'
+    +'<div><div class="wl-sig-line">HSE Manager<br>Name: ______________________<br>Date: ______________________</div></div>'
+    +'<div><div class="wl-sig-line">Contract Manager<br>Name: ______________________<br>Date: ______________________</div></div>'
+    +'</div>'
+
+    // ── FOOTER ──
+    +'<hr style="border:none;border-top:1px solid var(--bdr);margin:12px 0 6px 0;">'
+    +'<p style="font-size:9px;color:#999;margin:0;">ATNM STAC Digital Ecosystem | STAC Ref: '+d.id+' | Official HSE Record</p>'
+    +'</div>';
+}
+
 
 function openWLModal(){
   const el=document.getElementById('wl-print-area');
@@ -3336,56 +3402,47 @@ function _getWLPrintHTML(){
   var el=document.getElementById('wl-print-area');
   if(!el) return null;
   var html=el.innerHTML
-    .replace(/var\(--blue\)/g,'#21409a')
-    .replace(/var\(--orange\)/g,'#f58220')
-    .replace(/var\(--red\)/g,'#c0392b')
-    .replace(/var\(--green\)/g,'#1b7a3e')
-    .replace(/var\(--amber\)/g,'#d68910')
-    .replace(/var\(--text\)/g,'#1e2329')
-    .replace(/var\(--t2\)/g,'#4d555b')
-    .replace(/var\(--t3\)/g,'#8b95a1')
-    .replace(/var\(--bg\)/g,'#f0f2f5')
-    .replace(/var\(--blt\)/g,'#e8edf8')
-    .replace(/var\(--bdr\)/g,'#dde1e6')
-    .replace(/var\(--rbg\)/g,'#fdecea')
-    .replace(/var\(--abg\)/g,'#fef9ec')
-    .replace(/var\(--gbg\)/g,'#eaf4ee')
-    .replace(/var\(--r\)/g,'6px')
-    .replace(/var\(--sh\)/g,'none')
-    .replace(/var\(--card\)/g,'#fff');
+    .replace(/var\(--blue\)/g,'#21409a').replace(/var\(--orange\)/g,'#f58220')
+    .replace(/var\(--red\)/g,'#c0392b').replace(/var\(--text\)/g,'#1e2329')
+    .replace(/var\(--t2\)/g,'#4d555b').replace(/var\(--t3\)/g,'#888')
+    .replace(/var\(--bg\)/g,'#f0f2f5').replace(/var\(--blt\)/g,'#e8edf8')
+    .replace(/var\(--bdr\)/g,'#dde1e6').replace(/var\(--rbg\)/g,'#fdecea')
+    .replace(/var\(--abg\)/g,'#fef9ec').replace(/var\(--gbg\)/g,'#eaf4ee')
+    .replace(/var\(--r\)/g,'4px').replace(/var\(--sh\)/g,'none').replace(/var\(--card\)/g,'#fff')
+    .replace(/var\(--amber\)/g,'#d68910');
 
-  var CSS = [
-    '@page{size:A4 portrait;margin:15mm 16mm 15mm 16mm;}',
+  var CSS=[
+    '@page{size:A4 portrait;margin:14mm 16mm 14mm 16mm;}',
     '*{box-sizing:border-box;margin:0;padding:0;}',
-    'html,body{width:100%;background:#fff;font-family:Calibri,Arial,sans-serif;font-size:10.5pt;color:#1e2329;line-height:1.55;}',
-    '.wl-letter{width:100%;background:#fff;border:none;box-shadow:none;border-radius:0;padding:0;}',
-    '.wl-letterhead{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8pt;margin-bottom:10pt;border-bottom:2.5pt solid #21409a;}',
-    '.wl-letterhead img{height:58pt;width:auto;object-fit:contain;flex-shrink:0;}',
-    '.wl-letterhead>div:first-child{display:flex;align-items:center;gap:10pt;}',
-    '.wl-company{font-size:15pt;font-weight:700;color:#21409a;line-height:1.2;}',
-    '.wl-tagline{font-size:8.5pt;color:#f58220;font-weight:600;margin-top:2pt;}',
-    '.wl-ref-block{text-align:right;font-size:9pt;color:#4d555b;line-height:1.65;}',
-    '.wl-ref-block strong{color:#1e2329;}',
-    'p{text-align:justify;margin:4pt 0;font-size:10pt;line-height:1.55;}',
+    'html,body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1e2329;line-height:1.45;background:#fff;}',
+    '.wl-letter{width:100%;background:#fff;border:none!important;box-shadow:none!important;padding:0;}',
+    '.wl-letterhead{display:flex;justify-content:space-between;align-items:flex-start;',
+      'padding-bottom:8pt;margin-bottom:10pt;border-bottom:2pt solid #21409a;}',
+    '.wl-letterhead img{height:50pt;width:auto;}',
+    'p{text-align:justify;margin:4pt 0;font-size:10.5pt;line-height:1.45;}',
     'strong{font-weight:700;}',
-    '.wl-subject{background:#e8edf8;padding:6pt 10pt;margin:8pt 0;font-weight:700;font-size:10pt;border-left:3.5pt solid #21409a;page-break-inside:avoid;}',
-    '.wl-table{width:100%;border-collapse:collapse;margin:6pt 0;font-size:9.5pt;page-break-inside:avoid;}',
-    '.wl-table td{padding:4pt 7pt;border:0.75pt solid #ccc;vertical-align:top;text-align:left;}',
-    '.wl-table td:first-child{background:#f0f2f5;font-weight:600;width:38%;color:#4d555b;}',
-    '.wl-penalty-box{background:#fdecea;border:1pt solid #c0392b;border-radius:3pt;padding:6pt 10pt;margin:6pt 0;font-size:9.5pt;page-break-inside:avoid;}',
-    '.wl-actions{background:#e8edf8;border-left:3.5pt solid #21409a;padding:6pt 10pt;margin:6pt 0;font-size:9.5pt;border-radius:0 3pt 3pt 0;page-break-inside:avoid;}',
-    '.wl-actions ol{margin:4pt 0 2pt 16pt;padding:0;}',
-    '.wl-actions li{margin-bottom:3pt;text-align:justify;font-size:9.5pt;line-height:1.5;}',
-    '.wl-final-warn{background:#fdecea;border:1.5pt solid #c0392b;border-radius:3pt;padding:6pt 10pt;margin:6pt 0;font-size:9.5pt;page-break-inside:avoid;}',
-    '.wl-sig{display:grid;grid-template-columns:1fr 1fr;gap:36pt;margin-top:20pt;page-break-inside:avoid;}',
-    '.wl-sig-line{border-top:0.75pt solid #1e2329;padding-top:4pt;font-size:9pt;color:#4d555b;line-height:1.75;}',
-    'hr{border:none;border-top:0.5pt solid #dde1e6;margin:8pt 0;}',
-    '@media print{.wl-letter{padding:0!important;border:none!important;box-shadow:none!important;}}'
+    '.wl-subject{background:#e8edf8;padding:5pt 10pt;margin:7pt 0;font-weight:700;',
+      'font-size:10.5pt;border-left:3.5pt solid #21409a;}',
+    '.wl-table{width:100%;border-collapse:collapse;margin:6pt 0;font-size:9.5pt;}',
+    '.wl-table td{padding:4pt 7pt;border:0.5pt solid #ccc;vertical-align:top;}',
+    '.wl-table td:first-child{background:#f0f2f5;font-weight:600;width:36%;color:#4d555b;}',
+    '.wl-table tr:nth-child(even) td{background:#f8f9fc;}',
+    '.wl-table tr:nth-child(even) td:first-child{background:#ebebf0;}',
+    '.wl-penalty-box,.wl-final-warn{background:#fdecea;border:1pt solid #c0392b;',
+      'padding:5pt 9pt;margin:5pt 0;font-size:9.5pt;}',
+    '.wl-actions{background:#e8edf8;border-left:3.5pt solid #21409a;',
+      'padding:5pt 9pt;margin:5pt 0;font-size:9.5pt;}',
+    'ol{margin:3pt 0 2pt 15pt;padding:0;}',
+    'li{margin-bottom:2pt;font-size:9.5pt;line-height:1.4;}',
+    '.wl-sig{display:grid;grid-template-columns:1fr 1fr;gap:30pt;margin-top:10pt;}',
+    '.wl-sig-line{font-size:9pt;color:#4d555b;line-height:1.7;}',
+    'hr{border:none;border-top:0.5pt solid #dde1e6;margin:6pt 0;}',
+    '@media print{html,body{background:#fff;}',
+      '.wl-letter{border:none!important;box-shadow:none!important;}}'
   ].join('');
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ATNM Warning Letter</title>'
-    +'<style>'+CSS+'</style>'
-    +'</head><body>'
+    +'<style>'+CSS+'</style></head><body>'
     +'<div class="wl-letter">'+html+'</div>'
     +'</body></html>';
 }
@@ -3419,19 +3476,17 @@ function downloadWordLetter(){
   if(!el){toast('Select a STAC case first',2000,'warn');return;}
   var stacId=gv('wl-sel')||'ATNM-WL';
 
-  // Resolve CSS variables
   var body=el.innerHTML
     .replace(/var\(--blue\)/g,'#21409a').replace(/var\(--orange\)/g,'#f58220')
     .replace(/var\(--red\)/g,'#c0392b').replace(/var\(--text\)/g,'#1e2329')
     .replace(/var\(--t2\)/g,'#4d555b').replace(/var\(--t3\)/g,'#888')
     .replace(/var\(--bg\)/g,'#f0f2f5').replace(/var\(--blt\)/g,'#e8edf8')
-    .replace(/var\(--bdr\)/g,'#ccc').replace(/var\(--rbg\)/g,'#fdecea')
+    .replace(/var\(--bdr\)/g,'#dde1e6').replace(/var\(--rbg\)/g,'#fdecea')
     .replace(/var\(--abg\)/g,'#fef9ec').replace(/var\(--gbg\)/g,'#eaf4ee')
     .replace(/var\(--r\)/g,'4px').replace(/var\(--sh\)/g,'none')
     .replace(/var\(--card\)/g,'#fff').replace(/var\(--amber\)/g,'#d68910')
-    // Override the ol inline style that causes 2-page overflow
-    .replace(/style="margin-left:16px;margin-top:8px;line-height:1\.9;"/g,
-             'style="margin-left:12px;margin-top:2px;line-height:1.3;"');
+    .replace(/style="margin:5px 0 3px 16px;padding:0;line-height:1\.5;"/g,
+             'style="margin:3pt 0 2pt 15pt;padding:0;line-height:1.35;"');
 
   var doc=
     '<html xmlns:o="urn:schemas-microsoft-com:office:office"'+
@@ -3441,44 +3496,33 @@ function downloadWordLetter(){
     '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'+
     '<w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
     '<style>'+
-    '@page Section1{size:21.0cm 29.7cm;margin:1.6cm 1.6cm 1.6cm 1.6cm;'+
-    'mso-header-margin:.5cm;mso-footer-margin:.5cm;}'+
+    '@page Section1{size:21.0cm 29.7cm;margin:1.5cm 1.6cm 1.5cm 1.6cm;'+
+    'mso-header-margin:.4cm;mso-footer-margin:.4cm;}'+
     'div.Section1{page:Section1;}'+
-    '*{box-sizing:border-box;}'+
-    'body{font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#1e2329;'+
-    'line-height:1.35;mso-line-height-rule:exactly;margin:0;padding:0;}'+
-    'p{margin:2pt 0;text-align:justify;mso-justify-low-priority:0;'+
-    'font-size:10pt;line-height:1.35;mso-line-height-rule:exactly;}'+
-    'strong{font-weight:700;}'+
-    'br{mso-data-placement:same-cell;}'+
+    'body,p,td,li{font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#1e2329;'+
+    'line-height:1.35;mso-line-height-rule:exactly;}'+
+    'p{margin:2.5pt 0;text-align:justify;mso-justify-low-priority:0;}'+
+    'strong{font-weight:bold;}'+
     '.wl-letter{width:100%;}'+
-    '.wl-letterhead{width:100%;border-collapse:collapse;margin-bottom:6pt;}'+
-    'img{height:50pt;width:auto;}'+
-    '.wl-company{font-size:13pt;font-weight:bold;color:#21409a;'+
-    'mso-style-priority:99;margin:0;line-height:1.2;}'+
-    '.wl-tagline{font-size:8pt;color:#f58220;font-weight:bold;margin:1pt 0 0 0;}'+
-    '.wl-ref-block{text-align:right;font-size:8.5pt;color:#4d555b;line-height:1.3;}'+
-    '.wl-subject{background:#e8edf8;padding:4pt 8pt;margin:5pt 0;'+
-    'font-weight:bold;font-size:10pt;border-left:3pt solid #21409a;display:block;}'+
+    '.wl-letterhead{width:100%;border-collapse:collapse;border-bottom:2pt solid #21409a;'+
+    'padding-bottom:6pt;margin-bottom:8pt;display:flex;justify-content:space-between;}'+
+    'img{height:48pt;width:auto;}'+
+    '.wl-subject{background:#e8edf8;padding:4pt 8pt;margin:5pt 0;font-weight:bold;'+
+    'border-left:3pt solid #21409a;display:block;font-size:10pt;}'+
     '.wl-table{width:100%;border-collapse:collapse;margin:4pt 0;font-size:9pt;}'+
-    '.wl-table td{padding:2.5pt 5pt;border:.75pt solid #bbb;vertical-align:top;}'+
+    '.wl-table td{padding:3pt 6pt;border:.5pt solid #bbb;vertical-align:top;}'+
     '.wl-table td:first-child{background:#f0f2f5;font-weight:bold;width:35%;color:#4d555b;}'+
-    '.wl-penalty-box{background:#fdecea;border:1pt solid #c0392b;'+
-    'padding:4pt 8pt;margin:4pt 0;font-size:9pt;}'+
+    'ol{margin:3pt 0 2pt 14pt;padding:0;}'+
+    'li{margin-bottom:2pt;text-align:justify;font-size:9pt;line-height:1.35;'+
+    'mso-line-height-rule:exactly;}'+
     '.wl-actions{background:#e8edf8;border-left:3pt solid #21409a;'+
     'padding:4pt 8pt;margin:4pt 0;font-size:9pt;}'+
-    '.wl-actions strong{display:block;margin-bottom:2pt;}'+
-    'ol{margin:2pt 0 2pt 14pt;padding:0;}'+
-    'li{margin-bottom:1.5pt;text-align:justify;font-size:9pt;'+
-    'line-height:1.35;mso-line-height-rule:exactly;}'+
-    '.wl-final-warn{background:#fdecea;border:1pt solid #c0392b;'+
+    '.wl-penalty-box,.wl-final-warn{background:#fdecea;border:1pt solid #c0392b;'+
     'padding:4pt 8pt;margin:4pt 0;font-size:9pt;}'+
-    '.wl-sig{width:100%;border-collapse:collapse;margin-top:12pt;}'+
-    '.wl-sig td{border:none;width:50%;vertical-align:bottom;padding-right:20pt;}'+
-    '.wl-sig-line{border-top:.75pt solid #333;padding-top:3pt;'+
-    'font-size:8.5pt;color:#555;line-height:1.5;}'+
+    '.wl-sig{width:100%;border-collapse:collapse;margin-top:8pt;}'+
+    '.wl-sig td{border:none;width:50%;vertical-align:bottom;padding-right:16pt;}'+
+    '.wl-sig-line{font-size:8.5pt;color:#555;line-height:1.6;}'+
     'hr{border:none;border-top:.5pt solid #ccc;margin:5pt 0;}'+
-    'p[style*="font-size:10px"]{font-size:7.5pt!important;}'+
     '</style></head>'+
     '<body><div class="Section1"><div class="wl-letter">'+body+
     '</div></div></body></html>';
@@ -3779,31 +3823,14 @@ function nav(v){
     }
   }
   else if(v==='hse-stats'){
-    // Force view visible — bypass all CSS class/specificity issues
-    var _ve=document.getElementById('view-hse-stats');
-    if(_ve){
-      _ve.style.display='block';
-      _ve.style.width='100%';
-      _ve.style.minHeight='100vh';
-      _ve.style.background='#f0f2f7';
-      _ve.style.boxSizing='border-box';
-    }
-    // Show HSE topbar buttons, hide STAC ones
     var _stacB=document.getElementById('stac-topbar-btns');
     var _hseB=document.getElementById('hse-topbar-btns');
     if(_stacB)_stacB.style.display='none';
     if(_hseB)_hseB.style.display='inline';
-    // Clear stale status bar
-    var _sb=document.getElementById('hse-status-bar');
-    if(_sb&&scTxnData.length>0){_sb.style.display='none';}
+    // Always render skeleton immediately so view is never blank
+    renderHseStats();
     if(scTxnData.length===0){
       loadHseStatsData();
-    } else {
-      // Use rAF to ensure DOM layout is complete before rendering charts
-      requestAnimationFrame(function(){
-        hsePopulateDropdowns();
-        renderHseStats();
-      });
     }
   }
 }
@@ -4460,9 +4487,15 @@ function renderHseStats() {
 
 async function loadHseStatsData() {
   var sid = (typeof CFG !== 'undefined') ? CFG.sheetId : '';
-  if (!sid) return;
+  if (!sid) { console.warn('HSE Stats: no sheetId in CFG'); return; }
   var sb=document.getElementById('hse-status-bar');
-  if(sb){sb.style.display='block';sb.textContent='Loading SC_HSE_TXN…';}
+  if(sb){
+    sb.style.display='block';
+    sb.style.background='#e8edf8';
+    sb.style.color='#21409a';
+    sb.style.border='1px solid #b0bde0';
+    sb.textContent='⏳ Loading SC_HSE_TXN from Google Sheet…';
+  }
   try {
     var raw = await fetchGvizData(sid, null, 'SC_HSE_TXN', 3);
     if (!raw || !raw.table) {
@@ -4510,13 +4543,30 @@ async function loadHseStatsData() {
       };
     }).filter(function(r){return r.txn_id||r.manhours||r.sc;});
 
-    if(sb) sb.style.display='none';
+    if(sb){
+      if(scTxnData.length===0){
+        sb.style.display='block';
+        sb.style.background='#fff3cd';
+        sb.style.color='#856404';
+        sb.style.border='1px solid #ffc107';
+        sb.textContent='⚠ Sheet loaded but 0 records found. Check SC_HSE_TXN tab has data.';
+      } else {
+        sb.style.display='none';
+      }
+    }
     hsePopulateDropdowns();
     renderHseStats();
     console.log('[HSE Stats] loaded', scTxnData.length, 'records');
   } catch(e) {
     console.error('[HSE Stats] error:', e);
-    if(sb){sb.style.display='block';sb.textContent='❌ '+e.message+' — ensure sheet is public (Anyone → Viewer)';}
+    if(sb){
+      sb.style.display='block';
+      sb.style.background='#fdecea';
+      sb.style.color='#c0392b';
+      sb.style.border='1px solid #e57373';
+      sb.textContent='❌ Cannot load data: '+e.message+
+        ' — Go to Google Sheet → Share → Anyone with link → Viewer, then click Refresh.';
+    }
     renderHseStats();
   }
 }
