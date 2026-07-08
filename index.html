@@ -3391,92 +3391,91 @@ function _getWLPrintHTML(){
 }
 
 
+function _printViaIframe(html){
+  var old=document.getElementById('wl-print-iframe');
+  if(old) old.parentNode.removeChild(old);
+  var iframe=document.createElement('iframe');
+  iframe.id='wl-print-iframe';
+  iframe.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  document.body.appendChild(iframe);
+  var doc=iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  setTimeout(function(){
+    try{iframe.contentWindow.focus();iframe.contentWindow.print();}
+    catch(e){window.print();}
+  },700);
+}
+
 function wlExportPDF(){
   closeWLModal();
   var html=_getWLPrintHTML();
   if(!html){toast('Generate a letter first',2000,'warn');return;}
-  var win=window.open('','_blank');
-  if(!win){toast('Popup blocked — allow popups and retry',3000,'warn');return;}
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(function(){try{win.print();}catch(e){}},800);
+  _printViaIframe(html);
 }
-
 
 function wlDoPrint(){
   closeWLModal();
   var html=_getWLPrintHTML();
   if(!html){toast('Generate a letter first',2000,'warn');return;}
-  var win=window.open('','_blank');
-  if(!win){toast('Popup blocked — allow popups and retry',3000,'warn');return;}
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(function(){try{win.print();}catch(e){}},800);
+  _printViaIframe(html);
 }
+
+
+
 
 function downloadWordLetter(){
   var el=document.getElementById('wl-print-area');
   if(!el){toast('Generate a letter first',2000,'warn');return;}
 
-  // Get rendered text content with vars resolved
+  // Resolve CSS variables
   var body=el.innerHTML
-    .replace(/var\(--blue\)/g,'#21409a')
-    .replace(/var\(--orange\)/g,'#f58220')
-    .replace(/var\(--red\)/g,'#c0392b')
-    .replace(/var\(--text\)/g,'#1e2329')
-    .replace(/var\(--t2\)/g,'#4d555b')
-    .replace(/var\(--bg\)/g,'#f0f2f5')
-    .replace(/var\(--blt\)/g,'#e8edf8')
-    .replace(/var\(--bdr\)/g,'#dde1e6')
-    .replace(/var\(--rbg\)/g,'#fdecea')
-    .replace(/var\(--abg\)/g,'#fef9ec')
-    .replace(/var\(--r\)/g,'6px')
-    .replace(/var\(--sh\)/g,'none')
-    .replace(/var\(--card\)/g,'#fff');
+    .replace(/var\(--blue\)/g,'#21409a').replace(/var\(--orange\)/g,'#f58220')
+    .replace(/var\(--red\)/g,'#c0392b').replace(/var\(--text\)/g,'#1e2329')
+    .replace(/var\(--t2\)/g,'#4d555b').replace(/var\(--t3\)/g,'#888')
+    .replace(/var\(--bg\)/g,'#f0f2f5').replace(/var\(--blt\)/g,'#e8edf8')
+    .replace(/var\(--bdr\)/g,'#ccc').replace(/var\(--rbg\)/g,'#fdecea')
+    .replace(/var\(--abg\)/g,'#fef9ec').replace(/var\(--gbg\)/g,'#eaf4ee')
+    .replace(/var\(--r\)/g,'4px').replace(/var\(--sh\)/g,'none')
+    .replace(/var\(--card\)/g,'#fff').replace(/var\(--amber\)/g,'#d68910');
 
-  var wordDoc='<html xmlns:o="urn:schemas-microsoft-com:office:office" '
-    +'xmlns:w="urn:schemas-microsoft-com:office:word" '
-    +'xmlns="http://www.w3.org/TR/REC-html40">'
-    +'<head><meta charset="UTF-8">'
-    +'<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'
-    +'<w:Zoom>90</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'
-    +'<style>'
-    +'@page{size:21.0cm 29.7cm;margin:2.0cm 1.8cm 2.0cm 1.8cm;}'
-    +'body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1e2329;line-height:1.55;}'
-    +'p{text-align:justify;margin:4pt 0;}'
-    +'.wl-letter{padding:0;}'
-    +'.wl-letterhead{display:flex;justify-content:space-between;border-bottom:2pt solid #21409a;padding-bottom:8pt;margin-bottom:10pt;}'
-    +'.wl-company{font-size:15pt;font-weight:bold;color:#21409a;}'
-    +'.wl-tagline{font-size:9pt;color:#f58220;font-weight:bold;}'
-    +'.wl-ref-block{text-align:right;font-size:9pt;color:#4d555b;}'
-    +'.wl-subject{background:#e8edf8;padding:6pt 10pt;margin:8pt 0;font-weight:bold;border-left:3pt solid #21409a;}'
-    +'.wl-table{width:100%;border-collapse:collapse;margin:6pt 0;font-size:10pt;}'
-    +'.wl-table td{padding:4pt 7pt;border:1pt solid #ccc;}'
-    +'.wl-table td:first-child{background:#f0f2f5;font-weight:bold;width:38%;}'
-    +'.wl-actions{background:#e8edf8;border-left:3pt solid #21409a;padding:6pt 10pt;margin:6pt 0;}'
-    +'.wl-actions ol{margin-left:16pt;}'
-    +'.wl-actions li{margin-bottom:3pt;text-align:justify;}'
-    +'.wl-penalty-box{background:#fdecea;border:1pt solid #c0392b;padding:6pt 10pt;margin:6pt 0;}'
-    +'.wl-final-warn{background:#fdecea;border:1pt solid #c0392b;padding:6pt 10pt;margin:6pt 0;}'
-    +'.wl-sig{display:table;width:100%;margin-top:20pt;}'
-    +'.wl-sig>div{display:table-cell;width:50%;padding-right:20pt;vertical-align:bottom;}'
-    +'.wl-sig-line{border-top:1pt solid #333;padding-top:4pt;font-size:9pt;color:#4d555b;}'
-    +'hr{border-top:1pt solid #dde1e6;}'
-    +'</style></head><body>'
-    +'<div class="wl-letter">'+body+'</div>'
-    +'</body></html>';
+  var doc='<html xmlns:o="urn:schemas-microsoft-com:office:office"'+
+    ' xmlns:w="urn:schemas-microsoft-com:office:word"'+
+    ' xmlns="http://www.w3.org/TR/REC-html40">'+
+    '<head><meta charset="UTF-8">'+
+    '<title>ATNM Warning Letter</title>'+
+    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'+
+    '<w:Zoom>95</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
+    '<style>'+
+    '@page Section1{size:21.0cm 29.7cm;margin:1.8cm 1.8cm 1.8cm 1.8cm;mso-header-margin:.5cm;mso-footer-margin:.5cm;}'+
+    'div.Section1{page:Section1;}'+
+    'body,p,td,li{font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#1e2329;line-height:1.4;mso-line-height-rule:exactly;}'+
+    'p{margin:3pt 0;text-align:justify;mso-justify-low-priority:0;}'+
+    'h1{font-size:14pt;color:#21409a;font-weight:bold;margin:0 0 2pt 0;}'+
+    '.wl-letter{width:100%;}'+
+    '.wl-letterhead{width:100%;border-bottom:2pt solid #21409a;padding-bottom:6pt;margin-bottom:8pt;}'+
+    '.wl-company{font-size:14pt;font-weight:bold;color:#21409a;margin:0;}'+
+    '.wl-tagline{font-size:8.5pt;color:#f58220;font-weight:bold;margin:1pt 0;}'+
+    '.wl-ref-block{text-align:right;font-size:9pt;color:#4d555b;}'+
+    '.wl-subject{background:#e8edf8;padding:5pt 8pt;margin:6pt 0;font-weight:bold;font-size:10pt;border-left:3pt solid #21409a;display:block;}'+
+    '.wl-table{width:100%;border-collapse:collapse;margin:5pt 0;font-size:9.5pt;}'+
+    '.wl-table td{padding:3pt 6pt;border:0.75pt solid #bbb;vertical-align:top;}'+
+    '.wl-table td:first-child{background:#f0f2f5;font-weight:bold;width:36%;color:#4d555b;}'+
+    '.wl-penalty-box{background:#fdecea;border:1pt solid #c0392b;padding:5pt 8pt;margin:5pt 0;font-size:9.5pt;}'+
+    '.wl-actions{background:#e8edf8;border-left:3pt solid #21409a;padding:5pt 8pt;margin:5pt 0;font-size:9.5pt;}'+
+    '.wl-actions ol{margin-left:14pt;margin-top:3pt;margin-bottom:2pt;padding:0;}'+
+    '.wl-actions li{margin-bottom:2pt;text-align:justify;font-size:9.5pt;}'+
+    '.wl-final-warn{background:#fdecea;border:1pt solid #c0392b;padding:5pt 8pt;margin:5pt 0;font-size:9.5pt;}'+
+    '.wl-sig{width:100%;margin-top:16pt;}'+
+    '.wl-sig-line{border-top:0.75pt solid #333;padding-top:3pt;font-size:9pt;color:#555;line-height:1.6;}'+
+    'hr{border:none;border-top:0.5pt solid #ccc;margin:6pt 0;}'+
+    '</style></head>'+
+    '<body><div class="Section1"><div class="wl-letter">'+body+'</div></div></body></html>';
 
-  var blob=new Blob(['\uFEFF'+wordDoc],{type:'application/msword'});
+  var blob=new Blob(['\uFEFF'+doc],{type:'application/msword'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');
-  a.href=url;
-  a.download='ATNM-Warning-Letter.doc';
-  document.body.appendChild(a);
-  a.click();
+  a.href=url; a.download='ATNM-Warning-Letter.doc';
+  document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url);},1000);
   toast('Word file downloaded',2000);
@@ -3786,8 +3785,11 @@ function nav(v){
     if(scTxnData.length===0){
       loadHseStatsData();
     } else {
-      hsePopulateDropdowns();
-      renderHseStats();
+      // Use rAF to ensure DOM layout is complete before rendering charts
+      requestAnimationFrame(function(){
+        hsePopulateDropdowns();
+        renderHseStats();
+      });
     }
   }
 }
