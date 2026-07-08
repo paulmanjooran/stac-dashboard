@@ -349,7 +349,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   #wl-print-area .wl-sig { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 30pt !important; margin-top: 10pt !important; }
   @page { size: A4 portrait; margin: 0; }
 }
-/* print handled by wl-print section */#cnt{padding:0;}.wl-letter{border:none;padding:20px;box-shadow:none;}}
+/* print handled by wl-print section */.wl-letter{border:none;padding:20px;box-shadow:none;}}
 .spinner{width:26px;height:26px;border:3px solid var(--bdr);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;margin:24px auto;}
 @keyframes sp{to{transform:rotate(360deg)}}
 .ins-hint{background:var(--abg);border-left:3px solid var(--amber);padding:7px 11px;border-radius:0 5px 5px 0;font-size:11px;color:var(--t2);margin-top:5px;}
@@ -3300,9 +3300,6 @@ function populateWLSel(){
     o.textContent=`${d.id} | ${d.company.substring(0,24)} | ${d.cluster} | Inst#${n}${issued}`;
     sel.appendChild(o);
   });
-  // Update next WL number display
-  const nwl=document.getElementById('wl-next-num');
-  if(nwl)nwl.textContent=String(getNextWL()).padStart(3,'0');
 }
 
 function openWL(id){nav('warning-letter');setTimeout(()=>{populateWLSel();const s=document.getElementById('wl-sel');if(s)s.value=id;loadWL(id);},120);}
@@ -3498,7 +3495,9 @@ function downloadWLPDF(){
     height:el.scrollHeight
   }).then(function(canvas){
     var imgData=canvas.toDataURL('image/jpeg',0.97);
-    var pdf=new window.jspdf.jsPDF({
+    var jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    if(!jsPDFCtor){toast('PDF library not loaded yet, retry in 2s',3000,'warn');return;}
+    var pdf=new jsPDFCtor({
       orientation:'portrait',
       unit:'mm',
       format:'a4'
