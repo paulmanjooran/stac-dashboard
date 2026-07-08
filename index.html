@@ -312,6 +312,43 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 /* SAFETY QUBE BANNER */
 .sq-banner{background:#e8f4fd;border:1px solid #3498db;border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;color:#1a5276;}
 /* PRINT */
+@media print {
+  body * { visibility: hidden !important; }
+  #wl-print-area, #wl-print-area * { visibility: visible !important; }
+  #wl-print-area {
+    position: fixed !important;
+    left: 0 !important; top: 0 !important;
+    width: 100% !important;
+    padding: 14mm 16mm !important;
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-family: Calibri, Arial, sans-serif !important;
+    font-size: 10.5pt !important;
+    line-height: 1.45 !important;
+    color: #1e2329 !important;
+  }
+  #wl-print-area .wl-letterhead {
+    display: flex !important;
+    justify-content: space-between !important;
+    border-bottom: 2pt solid #21409a !important;
+    padding-bottom: 8pt !important;
+    margin-bottom: 10pt !important;
+  }
+  #wl-print-area .wl-subject {
+    background: #e8edf8 !important;
+    border-left: 3.5pt solid #21409a !important;
+    padding: 5pt 10pt !important;
+    margin: 7pt 0 !important;
+    font-weight: 700 !important;
+  }
+  #wl-print-area .wl-table { width: 100% !important; border-collapse: collapse !important; }
+  #wl-print-area .wl-table td { padding: 4pt 7pt !important; border: 0.5pt solid #ccc !important; }
+  #wl-print-area .wl-table td:first-child { background: #f0f2f5 !important; font-weight: 600 !important; width: 36% !important; }
+  #wl-print-area .wl-actions { background: #e8edf8 !important; border-left: 3.5pt solid #21409a !important; padding: 5pt 9pt !important; }
+  #wl-print-area .wl-sig { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 30pt !important; margin-top: 10pt !important; }
+  @page { size: A4 portrait; margin: 0; }
+}
 @media print{#sb,#topbar,.no-print{display:none!important;}#main{margin-left:0;}#cnt{padding:0;}.wl-letter{border:none;padding:20px;box-shadow:none;}}
 .spinner{width:26px;height:26px;border:3px solid var(--bdr);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;margin:24px auto;}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -994,7 +1031,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <div class="fg" style="flex:1;min-width:200px;"><label>Select STAC Case</label><select id="wl-sel" onchange="loadWL(this.value)"><option value="">-- Select STAC ID --</option></select></div>
             <div class="fg" style="min-width:170px;"><label>Letter Type</label><select id="wl-type" onchange="loadWL(gv('wl-sel'))"><option value="1">1st Formal Warning Letter</option><option value="2">2nd Warning Letter</option><option value="3">Final Warning / Escalation</option></select></div>
             <div style="display:flex;gap:7px;padding-bottom:3px;">
-              <button class="btn bk bsm" onclick="openWLModal()">🖨 Print/PDF</button>
+              <button class="btn bk bsm" onclick="printWLDirect()">🖨 Print/PDF</button>
               <button class="btn bg bsm" onclick="downloadWordLetter()">📄 Download Word (.doc)</button>
             </div>
           </div>
@@ -3346,7 +3383,6 @@ function loadWL(stacId){
     +'<tr><td>Cluster / Location</td><td>'+d.cluster+'</td></tr>'
     +'<tr><td>HSE Violation Category</td><td>'+d.category+'</td></tr>'
     +'<tr><td>YTD Instance #</td><td><strong>#'+ytdN+'</strong> (YTD '+CY+' — same company + same category)</td></tr>'
-    +'<tr><td>Contract No.</td><td>'+(d.contractNo||'N/A')+'</td></tr>'
     +penRow
     +'</table>'
 
@@ -3448,26 +3484,14 @@ function _getWLPrintHTML(){
 }
 
 
+function printWLDirect(){
+  var el=document.getElementById('wl-print-area');
+  if(!el){toast('Select a STAC case first',2000,'warn');return;}
+  window.print();
+}
+
 function wlExportPDF(){
-  closeWLModal();
-  var html=_getWLPrintHTML();
-  if(!html){toast('Select a STAC case first',2000,'warn');return;}
-  // Open in new tab using data URI — no popup blocker, no CORS issue
-  var newTab=window.open('about:blank','_blank');
-  if(newTab){
-    newTab.document.open();
-    newTab.document.write(html);
-    newTab.document.close();
-  } else {
-    // Last resort fallback — hidden iframe print
-    var fr=document.getElementById('_wl_print_fr');
-    if(!fr){fr=document.createElement('iframe');fr.id='_wl_print_fr';
-      fr.style.cssText='position:fixed;width:1px;height:1px;top:-9999px;left:-9999px;border:0;';
-      document.body.appendChild(fr);}
-    var d=fr.contentDocument||fr.contentWindow.document;
-    d.open();d.write(html);d.close();
-    setTimeout(function(){fr.contentWindow.print();},500);
-  }
+  printWLDirect();
 }
 
 function wlDoPrint(){wlExportPDF();}
