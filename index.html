@@ -791,7 +791,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
     <div class="tb-r"><div style="display:flex;align-items:center;gap:5px;margin-right:10px;font-size:11px;"><span id="health-dot" style="width:8px;height:8px;border-radius:50%;background:#1b7a3e;display:inline-block;flex-shrink:0;"></span><span id="health-lbl" style="color:#1b7a3e;font-weight:600;">Live</span><span id="health-ts" style="color:var(--t3);font-size:10px;margin-left:4px;"></span></div><span id="draft-badge" onclick="retryDrafts()" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;cursor:pointer;margin-right:8px;" title="Pending drafts — click to retry"></span><span id="admin-status" style="display:none;"></span><span id="admin-badge" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.4px;margin-right:4px;">ADMIN</span>
       <span id="dsrc" class="bdg bgy" style="font-size:10px;">⏳ Loading...</span>
-      <span id="stac-topbar-btns"><button class="btn bk bsm" onclick="loadData()">🔄 Refresh</button> <button class="btn bk bsm" onclick="exportFilteredExcel()">⬇ Excel</button> <button class="btn bk bsm" onclick="exportFilteredPDF()">🖨 PDF</button></span>
+      <span id="stac-topbar-btns"><button class="btn bk bsm" onclick="loadData()">🔄 Refresh</button> <button class="btn bk bsm" onclick="exportFilteredExcel()">⬇ CSV</button> <button class="btn bk bsm" onclick="exportFilteredPDF()">🖨 PDF</button></span>
       <span id="hse-topbar-btns" style="display:none;"><button class="btn bk bsm" onclick="hseRefresh()">🔄 Refresh</button> <button class="btn bk bsm" onclick="exportHseStatsXL()">⬇ CSV</button></span>
       <button class="btn bo bsm" onclick="nav('new-stac')">+ New STAC Form</button>
       <div style="font-size:10px;color:var(--t3);" id="lu">—</div>
@@ -818,7 +818,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <button class="btn bk bsm" onclick="resetF()">✕ Reset</button>
         <span id="fcnt" style="font-size:11px;color:var(--t3);">— cases</span>
         <div style="margin-left:auto;display:flex;gap:5px;">
-          <button class="btn bg bsm" onclick="exportFilteredExcel()">⬇ Excel</button>
+          <button class="btn bg bsm" onclick="exportFilteredExcel()">⬇ CSV</button>
           <button class="btn bk bsm" onclick="exportFilteredPDF()">🖨 PDF</button>
         </div>
       </div>
@@ -965,7 +965,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <button class="btn bk bsm" onclick="clearTF()">✕ Reset</button>
         <span id="tc" style="font-size:11px;color:var(--t3);">—</span>
         <div style="margin-left:auto;display:flex;gap:5px;">
-          <button class="btn bg bsm" onclick="exportTrackerXL()">⬇ Excel</button>
+          <button class="btn bg bsm" onclick="exportTrackerXL()">⬇ CSV</button>
           <button class="btn bk bsm" onclick="exportTrackerPDF()">🖨 PDF</button>
         </div>
       </div>
@@ -985,7 +985,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <div class="kpi kbl"><div class="klbl">Total YTD Cases</div><div class="kval" id="fp-cas">—</div><div class="ksub" id="fp-cas-s">All STAC cases this year</div></div>
       </div>
       <div class="ch2">
-        <div class="card"><div class="chd"><h3>💰 Penalty by Subcontractor</h3><div style="display:flex;gap:5px;"><button class="btn bg bsm" onclick="exportFinesXL()">⬇ Excel</button><button class="btn bk bsm" onclick="exportFinesPDF()">🖨 PDF</button></div></div>
+        <div class="card"><div class="chd"><h3>💰 Penalty by Subcontractor</h3><div style="display:flex;gap:5px;"><button class="btn bg bsm" onclick="exportFinesXL()">⬇ CSV</button><button class="btn bk bsm" onclick="exportFinesPDF()">🖨 PDF</button></div></div>
           <div class="cbd" style="position:relative;height:250px;"><canvas id="ch-pen-co"></canvas></div><div class="ch-hint">💡 Click to drill down</div></div>
         <div class="card"><div class="chd"><h3>📊 Penalty by Category</h3></div>
           <div class="cbd" style="position:relative;height:250px;"><canvas id="ch-pen-cat"></canvas></div><div class="ch-hint">💡 Click to drill down</div></div>
@@ -1014,7 +1014,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         <button class="btn bk bsm" onclick="clearSCF()">✕ Reset</button>
         <span id="sc-cnt" style="font-size:11px;color:var(--t3);">—</span>
         <div style="margin-left:auto;display:flex;gap:5px;">
-          <button class="btn bg bsm" onclick="exportScoresXL()">⬇ Excel All</button>
+          <button class="btn bg bsm" onclick="exportScoresXL()">⬇ CSV All</button>
           <button class="btn bk bsm" onclick="exportScoresPDF()">🖨 PDF All</button>
         </div>
       </div>
@@ -1061,7 +1061,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           style="border:1px solid var(--bdr);border-radius:var(--r);padding:5px 10px;font-size:12px;width:180px;">
         <button class="btn bk bsm" onclick="clearPF()">Reset</button>
         <div class="fdiv"></div>
-        <button class="btn bg bsm" onclick="exportPerfXL()">&#x2B07; Excel</button>
+        <button class="btn bg bsm" onclick="exportPerfXL()">⬇ CSV</button>
         <button class="btn bk bsm" onclick="exportPerfPDF()">PDF</button>
         <span id="pf-cnt" style="font-size:11px;color:var(--t3);margin-left:6px;"></span>
       </div>
@@ -1622,7 +1622,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   <div class="mhd"><h3 id="m-drill-title">Cases</h3><button class="xbtn" onclick="cm('m-drill')">✕</button></div>
   <div class="mbd">
     <div style="margin-bottom:10px;display:flex;justify-content:flex-end;gap:7px;">
-      <button class="btn bg bsm" onclick="exportDrillXL()">⬇ Excel</button>
+      <button class="btn bg bsm" onclick="exportDrillXL()">⬇ CSV</button>
       <button class="btn bk bsm" onclick="exportDrillPDF()">🖨 PDF</button>
     </div>
     <div class="tw"><table class="tbl"><thead><tr><th>STAC ID</th><th>Date</th><th>Cluster</th><th>Subcontractor</th><th>Category</th><th>YTD Inst.</th><th>Penalty</th></tr></thead>
@@ -1633,7 +1633,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 <!-- SCORECARD DETAIL MODAL -->
 <div class="mbg" id="m-sc"><div class="mbox mbox-md">
   <div class="mhd"><h3 id="m-sc-title">Subcontractor Scorecard</h3>
-    <div style="display:flex;gap:7px;"><button class="btn bg bsm" onclick="exportSCXL()">⬇ Excel</button><button class="btn bk bsm" onclick="exportSCPDF()">🖨 PDF</button><button class="xbtn" onclick="cm('m-sc')">✕</button></div>
+    <div style="display:flex;gap:7px;"><button class="btn bg bsm" onclick="exportSCXL()">⬇ CSV</button><button class="btn bk bsm" onclick="exportSCPDF()">🖨 PDF</button><button class="xbtn" onclick="cm('m-sc')">✕</button></div>
   </div>
   <div class="mbd" id="m-sc-body"></div>
 </div></div>
@@ -3637,27 +3637,62 @@ function getRows(data){
   const r=data.map(d=>[d.id,d.date,d.cluster,d.company,d.category,getYTDInst(d),d.wlType,d.penalty,d.wlIssued||'No',d.contractNo,d.description]);
   return{h,r};
 }
-function doXL(data,name){
-  var XL=window.XLSX;
-  if(!XL||!XL.utils){toast('❌ Excel engine not ready — refresh page',3000,'warn');return;}
-  try{
-    var gr=getRows(data);
-    var wb=XL.utils.book_new();
-    var ws=XL.utils.aoa_to_sheet([gr.h].concat(gr.r));
-    ws['!cols']=gr.h.map(function(_,i){return {wch:i===3||i===4||i===6||i===10?35:i===0?22:14};});
-    XL.utils.book_append_sheet(wb,ws,'STAC');
-    var fname='ATNM-STAC-'+name+'-'+new Date().toISOString().split('T')[0]+'.xlsx';
-    XL.writeFile(wb,fname);
-    toast('✅ Excel downloaded: '+fname);
-  }catch(e){toast('❌ Excel error: '+e.message,4000,'warn');console.error('doXL',e);}
+function doCSV(data,name){
+  // Generate CSV from STAC data rows
+  var gr=getRows(data);
+  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
+  var csv=gr.h.map(q).join(',')+String.fromCharCode(13,10);
+  gr.r.forEach(function(row){csv+=row.map(q).join(',')+String.fromCharCode(13,10);});
+  var fname='ATNM-STAC-'+name+'-'+new Date().toISOString().split('T')[0]+'.csv';
+  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=fname;a.style.display='none';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+  toast('✅ CSV downloaded: '+fname);
 }
+function doXL(data,name){doCSV(data,name);}
 function doPDF(data,title){
-  let h=`<h2 style="color:#21409a;">${title}</h2><p style="font-size:11px;color:#666;margin-bottom:12px;">YTD ${CY} | ${new Date().toLocaleDateString()} | ${data.length} cases</p>`;
-  h+=`<table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#21409a;color:#fff;">`;
-  ['STAC ID','Date','Cluster','Subcontractor','Category','YTD#','Penalty','WL Type'].forEach(c=>h+=`<th style="padding:5px 7px;text-align:left;">${c}</th>`);
-  h+=`</tr></thead><tbody>`;
-  data.forEach((d,i)=>{h+=`<tr style="background:${i%2===0?'#f9f9f9':'#fff'};"><td style="padding:4px 7px;font-family:monospace;font-size:9px;">${d.id}</td><td style="padding:4px 7px;">${fd(d.date)}</td><td>${d.cluster}</td><td>${d.company}</td><td>${d.category}</td><td>${getYTDInst(d)}</td><td>OMR ${d.penalty}</td><td style="font-size:9px;">${(d.wlType||'').substring(0,30)}</td></tr>`;});
-  h+=`</tbody></table>`;openPW(title,h);
+  // Screenshot the current active view — respects all filters
+  var activeView=document.querySelector('.view.active')||document.getElementById('cnt');
+  if(!activeView){toast('Nothing to capture',2000,'warn');return;}
+  if(typeof html2canvas!=='function'){
+    toast('PDF library loading — try again in 2s',2500,'warn');return;
+  }
+  toast('Generating PDF screenshot…',3000);
+  var fname='ATNM-'+title.replace(/[^a-zA-Z0-9]/g,'-')+'-'+new Date().toISOString().split('T')[0]+'.pdf';
+  html2canvas(activeView,{
+    scale:1.5,
+    useCORS:true,
+    backgroundColor:'#f0f2f5',
+    scrollY:-window.scrollY,
+    windowWidth:activeView.scrollWidth,
+    width:activeView.scrollWidth,
+    height:activeView.scrollHeight
+  }).then(function(canvas){
+    var imgData=canvas.toDataURL('image/jpeg',0.92);
+    var jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    if(!jsPDFCtor){toast('❌ jsPDF not loaded — refresh page',3000,'warn');return;}
+    // Fit to A4 landscape if wide, portrait if narrow
+    var ratio=canvas.width/canvas.height;
+    var orient=ratio>1.2?'landscape':'portrait';
+    var pdf=new jsPDFCtor({orientation:orient,unit:'mm',format:'a4'});
+    var pw=pdf.internal.pageSize.getWidth();
+    var ph=pdf.internal.pageSize.getHeight();
+    var margin=8;
+    var imgW=pw-(margin*2);
+    var imgH=imgW/ratio;
+    // If taller than page, scale down
+    if(imgH>ph-(margin*2)){imgH=ph-(margin*2);imgW=imgH*ratio;}
+    var x=(pw-imgW)/2;
+    pdf.addImage(imgData,'JPEG',x,margin,imgW,imgH);
+    // Add footer
+    pdf.setFontSize(7);pdf.setTextColor(150);
+    pdf.text('ATNM STAC | '+title+' | '+new Date().toLocaleDateString(),margin,ph-3);
+    pdf.save(fname);
+    toast('✅ PDF downloaded: '+fname);
+  }).catch(function(e){toast('❌ PDF error: '+e.message,4000,'warn');});
 }
 function openPW(title,body){
   const w=window.open('','_blank','width=1000,height=700');
@@ -3672,13 +3707,9 @@ function exportTrackerPDF(){doPDF(getTrData(),'STAC Case Tracker');}
 function exportFinesXL(){
   var XL=window.XLSX;if(!XL||!XL.utils){toast('❌ Excel engine not ready',3000,'warn');return;}
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  const wb=XLSX.utils.book_new();
-  const{h,r}=getRows(ytd);const ws=XLSX.utils.aoa_to_sheet([h,...r]);XLSX.utils.book_append_sheet(wb,ws,'Penalty Register');
-  const dh=['#','Category','Type','1st Instance','2nd Instance','3rd Instance','P1','P2','P3','Qtr','Annual'];
-  const dr=SM.map(x=>[x.sno,x.cat,x.type,x.l1,x.l2,x.l3,'OMR '+x.p1,'OMR '+x.p2,'OMR '+x.p3,x.qd,x.ad]);
-  const ws2=XLSX.utils.aoa_to_sheet([dh,...dr]);XLSX.utils.book_append_sheet(wb,ws2,'Scoring Matrix');
-  XLSX.writeFile(wb,`ATNM-STAC-Fines-${CY}.xlsx`);toast('✅ Fines + Matrix exported');
+  doCSV(ytd,'Fines-Penalties');
 }
+
 function exportFinesPDF(){doPDF(stacData.filter(d=>d.date&&d.date.startsWith(String(CY))),'Fines & Penalties '+CY);}
 function exportScoresXL(){
   var XL=window.XLSX;if(!XL||!XL.utils){toast('❌ Excel engine not ready',3000,'warn');return;}
@@ -3713,8 +3744,15 @@ function exportScoresXL(){
            cases.length,pen,cs.deductedPts*-1,Math.max(0,cs.actualScore),
            (cs.pct||100)+'%',cs.bandLabel];
   }); // No filter — ALL subcontractors shown regardless of violations
-  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([hdrNew,...rows]);XLSX.utils.book_append_sheet(wb,ws,'Scorecards');
-  XLSX.writeFile(wb,`ATNM-STAC-Scorecards-${CY}.xlsx`);toast('✅ Scorecards exported');
+  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
+  var csv=[hdrNew,...rows].map(function(row){return row.map(q).join(',');}).join('\r\n');
+  var fname='ATNM-STAC-Scorecards-'+CY+'.csv';
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=fname;a.style.display='none';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+  toast('✅ CSV downloaded: '+fname);
 }
 function exportScoresPDF(){
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
@@ -5360,12 +5398,16 @@ function exportPerfXL(){
     Math.round(r.cs.pct||0)+'%',r.cs.bandLabel,
     r.cs.band==='green'?'Compliant':r.cs.band==='amber'?'At Risk':r.cs.band==='red'?'Non-Compliant':'BLACKLIST REVIEW'
   ];});
-  var wb=XL.utils.book_new();
-  var ws=XL.utils.aoa_to_sheet([hdrs].concat(data));
-  ws['!cols']=[{wch:6},{wch:34},{wch:16},{wch:14},{wch:10},{wch:10},{wch:14},{wch:12},{wch:12},{wch:8},{wch:12},{wch:16},{wch:18}];
-  XL.utils.book_append_sheet(wb,ws,'Performance Report');
-  XL.writeFile(wb,'ATNM-Performance-Report-'+yr+'-'+new Date().toISOString().split('T')[0]+'.xlsx');
-  toast('✅ Performance Report exported');
+  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
+  var csv=hdrs.map(q).join(',')+String.fromCharCode(13,10);
+  data.forEach(function(row){csv+=row.map(q).join(',')+String.fromCharCode(13,10);});
+  var fname='ATNM-Performance-Report-'+yr+'-'+new Date().toISOString().split('T')[0]+'.csv';
+  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=fname;a.style.display='none';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+  toast('✅ CSV downloaded: '+fname);
 }
 
 function exportPerfPDF(){
