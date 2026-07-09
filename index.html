@@ -1856,64 +1856,90 @@ function findSubcon(company){
 }
 
 function getRiskProfile(company){
-  const sub=findSubcon(company);
+  var sub=findSubcon(company);
   if(!sub)return RISK_LEVELS['Medium-High'];
-  const rl=String(sub.riskLevel||'Medium-High').trim();
+  var rl=String(sub.riskLevel||'Medium-High').trim();
   return RISK_LEVELS[rl]||RISK_LEVELS['Medium-High'];
 }
 
-function isFullDemerit(d){
-  // Matrix rule: Full Demerit ONLY on 3rd instance (Final Warning Letter)
-  // Detect via wlType string OR via instance count reaching 3
-  if(!d)return false;
-  var wl=String(d.wlType||'').toLowerCase();
-  // Explicit full demerit tag (long format from matrix lookup)
-  if(wl.includes('full demerit'))return true;
-  // Final warning letter (any format)
-  if(wl.includes('final'))return true;
-  // Form dropdown value '3' = Final Warning / Escalation
-  if(wl==='3')return true;
-  if(wl.includes('escalat'))return true;
-  // Fallback: if YTD instance # for this company+category is 3+
-  var inst=getYTDInst(d);
-  if(inst>=3)return true;
-  return false;
+
+function isCat8(d){
+  if(!d||!d.category)return false;
+  var cat=d.category.toLowerCase();
+  return cat.includes('unsafe act')||cat.includes('unsafe condition');
 }
 
-function calcComplianceScore(company){
-  const profile=getRiskProfile(company);
-  const coL=company.trim().toLowerCase();
-  // Get all YTD cases for this company (fuzzy name match)
-  const ytd=stacData.filter(d=>{
-    if(!d.date||!d.date.startsWith(String(CY)))return false;
-    const dcoL=d.company.trim().toLowerCase();
-    return dcoL===coL||dcoL.includes(coL.substring(0,15))||coL.includes(dcoL.substring(0,15));
+// Does this case carry a Full Demerit? Pure category + instance logic.
+function isFullDemerit(d){
+  if(!d)return false;
+  var inst=parseInt(d.instances)||1;
+  if(isCat8(d))return true;   // Cat 8: Final Always — every instance
+  if(inst>=3)  return true;   // All others: 3rd instance = Final WL
+  return false;                // 1st, 2nd instance = No Demerit
+}
+
+// Does this company have ANY case at 3rd instance or above (any category)?
+function hasThirdInstance(ytd){
+  return ytd.some(function(d){
+    var inst=parseInt(d.instances)||1;
+    return inst>=3||isCat8(d);
   });
-  // Count Full Demerit events (3rd instance / Final WL)
-  // Per matrix: -10 pts annual, -2.5 pts quarterly per Full Demerit event
-  const fullDemeritCases=ytd.filter(d=>isFullDemerit(d));
-  const fullDemerits=fullDemeritCases.length;
-  const deductedPtsAnnual=fullDemerits*10;   // -10 pts per Full Demerit (annual)
-  const deductedPtsQtr=fullDemerits*2.5;     // -2.5 pts per Full Demerit (quarterly)
-  const actualScore=profile.annualCeiling - deductedPtsAnnual;
-  const pct=profile.annualCeiling>0?(actualScore/profile.annualCeiling)*100:0;
-  // Band classification per ATNM STAC matrix
-  let band='green',bandLabel='Compliant';
-  if(actualScore<0){band='black';bandLabel='BLACKLIST REVIEW';}
-  else if(pct<60){band='red';bandLabel='Non-Compliant';}
-  else if(pct<80){band='amber';bandLabel='At Risk';}
-  else{band='green';bandLabel='Compliant';}
-  return{
-    profile,
-    fullDemerits,
-    deductedPts:deductedPtsAnnual,
-    deductedPtsQtr,
-    actualScore:Math.max(0,actualScore),
-    rawScore:actualScore,
-    pct:Math.max(0,pct),
-    band,bandLabel,
-    ytdCases:ytd.length,
-    noDemerits:ytd.length-fullDemerits   // 1st+2nd instance cases (no demerit)
+}
+
+// Calculate YTD compliance score for a company
+function calcComplianceScore(company){
+  var profile = getRiskProfile(company);
+  var ceiling  = profile.annualCeiling;  // 90, 92, or 95
+  var coL      = company.trim().toLowerCase();
+
+  // All YTD STAC cases — exact company name match
+  var ytd=stacData.filter(function(d){
+    if(!d.date||!d.date.startsWith(String(CY)))return false;
+    return d.company.trim().toLowerCase()===coL;
+  });
+
+  // Categorise every case
+  var fullDemeritCases = ytd.filter(function(d){return  isFullDemerit(d);});
+  var noDemeritCases   = ytd.filter(function(d){return !isFullDemerit(d);});
+  var fullDemerits     = fullDemeritCases.length;
+  var hasThird         = hasThirdInstance(ytd);
+
+  // Score: ceiling minus deductions
+  var deductedAnnual = fullDemerits * 10;    // −10 pts per Full Demerit
+  var deductedQtr    = fullDemerits * 2.5;   // −2.5 pts per Full Demerit (quarterly)
+  var rawScore       = ceiling - deductedAnnual;
+
+  // ── BAND LOGIC ──────────────────────────────────────────────────
+  // Green  : score = ceiling     → no demerits at all → Compliant
+  // Amber  : score < ceiling     → at least 1 full demerit but < 3rd instance yet
+  // Red    : 3rd instance hit    → regardless of score → Non-Compliant
+  // Black  : score < 0           → ceiling breached → Blacklist Review
+  var band, bandLabel;
+  if(rawScore<0){
+    band='black'; bandLabel='BLACKLIST REVIEW';
+  }else if(hasThird){
+    band='red';   bandLabel='Non-Compliant';
+  }else if(fullDemerits>0){
+    band='amber'; bandLabel='At Risk';
+  }else{
+    band='green'; bandLabel='Compliant';
+  }
+
+  return {
+    profile          : profile,
+    ceiling          : ceiling,
+    ytdCases         : ytd.length,
+    fullDemerits     : fullDemerits,
+    noDemeritCases   : noDemeritCases.length,
+    fullDemeritCases : fullDemeritCases,
+    hasThirdInstance : hasThird,
+    deductedPts      : deductedAnnual,
+    deductedPtsQtr   : deductedQtr,
+    rawScore         : rawScore,
+    actualScore      : Math.max(0,rawScore),
+    pct              : ceiling>0?Math.max(0,(rawScore/ceiling)*100):0,
+    band             : band,
+    bandLabel        : bandLabel
   };
 }
 
@@ -1953,13 +1979,15 @@ function lookupRule(cat){
 // RISK LEVEL & CEILING — from Risk Level & Ceiling sheet
 // Drives compliance scoring and ceiling per subcontractor
 // ============================================================
+// ATNM STAC Risk Levels — Annual ceiling per Sub Contractors sheet
 const RISK_LEVELS={
-  'Medium':     {qtrCeiling:22.5, annualRequired:100, annualCeiling:90,  label:'Medium'},
-  'Medium-High':{qtrCeiling:23.0, annualRequired:100, annualCeiling:92,  label:'Medium-High'},
-  'Critical':   {qtrCeiling:23.8, annualRequired:100, annualCeiling:95,  label:'Critical'},
-  'Medium (90)':{qtrCeiling:22.5, annualRequired:100, annualCeiling:90,  label:'Medium'},
-  'Medium-High (92)':{qtrCeiling:23.0,annualRequired:100,annualCeiling:92,label:'Medium-High'},
-  'Critical (95)':{qtrCeiling:23.8,annualRequired:100,annualCeiling:95,  label:'Critical'}
+  'Medium':         {annualCeiling:90,  label:'Medium'},
+  'Medium-High':    {annualCeiling:92,  label:'Medium-High'},
+  'Critical':       {annualCeiling:95,  label:'Critical'},
+  // Aliases for legacy data variants
+  'Medium (90)':    {annualCeiling:90,  label:'Medium'},
+  'Medium-High (92)':{annualCeiling:92, label:'Medium-High'},
+  'Critical (95)':  {annualCeiling:95,  label:'Critical'}
 };
 
 // [Unified above — see findSubcon/getRiskProfile/calcComplianceScore]
@@ -3455,12 +3483,6 @@ function loadWL(stacId){
 }
 
 
-function openWLModal(){
-  const el=document.getElementById('wl-print-area');
-  if(!el){toast('Generate a letter first',2000,'warn');return;}
-  const modal=document.getElementById('wl-print-modal');
-  if(modal){modal.style.display='flex';}
-}
 
 function closeWLModal(){
   const modal=document.getElementById('wl-print-modal');
@@ -3557,12 +3579,12 @@ function downloadWLPDF(){
   });
 }
 
-function printWLDirect(){ downloadWLPDF(); }
-function wlExportPDF(){ downloadWLPDF(); }
-
-function wlDoPrint(){wlExportPDF();}
 
 
+// WL PDF — all routes to downloadWLPDF
+function wlExportPDF(){downloadWLPDF();}
+function printWLDirect(){downloadWLPDF();}
+function wlDoPrint(){downloadWLPDF();}
 
 
 function downloadWordLetter(){
@@ -3732,18 +3754,12 @@ function doPDF(data,title){
     toast('✅ PDF downloaded: '+fname);
   }).catch(function(e){toast('❌ PDF error: '+e.message,4000,'warn');});
 }
-function openPW(title,body){
-  const w=window.open('','_blank','width=1000,height=700');
-  if(!w)return toast('Pop-up blocked — allow pop-ups',3000,'warn');
-  w.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:'Segoe UI',sans-serif;margin:20px;}</style></head><body><div style="text-align:right;margin-bottom:10px;"><button onclick="window.print();" style="background:#21409a;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;">🖨 Print / Save PDF</button></div>${body}</body></html>`);
-  w.document.close();
-}
+
 function exportFilteredExcel(){doXL(filteredData.length?filteredData:stacData,'Dashboard');}
 function exportFilteredPDF(){doPDF(filteredData.length?filteredData:stacData,'STAC Dashboard');}
 function exportTrackerXL(){doXL(getTrData(),'Tracker');}
 function exportTrackerPDF(){doPDF(getTrData(),'STAC Case Tracker');}
 function exportFinesXL(){
-  var XL=window.XLSX;if(!XL||!XL.utils){toast('❌ Excel engine not ready',3000,'warn');return;}
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
   doCSV(ytd,'Fines-Penalties');
 }
@@ -3793,38 +3809,9 @@ function exportScoresXL(){
   toast('✅ CSV downloaded: '+fname);
 }
 function exportScoresPDF(){
-  const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  const _coSeen2=new Set(),allPCo=[];
-  const _norm=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-  subconData.forEach(x=>{if(x.company&&x.company.trim().length>1){const k=_norm(x.company);if(!_coSeen2.has(k)){_coSeen2.add(k);allPCo.push(x.company.trim());}}});
-  stacData.forEach(d=>{if(d.company&&d.company.trim().length>1){const k=_norm(d.company);if(!_coSeen2.has(k)){_coSeen2.add(k);allPCo.push(d.company.trim());}}});
-  const bc2={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
-  let h='<h2 style="color:#21409a;">Subcontractor Scorecards '+CY+'</h2>';
-  h+='<p style="font-size:11px;color:#666;margin-bottom:10px;">Al Tasnim Enterprises LLC | PDO ODC | '+new Date().toLocaleDateString()+' | '+allPCo.length+' subcontractors</p>';
-  h+='<table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#21409a;color:#fff;">';
-  ['Subcontractor','Cluster','Risk Level','Score / Ceiling','% Compliance','YTD Cases','Penalty (OMR)','Demerit Pts','Band'].forEach(col=>h+=`<th style="padding:5px 7px;text-align:left;">${col}</th>`);
-  h+='</tr></thead><tbody>';
-  allPCo.forEach((co,i)=>{
-    const coL=co.toLowerCase();
-    const cs=calcComplianceScore(co);
-    const cases=ytd.filter(d=>d.company.trim().toLowerCase()===coL);
-    const sub=subconData.find(s=>s.company&&s.company.trim().toLowerCase()===coL);
-    const pen=cases.reduce((s,d)=>s+(d.penalty||0),0);
-    const bc=bc2[cs.band]||'#1b7a3e';
-    h+=`<tr style="background:${i%2===0?'#f9f9f9':'#fff'};">
-      <td style="padding:4px 7px;font-weight:600;">${co}</td>
-      <td>${sub?normCluster(sub.cluster):'—'}</td>
-      <td style="font-size:9px;">${cs.profile.label}</td>
-      <td style="font-weight:700;">${Math.max(0,cs.actualScore)} / ${cs.profile.annualCeiling}</td>
-      <td style="text-align:center;">${cs.pct||100}%</td>
-      <td style="text-align:center;">${cases.length}</td>
-      <td style="text-align:right;">OMR ${pen}</td>
-      <td style="text-align:center;color:${cs.deductedPts>0?'red':'#333'};">${cs.deductedPts*-1} pts</td>
-      <td><span style="padding:2px 6px;border-radius:3px;font-size:9px;background:${bc};color:#fff;">${cs.bandLabel}</span></td>
-    </tr>`;
-  });
-  h+='</tbody></table>';openPW('Subcontractor Scorecards',h);
+  doPDF([],'Subcon-Scorecards');
 }
+
 function exportSCXL(){if(activeSCData){const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY))&&d.company===activeSCData);doXL(ytd,'Scorecard-'+activeSCData.substring(0,20));}}
 function exportSCPDF(){if(activeSCData){const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY))&&d.company===activeSCData);doPDF(ytd,'Scorecard: '+activeSCData);}}
 
