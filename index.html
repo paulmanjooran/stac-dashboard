@@ -375,7 +375,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* ── FORM CHROME ─────────────────────────────────────────────────── */
 #view-hse-form { padding: 0; margin: 0; background: #F0F2F7; }
-#view-hse-stats { padding: 0; margin: 0; background: #F0F2F7; }
 #view-hse-form #formWrap { max-width: 100%; margin: 0; padding: 0 24px 40px 24px; box-sizing: border-box; }
 
 /* ── TOPBAR ─────────────────────────────────────────────────────── */
@@ -697,7 +696,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 }
 
 /* ── HSE STATISTICS DASHBOARD ────────────────────────────── */
-#view-hse-stats { padding: 0; margin: 0; background: #f0f2f7; text-align: left; }
 
 /* KPI grids */
 .hs-kgrid { display: grid; gap: 12px; margin: 0 0 14px 0; width: 100%; box-sizing: border-box; }
@@ -755,9 +753,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 /* === HSE VIEWS — SINGLE AUTHORITATIVE DISPLAY RULE === */
 #view-hse-form  { display: none !important; }
-#view-hse-stats { display: none !important; }
+#view-hse-stats { display: none; }
 #view-hse-form.active  { display: block !important; width: 100%; box-sizing: border-box; }
-#view-hse-stats.active { display: block !important; width: 100%; min-height: calc(100vh - 50px); box-sizing: border-box; }
+#view-hse-stats.active { display: block; width: 100%; min-height: calc(100vh - 50px); box-sizing: border-box; }
 /* #cnt.hse-active padding handled above */
 </style>
 </head><body>
@@ -1418,7 +1416,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
 
-    <div id="view-hse-stats" class="view" style="width:100%;">
+    <div id="view-hse-stats" style="display:none;width:100%;">
 <div style="padding:20px 24px 48px;box-sizing:border-box;width:100%;">
 
   <!-- Status bar -->
@@ -3640,12 +3638,18 @@ function getRows(data){
   return{h,r};
 }
 function doXL(data,name){
-  const{h,r}=getRows(data);const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet([h,...r]);
-  ws['!cols']=h.map((_,i)=>({wch:i===3||i===4||i===6||i===10?35:i===0?22:14}));
-  XLSX.utils.book_append_sheet(wb,ws,'STAC');
-  XLSX.writeFile(wb,`ATNM-STAC-${name}-${new Date().toISOString().split('T')[0]}.xlsx`);
-  toast('✅ Excel downloaded');
+  var XL=window.XLSX;
+  if(!XL||!XL.utils){toast('❌ Excel engine not ready — refresh page',3000,'warn');return;}
+  try{
+    var gr=getRows(data);
+    var wb=XL.utils.book_new();
+    var ws=XL.utils.aoa_to_sheet([gr.h].concat(gr.r));
+    ws['!cols']=gr.h.map(function(_,i){return {wch:i===3||i===4||i===6||i===10?35:i===0?22:14};});
+    XL.utils.book_append_sheet(wb,ws,'STAC');
+    var fname='ATNM-STAC-'+name+'-'+new Date().toISOString().split('T')[0]+'.xlsx';
+    XL.writeFile(wb,fname);
+    toast('✅ Excel downloaded: '+fname);
+  }catch(e){toast('❌ Excel error: '+e.message,4000,'warn');console.error('doXL',e);}
 }
 function doPDF(data,title){
   let h=`<h2 style="color:#21409a;">${title}</h2><p style="font-size:11px;color:#666;margin-bottom:12px;">YTD ${CY} | ${new Date().toLocaleDateString()} | ${data.length} cases</p>`;
@@ -3666,6 +3670,7 @@ function exportFilteredPDF(){doPDF(filteredData.length?filteredData:stacData,'ST
 function exportTrackerXL(){doXL(getTrData(),'Tracker');}
 function exportTrackerPDF(){doPDF(getTrData(),'STAC Case Tracker');}
 function exportFinesXL(){
+  var XL=window.XLSX;if(!XL||!XL.utils){toast('❌ Excel engine not ready',3000,'warn');return;}
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
   const wb=XLSX.utils.book_new();
   const{h,r}=getRows(ytd);const ws=XLSX.utils.aoa_to_sheet([h,...r]);XLSX.utils.book_append_sheet(wb,ws,'Penalty Register');
@@ -3676,6 +3681,7 @@ function exportFinesXL(){
 }
 function exportFinesPDF(){doPDF(stacData.filter(d=>d.date&&d.date.startsWith(String(CY))),'Fines & Penalties '+CY);}
 function exportScoresXL(){
+  var XL=window.XLSX;if(!XL||!XL.utils){toast('❌ Excel engine not ready',3000,'warn');return;}
   const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
   // Primary source: subconData (canonical Sub Contractors list) 
   // + any companies from stacData not already in subconData
@@ -4655,9 +4661,13 @@ function exportHseStatsXL() {
       hn(r.mtc),hn(r.rwc),hn(r.fac),hn(r.sq_obs),red].map(q).join(',')+String.fromCharCode(13,10);
   });
   var a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('﻿'+csv);
   a.download='HSE_Stats_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.style.display='none';
+  document.body.appendChild(a);
   a.click();
+  setTimeout(function(){document.body.removeChild(a);},1000);
+  toast('✅ CSV downloaded');
 }
 
 
@@ -5324,6 +5334,8 @@ function clearPF(){
 }
 
 function exportPerfXL(){
+  var XL=window.XLSX;
+  if(!XL||!XL.utils){toast('❌ Excel engine not ready — refresh page',3000,'warn');return;}
   if(!dataLoaded){toast('Data not loaded',2000,'warn');return;}
   var yr=gv('pf-yr')||String(CY);
   var ytdAll=stacData.filter(function(d){return d.date&&d.date.startsWith(yr);});
@@ -5348,12 +5360,12 @@ function exportPerfXL(){
     Math.round(r.cs.pct||0)+'%',r.cs.bandLabel,
     r.cs.band==='green'?'Compliant':r.cs.band==='amber'?'At Risk':r.cs.band==='red'?'Non-Compliant':'BLACKLIST REVIEW'
   ];});
-  var wb=XLSX.utils.book_new();
-  var ws=XLSX.utils.aoa_to_sheet([hdrs].concat(data));
+  var wb=XL.utils.book_new();
+  var ws=XL.utils.aoa_to_sheet([hdrs].concat(data));
   ws['!cols']=[{wch:6},{wch:34},{wch:16},{wch:14},{wch:10},{wch:10},{wch:14},{wch:12},{wch:12},{wch:8},{wch:12},{wch:16},{wch:18}];
-  XLSX.utils.book_append_sheet(wb,ws,'Performance Report');
-  XLSX.writeFile(wb,'ATNM-Performance-Report-'+yr+'-'+new Date().toISOString().split('T')[0]+'.xlsx');
-  toast('Performance Report exported');
+  XL.utils.book_append_sheet(wb,ws,'Performance Report');
+  XL.writeFile(wb,'ATNM-Performance-Report-'+yr+'-'+new Date().toISOString().split('T')[0]+'.xlsx');
+  toast('✅ Performance Report exported');
 }
 
 function exportPerfPDF(){
