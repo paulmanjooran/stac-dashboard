@@ -1862,25 +1862,59 @@ function getRiskProfile(company){
   return RISK_LEVELS[rl]||RISK_LEVELS['Medium-High'];
 }
 
+function isFullDemerit(d){
+  // Matrix rule: Full Demerit ONLY on 3rd instance (Final Warning Letter)
+  // Detect via wlType string OR via instance count reaching 3
+  if(!d)return false;
+  var wl=String(d.wlType||'').toLowerCase();
+  // Explicit full demerit tag (long format from matrix lookup)
+  if(wl.includes('full demerit'))return true;
+  // Final warning letter (any format)
+  if(wl.includes('final'))return true;
+  // Form dropdown value '3' = Final Warning / Escalation
+  if(wl==='3')return true;
+  if(wl.includes('escalat'))return true;
+  // Fallback: if YTD instance # for this company+category is 3+
+  var inst=getYTDInst(d);
+  if(inst>=3)return true;
+  return false;
+}
+
 function calcComplianceScore(company){
   const profile=getRiskProfile(company);
-  // Cross-match: count ALL stacData entries for this company (fuzzy)
   const coL=company.trim().toLowerCase();
+  // Get all YTD cases for this company (fuzzy name match)
   const ytd=stacData.filter(d=>{
     if(!d.date||!d.date.startsWith(String(CY)))return false;
     const dcoL=d.company.trim().toLowerCase();
     return dcoL===coL||dcoL.includes(coL.substring(0,15))||coL.includes(dcoL.substring(0,15));
   });
-  const fullDemerits=ytd.filter(d=>d.wlType&&d.wlType.toLowerCase().includes('full demerit')).length;
-  const deductedPts=fullDemerits*10;
-  const actualScore=profile.annualCeiling - deductedPts;
+  // Count Full Demerit events (3rd instance / Final WL)
+  // Per matrix: -10 pts annual, -2.5 pts quarterly per Full Demerit event
+  const fullDemeritCases=ytd.filter(d=>isFullDemerit(d));
+  const fullDemerits=fullDemeritCases.length;
+  const deductedPtsAnnual=fullDemerits*10;   // -10 pts per Full Demerit (annual)
+  const deductedPtsQtr=fullDemerits*2.5;     // -2.5 pts per Full Demerit (quarterly)
+  const actualScore=profile.annualCeiling - deductedPtsAnnual;
   const pct=profile.annualCeiling>0?(actualScore/profile.annualCeiling)*100:0;
+  // Band classification per ATNM STAC matrix
   let band='green',bandLabel='Compliant';
   if(actualScore<0){band='black';bandLabel='BLACKLIST REVIEW';}
   else if(pct<60){band='red';bandLabel='Non-Compliant';}
   else if(pct<80){band='amber';bandLabel='At Risk';}
   else{band='green';bandLabel='Compliant';}
-  return{profile,fullDemerits,deductedPts,actualScore,pct:Math.max(0,pct),band,bandLabel,ytdCases:ytd.length};
+  return{
+    profile,
+    fullDemerits,
+    deductedPts:deductedPtsAnnual,
+    deductedPtsQtr,
+    actualScore:Math.max(0,actualScore),
+    rawScore:actualScore,
+    pct:Math.max(0,pct),
+    band,bandLabel,
+    ytdCases:ytd.length,
+    noDemerits:ytd.length-fullDemerits   // 1st+2nd instance cases (no demerit)
+  };
 }
 
 
@@ -2775,7 +2809,7 @@ function renderScores(){
     const sub=subconData.find(s=>s.company&&s.company.trim().toLowerCase()===coL);
     const cs=calcComplianceScore(co); // uses co (canonical name) or coL internally
     return{co,cluster:sub?normCluster(sub.cluster):'—',cases,pen,instMax,
-      demerit:cs.deductedPts*-1,score:Math.max(0,cs.actualScore),
+      demerit:cs.deductedPts*-1,fullDemerits:cs.fullDemerits,score:Math.max(0,cs.actualScore),
       riskLevel:cs.profile.label,annualCeiling:cs.profile.annualCeiling,
       scoreDisplay:cs.actualScore+'/'+cs.profile.annualCeiling,
       pct:cs.pct,bandLabel:cs.bandLabel,band:cs.band};
@@ -2808,7 +2842,7 @@ function renderScores(){
         <div class="sc-prog-lbl"><span>YTD Compliance (Ceiling: ${x.annualCeiling})</span><span>${x.scoreDisplay}</span></div>
         <div class="prog"><div class="pf" style="width:${Math.min(100,x.pct||0)}%;background:${bCol[x.band]};"></div></div>
       </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--t3);">${x.cases.length} YTD case(s) | Demerit: ${x.demerit} pts | OMR ${x.pen} penalty</div>
+      <div style="margin-top:8px;font-size:10px;color:var(--t3);">${x.cases.length} case(s) | ${x.demerit===0?"No Full Demerit":"⚠ "+x.fullDemerits+" Full Demerit(s) → −"+Math.abs(x.demerit)+"pts annual / −"+(x.fullDemerits*2.5)+"pts qtr"} | OMR ${x.pen} penalty</div>
     </div>`;
   });
   const sg=document.getElementById('sc-grid');if(sg)sg.innerHTML=h||'<p style="color:var(--t3);padding:20px;">No subcontractors found</p>';
