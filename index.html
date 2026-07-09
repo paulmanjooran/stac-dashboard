@@ -1863,83 +1863,115 @@ function getRiskProfile(company){
 }
 
 
+// ═══════════════════════════════════════════════════════════════════════
+// ATNM STAC COMPLIANCE SCORING ENGINE v2 — HARDCODED
+// Source: ATNM STAC Programme — Vendor HSE Scoring Matrix
+//
+// LOGIC: Band is determined by HIGHEST instance count across ALL
+//        violation categories for a company in the current year.
+//        Category 8 (Unsafe Act) counts as an instance every time.
+//
+// INSTANCE COUNT → BAND:
+//   0 instances  →  🟢 Green   Compliant          (score = ceiling)
+//   1 instance   →  🟡 Yellow  Advisory / Warning  (−10 pts)
+//   2 instances  →  🟠 Amber   At Risk             (−20 pts)
+//   3 instances  →  🔴 Red     Non-Compliant       (−30 pts)
+//   4+ instances →  ⚫ Black   Suspension Review   (−40+ pts)
+//
+// CEILING (from Sub Contractors sheet risk level):
+//   Medium        →  90 pts
+//   Medium-High   →  92 pts  (default)
+//   Critical      →  95 pts
+//
+// DEMERIT: −10 pts annual / −2.5 pts quarterly per violation instance
+//          Category 8: counts as instance on EVERY occurrence
+// ═══════════════════════════════════════════════════════════════════════
+
+// Category 8: "Involvement Unsafe Act / Working in Unsafe Condition..."
+// FINAL ALWAYS — every single occurrence counts as an instance
+// ═══════════════════════════════════════════════════════════════════════
+// ATNM STAC COMPLIANCE SCORING ENGINE — HARDCODED
+// Source: ATNM Vendor HSE Scoring Matrix
+//
+// BAND RULE — driven by highest violation instance count (YTD, per company):
+//   0 instances  →  Green   Compliant           (score = ceiling)
+//   1 instance   →  Yellow  Advisory / 1st WL   (score = ceiling − 10)
+//   2 instances  →  Orange  At Risk / 2nd WL    (score = ceiling − 20)
+//   3 instances  →  Red     Non-Compliant/FinalWL(score = ceiling − 30)
+//   4+ instances →  Black   Suspension Review    (score = ceiling − 40+)
+//
+// CEILING (from Sub Contractors sheet — risk level field):
+//   Medium        →  90 pts   (required score = 90/90 = 100%)
+//   Medium-High   →  92 pts   (required score = 92/92 = 100%)  ← default
+//   Critical      →  95 pts   (required score = 95/95 = 100%)
+//
+// DEMERIT: −10 pts per instance per case (annual)  |  −2.5 pts (quarterly)
+//
+// CATEGORY 8 EXCEPTION:
+//   "Involvement Unsafe Act / Working in Unsafe Condition..."
+//   → counts as an instance on EVERY occurrence (no 1st/2nd/3rd distinction)
+// ═══════════════════════════════════════════════════════════════════════
+
 function isCat8(d){
   if(!d||!d.category)return false;
   var cat=d.category.toLowerCase();
   return cat.includes('unsafe act')||cat.includes('unsafe condition');
 }
 
-// Does this case carry a Full Demerit? Pure category + instance logic.
-function isFullDemerit(d){
-  if(!d)return false;
-  var inst=parseInt(d.instances)||1;
-  if(isCat8(d))return true;   // Cat 8: Final Always — every instance
-  if(inst>=3)  return true;   // All others: 3rd instance = Final WL
-  return false;                // 1st, 2nd instance = No Demerit
-}
-
-// Does this company have ANY case at 3rd instance or above (any category)?
-function hasThirdInstance(ytd){
-  return ytd.some(function(d){
-    var inst=parseInt(d.instances)||1;
-    return inst>=3||isCat8(d);
-  });
-}
-
-// Calculate YTD compliance score for a company
 function calcComplianceScore(company){
   var profile = getRiskProfile(company);
-  var ceiling  = profile.annualCeiling;  // 90, 92, or 95
-  var coL      = company.trim().toLowerCase();
+  var ceiling = profile.annualCeiling;            // 90, 92, or 95
+  var coL     = company.trim().toLowerCase();
 
   // All YTD STAC cases — exact company name match
-  var ytd=stacData.filter(function(d){
+  var ytd = stacData.filter(function(d){
     if(!d.date||!d.date.startsWith(String(CY)))return false;
     return d.company.trim().toLowerCase()===coL;
   });
 
-  // Categorise every case
-  var fullDemeritCases = ytd.filter(function(d){return  isFullDemerit(d);});
-  var noDemeritCases   = ytd.filter(function(d){return !isFullDemerit(d);});
-  var fullDemerits     = fullDemeritCases.length;
-  var hasThird         = hasThirdInstance(ytd);
+  // Highest instance number recorded against this company YTD
+  // This single number drives the compliance band
+  var maxInst = 0;
+  ytd.forEach(function(d){
+    var inst = parseInt(d.instances)||1;
+    if(inst > maxInst) maxInst = inst;
+  });
 
-  // Score: ceiling minus deductions
-  var deductedAnnual = fullDemerits * 10;    // −10 pts per Full Demerit
-  var deductedQtr    = fullDemerits * 2.5;   // −2.5 pts per Full Demerit (quarterly)
-  var rawScore       = ceiling - deductedAnnual;
+  // Total deductions: each case deducts 10 pts × its instance level
+  var totalDed    = ytd.reduce(function(s,d){return s+(parseInt(d.instances)||1)*10;},0);
+  var deductedQtr = ytd.reduce(function(s,d){return s+(parseInt(d.instances)||1)*2.5;},0);
+  var rawScore    = ceiling - totalDed;
 
-  // ── BAND LOGIC ──────────────────────────────────────────────────
-  // Green  : score = ceiling     → no demerits at all → Compliant
-  // Amber  : score < ceiling     → at least 1 full demerit but < 3rd instance yet
-  // Red    : 3rd instance hit    → regardless of score → Non-Compliant
-  // Black  : score < 0           → ceiling breached → Blacklist Review
-  var band, bandLabel;
-  if(rawScore<0){
-    band='black'; bandLabel='BLACKLIST REVIEW';
-  }else if(hasThird){
-    band='red';   bandLabel='Non-Compliant';
-  }else if(fullDemerits>0){
-    band='amber'; bandLabel='At Risk';
-  }else{
-    band='green'; bandLabel='Compliant';
+  // ── BAND — instance count is the ONLY input ──────────────────────
+  var band, bandLabel, bandColor;
+  switch(true){
+    case (maxInst === 0):
+      band='green';  bandLabel='Compliant';                 bandColor='#1b7a3e'; break;
+    case (maxInst === 1):
+      band='yellow'; bandLabel='Advisory — 1st WL';         bandColor='#c8960c'; break;
+    case (maxInst === 2):
+      band='orange'; bandLabel='At Risk — 2nd WL';          bandColor='#e07000'; break;
+    case (maxInst === 3):
+      band='red';    bandLabel='Non-Compliant — Final WL';  bandColor='#c0392b'; break;
+    default:
+      band='black';  bandLabel='Suspension Review';         bandColor='#1a1d24'; break;
   }
 
   return {
-    profile          : profile,
-    ceiling          : ceiling,
-    ytdCases         : ytd.length,
-    fullDemerits     : fullDemerits,
-    noDemeritCases   : noDemeritCases.length,
-    fullDemeritCases : fullDemeritCases,
-    hasThirdInstance : hasThird,
-    deductedPts      : deductedAnnual,
-    deductedPtsQtr   : deductedQtr,
-    rawScore         : rawScore,
-    actualScore      : Math.max(0,rawScore),
-    pct              : ceiling>0?Math.max(0,(rawScore/ceiling)*100):0,
-    band             : band,
-    bandLabel        : bandLabel
+    profile        : profile,
+    ceiling        : ceiling,
+    ytdCases       : ytd.length,
+    maxInst        : maxInst,
+    deductedPts    : totalDed,
+    deductedPtsQtr : deductedQtr,
+    rawScore       : rawScore,
+    actualScore    : Math.max(0, rawScore),
+    pct            : ceiling>0 ? Math.max(0,(rawScore/ceiling)*100) : 0,
+    band           : band,
+    bandLabel      : bandLabel,
+    bandColor      : bandColor,
+    fullDemerits   : ytd.filter(function(d){return (parseInt(d.instances)||1)>=3||isCat8(d);}).length,
+    hasThirdInstance: maxInst>=3
   };
 }
 
@@ -2840,11 +2872,18 @@ function renderScores(){
     const instMax=cases.length?Math.max(...cases.map(d=>getYTDInst(d))):0;
     const sub=subconData.find(s=>s.company&&s.company.trim().toLowerCase()===coL);
     const cs=calcComplianceScore(co); // uses co (canonical name) or coL internally
-    return{co,cluster:sub?normCluster(sub.cluster):'—',cases,pen,instMax,
-      demerit:cs.deductedPts*-1,fullDemerits:cs.fullDemerits,score:Math.max(0,cs.actualScore),
-      riskLevel:cs.profile.label,annualCeiling:cs.profile.annualCeiling,
-      scoreDisplay:cs.actualScore+'/'+cs.profile.annualCeiling,
-      pct:cs.pct,bandLabel:cs.bandLabel,band:cs.band};
+    return{co,cluster:sub?normCluster(sub.cluster):'—',cases,pen,
+      instMax:cs.maxInst,                          // highest instance count
+      demerit:cs.deductedPts*-1,
+      score:cs.actualScore,
+      riskLevel:cs.profile.label,
+      annualCeiling:cs.ceiling,
+      scoreDisplay:cs.actualScore+'/'+cs.ceiling,
+      pct:cs.pct,
+      bandLabel:cs.bandLabel,
+      bandColor:cs.bandColor,
+      band:cs.band,
+      totalDemerits:cs.totalDemerits};
   }); // Show ALL subcontractors — no violations still gets a scorecard
 
   const filt=scores.filter(x=>{
@@ -2854,27 +2893,50 @@ function renderScores(){
     return true;
   });
   const cnt=document.getElementById('sc-cnt');if(cnt)cnt.textContent=filt.length+' subcontractors';
-  const bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  const bCol={green:'#1b7a3e',yellow:'#c8960c',amber:'#e07000',orange:'#e07000',red:'#c0392b',black:'#1a1d24'};
   let h='';
   filt.sort((a,b)=>a.score-b.score).forEach(x=>{
+    // Violation count label for progress bar
+    var _instLabel=['0 — Compliant','1 — Advisory (1st WL)','2 — At Risk (2nd WL)','3 — Non-Compliant (Final WL)'];
+    var _instLbl=x.instMax>=4?x.instMax+' — Suspension Review':(_instLabel[x.instMax]||x.instMax+' instances');
+    // Instance count progress (max 4 = ceiling)
+    var _instPct=Math.min(100,(x.instMax/4)*100);
     h+=`<div class="sc-card" onclick="openSC('${esc(x.co)}')">
-      <div class="sc-band" style="background:${bCol[x.band]||'#1b7a3e'};"></div>
+      <div class="sc-band" style="background:${x.bandColor||bCol[x.band]||'#1b7a3e'};"></div>
       <div class="sc-co" title="${esc(x.co)}">${x.co.length>32?x.co.substring(0,32)+'…':x.co}</div>
       <div class="sc-cluster" style="display:flex;justify-content:space-between;align-items:center;">
         <span>${x.cluster}</span>
-        <span style="font-size:9px;padding:1px 6px;border-radius:4px;background:var(--blt);color:var(--blue);font-weight:600;">${x.riskLevel}</span>
+        <span style="font-size:9px;padding:2px 7px;border-radius:4px;background:var(--blt);color:var(--blue);font-weight:700;">${x.riskLevel} · ${x.annualCeiling}pt</span>
       </div>
-      <div style="font-size:10px;font-weight:600;margin:4px 0 8px;color:${bCol[x.band]};">${x.bandLabel}</div>
+      <div style="font-size:11px;font-weight:700;margin:5px 0 8px;color:${x.bandColor||bCol[x.band]};">
+        ${x.instMax===0?'●':x.instMax===1?'⚠':x.instMax===2?'⚠⚠':x.instMax===3?'🔴':'⚫'} ${x.bandLabel}
+      </div>
       <div class="sc-stats">
-        <div class="sc-stat"><div class="sc-stat-val" style="color:${x.instMax>=3?'var(--red)':x.instMax===2?'var(--orange)':'var(--blue)'};">${x.instMax}</div><div class="sc-stat-lbl">YTD Inst.</div></div>
-        <div class="sc-stat"><div class="sc-stat-val" style="color:${x.pen>0?'var(--red)':'var(--green)'};">${x.pen}</div><div class="sc-stat-lbl">Penalty OMR</div></div>
-        <div class="sc-stat"><div class="sc-stat-val" style="color:${x.score>=(x.annualCeiling*0.8)?'var(--green)':x.score>=(x.annualCeiling*0.6)?'var(--amber)':'var(--red)'};">${x.score}</div><div class="sc-stat-lbl">Score /${x.annualCeiling}</div></div>
+        <div class="sc-stat">
+          <div class="sc-stat-val" style="color:${x.bandColor||bCol[x.band]};font-size:22px;">${x.instMax}</div>
+          <div class="sc-stat-lbl">Max Instance</div>
+        </div>
+        <div class="sc-stat">
+          <div class="sc-stat-val" style="color:${x.cases.length>0?'var(--orange)':'var(--t3)'};">${x.cases.length}</div>
+          <div class="sc-stat-lbl">YTD Cases</div>
+        </div>
+        <div class="sc-stat">
+          <div class="sc-stat-val" style="color:${x.pen>0?'var(--red)':'var(--t3)'};">${x.pen}</div>
+          <div class="sc-stat-lbl">Penalty OMR</div>
+        </div>
       </div>
       <div class="sc-prog">
-        <div class="sc-prog-lbl"><span>YTD Compliance (Ceiling: ${x.annualCeiling})</span><span>${x.scoreDisplay}</span></div>
-        <div class="prog"><div class="pf" style="width:${Math.min(100,x.pct||0)}%;background:${bCol[x.band]};"></div></div>
+        <div class="sc-prog-lbl">
+          <span>Violation Level</span>
+          <span style="font-weight:700;color:${x.bandColor||bCol[x.band]};">${_instLbl}</span>
+        </div>
+        <div class="prog" style="background:#eee;">
+          <div class="pf" style="width:${_instPct}%;background:${x.bandColor||bCol[x.band]};transition:width .4s;"></div>
+        </div>
       </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--t3);">${x.cases.length} case(s) | ${x.demerit===0?"No Full Demerit":"⚠ "+x.fullDemerits+" Full Demerit(s) → −"+Math.abs(x.demerit)+"pts annual / −"+(x.fullDemerits*2.5)+"pts qtr"} | OMR ${x.pen} penalty</div>
+      <div style="margin-top:8px;font-size:10px;color:var(--t3);">
+        Score: ${x.score}/${x.annualCeiling} | Deducted: ${Math.abs(x.demerit)} pts | OMR ${x.pen} penalties YTD
+      </div>
     </div>`;
   });
   const sg=document.getElementById('sc-grid');if(sg)sg.innerHTML=h||'<p style="color:var(--t3);padding:20px;">No subcontractors found</p>';
