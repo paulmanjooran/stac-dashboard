@@ -2042,7 +2042,11 @@ function parseGVizTable(data){
       o['HSE Non-Compliance Description\r\n(Briefly Describe Non Compliance and Refer PR and SP as applicable)']||'';
     const isWLInHSE=rawCat.toLowerCase().includes('warning letter')||rawCat.toLowerCase().includes('demerit');
     const category=isWLInHSE?inferCatFromDesc(rawDesc,rawCat):rawCat;
-    const wlType=isWLInHSE?rawCat:(rawDesc.toLowerCase().includes('warning')?rawDesc:rawCat);
+    // Read Warning Letter Type directly from its own column first
+    const rawWLType=o['Warning Letter Type']||o['WL Type']||o['Warning Letter']||'';
+    // Build wlType: prefer direct column, then fall back to old logic
+    const wlType=rawWLType.trim()||
+      (isWLInHSE?rawCat:(rawDesc.toLowerCase().includes('warning')?rawDesc:''));
     const description=isWLInHSE?rawDesc:(rawDesc.toLowerCase().includes('warning')?'':rawDesc);
     rows.push({
       id,
