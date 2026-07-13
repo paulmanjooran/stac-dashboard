@@ -1204,6 +1204,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div id="scLoaderStatus" style="color:rgba(255,255,255,.4);font-size:11px;margin-top:10px;font-family:monospace;">Connecting…</div>
   </div>
 
+  <div id="hseFormWrap">
   <!-- Progress bar -->
   <div style="height:3px;background:rgba(0,0,0,.08);position:sticky;top:50px;z-index:89;">
     <div style="height:3px;background:var(--orange);transition:width .4s ease;width:0%;" id="progressFill"></div>
@@ -1403,20 +1404,82 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   </div><!-- /sc-form-wrap -->
 
   <!-- Success screen -->
-  <div id="successScreen" style="display:none;max-width:900px;margin:40px auto;padding:0 18px;">
-    <div style="background:#fff;border-radius:var(--r);padding:48px 40px;text-align:center;border:1px solid var(--bdr);border-top:4px solid #2e7d32;">
-      <div style="font-size:36px;margin-bottom:16px;">✅</div>
-      <div style="font-size:20px;font-weight:700;color:#1e2d4a;margin-bottom:8px;">Submission Received</div>
-      <div style="font-size:13px;color:var(--t2);margin-bottom:20px;">HSE Statistics recorded in ATNM STAC Backend Master.</div>
-      <div id="successRef" style="font-family:monospace;font-size:15px;font-weight:600;color:var(--blue);background:var(--blt);border:1px solid var(--blue);border-radius:var(--r);padding:10px 24px;display:inline-block;margin-bottom:24px;">TXN-XXXX-XXXX</div>
-      <br>
-      <button class="btn bp" onclick="scStartNewSubmission()">Submit Another Month →</button>
+  <div id="successScreen" style="display:none;padding:40px 20px;">
+    <div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(33,64,154,.12);">
+      <div style="background:linear-gradient(135deg,#1b7a3e,#2e9d55);padding:36px 40px;text-align:center;">
+        <div style="width:72px;height:72px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:36px;">✅</div>
+        <div style="color:#fff;font-size:20px;font-weight:800;margin-bottom:4px;">Report Submitted</div>
+        <div style="color:rgba(255,255,255,.8);font-size:12px;">HSE Statistics recorded in ATNM STAC Backend</div>
+      </div>
+      <div style="padding:28px 36px;">
+        <div style="background:var(--blt);border:1px solid var(--blue);border-radius:8px;padding:14px 20px;text-align:center;margin-bottom:20px;">
+          <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Transaction Reference</div>
+          <div id="successRef" style="font-family:monospace;font-size:17px;font-weight:800;color:var(--blue);">TXN-XXXX-XXXX</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px 16px;margin-bottom:20px;">
+          <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Submitted At</div>
+          <div id="successDate" style="font-size:13px;font-weight:600;color:var(--text);">—</div>
+        </div>
+        <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b7a3e;margin-bottom:20px;line-height:1.6;">
+          ✔ Data saved to Google Sheet<br>
+          ✔ Notification dispatched to HSE Manager<br>
+          ✔ Available in HSE Statistics Dashboard immediately
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn bp" style="flex:1;" onclick="scStartNewSubmission()">➕ Submit Another Month</button>
+          <button class="btn" style="flex:1;background:var(--bg);border:1px solid var(--bdr);" onclick="nav('hse-stats')">📊 View Stats Dashboard</button>
+        </div>
+      </div>
     </div>
   </div>
 
 
 
-    <div id="view-hse-stats" style="display:none;width:100%;">
+  </div><!-- /hseFormWrap -->
+
+  <!-- STAC Submit Success Screen -->
+  <div id="hseSuccessScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);overflow-y:auto;">
+    <div style="max-width:600px;margin:80px auto;padding:0 20px;">
+      <div style="background:#fff;border-radius:16px;border:none;box-shadow:0 8px 40px rgba(33,64,154,.13);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#1b7a3e 0%,#2e9d55 100%);padding:40px;text-align:center;">
+          <div style="width:72px;height:72px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;">✅</div>
+          <div style="color:#fff;font-size:22px;font-weight:800;margin-bottom:6px;">Submitted Successfully</div>
+          <div style="color:rgba(255,255,255,.8);font-size:13px;">ATNM STAC Case recorded in backend</div>
+        </div>
+        <div style="padding:32px 40px;">
+          <div style="background:var(--blt);border:1px solid var(--blue);border-radius:8px;padding:16px 20px;margin-bottom:24px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">STAC Reference</div>
+            <div id="hseSuccessRef" style="font-family:monospace;font-size:18px;font-weight:800;color:var(--blue);">—</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+            <div style="background:var(--bg);border-radius:8px;padding:12px 16px;">
+              <div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Company</div>
+              <div id="hseSuccessCompany" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:12px 16px;">
+              <div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Submitted At</div>
+              <div id="hseSuccessDate" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+            </div>
+          </div>
+          <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b7a3e;margin-bottom:24px;">
+            <strong>What happens next:</strong> Warning letter will be generated and dispatched to the subcontractor. Track progress in Case Tracker.
+          </div>
+          <div style="display:flex;gap:12px;">
+            <button class="btn bp" style="flex:1;" onclick="document.getElementById('hseSuccessScreen').style.display='none';resetForm();nav('tracker');">
+              📋 Go to Case Tracker
+            </button>
+            <button class="btn bo" style="flex:1;" onclick="document.getElementById('hseSuccessScreen').style.display='none';resetForm();">
+              ➕ New STAC Case
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /view-hse-form -->
+
+
+    <div id="view-hse-stats" class="view" style="width:100%;">
 <div style="padding:20px 24px 48px;box-sizing:border-box;width:100%;">
 
   <!-- Status bar -->
@@ -1615,7 +1678,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 </div>
 </div>
-</div>
+
 
 <!-- DRILLDOWN MODAL -->
 <div class="mbg" id="m-drill"><div class="mbox mbox-lg">
@@ -3337,7 +3400,21 @@ async function doSubmit(e){
       // Update local cache immediately so dashboard reflects new record
       localStorage.removeItem(CACHE_KEY_STAC);
       localStorage.removeItem(CACHE_KEY_TS_STAC);
-      toast('✅ '+stacId+' submitted — uploading file…',4000);
+      // Show full success notification
+      const _sScreen=document.getElementById('hseSuccessScreen');
+      const _sRef=document.getElementById('hseSuccessRef');
+      const _sComp=document.getElementById('hseSuccessCompany');
+      const _sDate=document.getElementById('hseSuccessDate');
+      if(_sScreen){
+        if(_sRef) _sRef.textContent=stacId;
+        if(_sComp) _sComp.textContent=payload.company||'';
+        if(_sDate) _sDate.textContent=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        document.getElementById('hseFormWrap')?document.getElementById('hseFormWrap').style.display='none':null;
+        _sScreen.style.display='block';
+        window.scrollTo({top:0,behavior:'smooth'});
+      } else {
+        toast('✅ '+stacId+' submitted successfully',5000);
+      }
       // Stage 2: upload file separately if one was selected
       if (_pendingFile) {
         uploadFileToStac_(scriptUrl, stacId, _pendingFile);
@@ -5251,7 +5328,7 @@ function scSetupListeners() {
   sections.forEach(s => observer.observe(s));
 
   // Form submit
-  document.getElementById('hseForm').addEventListener('submit', scHandleSubmit);
+  // submit handled by onsubmit='scHandleSubmit(event)' on <form> tag — no duplicate listener
 }
 
 function scSumVehicles() {
@@ -5286,10 +5363,12 @@ function scUpdateProgress() {
 // ═══════════════════════════════════════════════════════════════════
 async function scHandleSubmit(e) {
   e.preventDefault();
+  // Duplicate-fire guard — button is disabled immediately on first fire
+  const btn = document.getElementById('submitBtn');
+  if(btn && btn.disabled) return;    // already submitted — ignore second event
   const form = document.getElementById('hseForm');
   if (!form.checkValidity()) { form.reportValidity(); return; }
 
-  const btn = document.getElementById('submitBtn');
   btn.textContent = 'Submitting…';
   btn.disabled = true;
 
@@ -5332,15 +5411,26 @@ async function scHandleSubmit(e) {
     }
   } catch(err) {
     scShowToast('❌ Submission failed — check your connection or contact HSE Manager.', true);
-    btn.textContent = 'Submit Report →'; btn.disabled = false;
+    console.error('scHandleSubmit error:', err);
+    btn.textContent = 'Submit Report →';
+    btn.disabled = false;  // re-enable so user can retry
   }
 }
 
 function scShowSuccess(ref) {
-  document.getElementById('formWrap').style.display = 'none';
-  document.getElementById('successRef').textContent = ref;
-  document.getElementById('successScreen').style.display = 'block';
-  window.scrollTo(0, 0);
+  var fw=document.getElementById('formWrap');
+  if(fw) fw.style.display='none';
+  var sr=document.getElementById('successRef');
+  if(sr) sr.textContent=ref||'—';
+  // Populate extra fields if available
+  var sc=document.getElementById('sc-sub-sel')||document.getElementById('scSubSel');
+  var sm=document.getElementById('sc-sub-sel')||{value:''};
+  var sd=document.getElementById('successDate');
+  if(sd) sd.textContent=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  var ss=document.getElementById('successScreen');
+  if(ss) ss.style.display='block';
+  window.scrollTo(0,0);
+  toast('✅ HSE Statistics submitted successfully!',5000);
 }
 
 function scStartNewSubmission() {
