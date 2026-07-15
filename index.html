@@ -2851,7 +2851,7 @@ function renderTracker(){
       <td class="tdc">${d.company}</td>
       <td class="tdc" title="${esc(d.category)}">${d.category}</td>
       <td>${idots(n,true)}</td>
-      <td style="font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.wlType||''}">${d.wlType||'—'}</td>
+      <td style="font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.wlType||''}">${(d.wlType||'—').split('|')[0].trim()}</td>
 
       <td style="display:flex;gap:3px;">
         <button class="btn bk bxs" onclick="openWL('${d.id}')" title="Warning Letter">✉️</button>
@@ -2938,7 +2938,7 @@ function renderFines(){
       <td class="tdc" title="${esc(d.category)}">${d.category.length>35?d.category.substring(0,35)+'…':d.category}</td>
       <td>${idots(getYTDInst(d),true)}</td>
       <td>${d.penalty===null?'<span class="bdg bgy" style="font-size:9px;">TBD</span>':d.penalty===0?'<span class="bdg bgy" style="font-size:9px;">—</span>':`<span class="${getPB(d.penalty)}">OMR ${d.penalty.toLocaleString()}</span>`}</td>
-      <td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.wlType||''}">${d.wlType||'—'}</td>
+      <td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.wlType||''}">${(d.wlType||'—').split('|')[0].trim()}</td>
       <td style="text-align:center;">${isFullDem?'<span class="bdg brd" style="font-size:9px;">-10 pts</span>':'<span class="bdg bgr" style="font-size:9px;">0</span>'}</td>
     </tr>`;
   });
