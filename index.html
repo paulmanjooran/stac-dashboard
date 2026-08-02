@@ -4030,8 +4030,45 @@ function exportScoresPDF(){
   doPDF([],'Subcon-Scorecards');
 }
 
-function exportSCXL(){if(activeSCData){const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY))&&d.company===activeSCData);doXL(ytd,'Scorecard-'+activeSCData.substring(0,20));}}
-function exportSCPDF(){if(activeSCData){const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY))&&d.company===activeSCData);doPDF(ytd,'Scorecard: '+activeSCData);}}
+function exportSCXL(){
+  if(!activeSCData){toast('No scorecard selected',2000,'warn');return;}
+  var ytd=stacData.filter(function(d){
+    return d.date&&d.date.startsWith(String(CY))&&d.company===activeSCData;
+  });
+  if(!ytd.length){toast('No YTD cases for this company',2000,'warn');return;}
+  doCSV(ytd,'Scorecard-'+activeSCData.replace(/[^a-zA-Z0-9]/g,'-').substring(0,25));
+}
+function exportSCPDF(){
+  if(!activeSCData){toast('No scorecard selected',2000,'warn');return;}
+  var el=document.getElementById('m-sc-body');
+  if(!el){toast('Popup not open',2000,'warn');return;}
+  if(typeof html2canvas!=='function'){toast('PDF library loading, retry in 2s',2500,'warn');return;}
+  var fname='Scorecard-'+activeSCData.replace(/[^a-zA-Z0-9]/g,'-').substring(0,30)+'-'+new Date().toISOString().split('T')[0]+'.pdf';
+  toast('Generating PDF…',3000);
+  html2canvas(el,{
+    scale:2,
+    useCORS:true,
+    backgroundColor:'#ffffff',
+    width:el.scrollWidth,
+    height:el.scrollHeight
+  }).then(function(canvas){
+    var imgData=canvas.toDataURL('image/jpeg',0.95);
+    var jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    if(!jsPDFCtor){toast('❌ jsPDF not loaded',3000,'warn');return;}
+    var pdf=new jsPDFCtor({orientation:'portrait',unit:'mm',format:'a4'});
+    var pw=pdf.internal.pageSize.getWidth();
+    var ph=pdf.internal.pageSize.getHeight();
+    var margin=12;
+    var imgW=pw-(margin*2);
+    var imgH=(canvas.height*imgW)/canvas.width;
+    if(imgH>ph-(margin*2)){imgH=ph-(margin*2);imgW=(canvas.width*imgH)/canvas.height;}
+    pdf.addImage(imgData,'JPEG',(pw-imgW)/2,margin,imgW,imgH);
+    pdf.setFontSize(7);pdf.setTextColor(150);
+    pdf.text('ATNM STAC | '+activeSCData+' | '+new Date().toLocaleDateString(),margin,ph-4);
+    pdf.save(fname);
+    toast('✅ PDF downloaded: '+fname,3000);
+  }).catch(function(e){toast('❌ PDF error: '+e.message,4000,'warn');});
+}
 
 // ============================================================
 // NAVIGATION
