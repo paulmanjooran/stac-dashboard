@@ -3083,13 +3083,23 @@ function openSC(co){
   const sub=subconData.find(s=>s.company===co);
   const pen=ytd.reduce((s,d)=>s+(d.penalty||0),0);
   const cs=calcComplianceScore(co);
-  const bc={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  // Band colour map — covers ALL band values from scoring engine v3
+  const bc={
+    green: '#1b7a3e',   // Compliant
+    yellow:'#c8960c',   // Advisory 1st WL
+    orange:'#e07000',   // At Risk 2nd WL  ← tangerine
+    amber: '#e07000',   // legacy alias
+    red:   '#c0392b',   // Non-Compliant Final WL
+    black: '#1a1d24'    // Suspension
+  };
+  const bandBg = cs.bandColor || bc[cs.band] || '#e07000';
+  const bandIcon = {green:'🟢',yellow:'🟡',orange:'🟠',amber:'🟡',red:'🔴',black:'⚫'}[cs.band]||'🟠';
   const t=document.getElementById('m-sc-title');if(t)t.textContent=co;
-  let h=`<div style="background:${bc[cs.band]};color:#fff;padding:12px 16px;border-radius:var(--r);margin-bottom:14px;">
-    <div style="font-size:10px;opacity:.7;text-transform:uppercase;">${cs.profile.label} Risk | Ceiling: ${cs.profile.annualCeiling}pts | Qtr Ceiling: ${cs.profile.qtrCeiling}pts</div>
-    <div style="font-size:32px;font-weight:700;line-height:1.1;">${Math.max(0,cs.actualScore)}<span style="font-size:14px;opacity:.8;"> / ${cs.profile.annualCeiling} pts</span></div>
-    <div style="font-size:12px;margin-top:3px;">${cs.fullDemerits} Full Demerit case(s) × 10 pts = -${cs.deductedPts} pts</div>
-    <div style="font-size:12px;font-weight:600;margin-top:2px;">${cs.bandLabel} ${cs.band==='green'?'🟢':cs.band==='amber'?'🟡':cs.band==='red'?'🔴':'⚫'}</div>
+  let h=`<div style="background:${bandBg};color:#fff;padding:14px 18px;border-radius:var(--r);margin-bottom:14px;">
+    <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.6px;">${cs.profile.label} Risk | Ceiling: ${cs.ceiling}pts</div>
+    <div style="font-size:32px;font-weight:800;line-height:1.1;margin:4px 0;">${Math.max(0,cs.actualScore)}<span style="font-size:14px;opacity:.8;"> / ${cs.ceiling} pts</span></div>
+    <div style="font-size:12px;margin-top:2px;opacity:.9;">${cs.fullDemerits} Full Demerit case(s) × 10 pts = -${cs.deductedPts} pts</div>
+    <div style="font-size:13px;font-weight:700;margin-top:4px;">${bandIcon} ${cs.bandLabel}</div>
   </div>`;
   if(sub)h+=`<div style="font-size:11px;color:var(--t2);margin-bottom:12px;"><strong>Owner:</strong> ${sub.owner||'—'} | <strong>Focal:</strong> ${sub.focal||'—'}<br><strong>Coordinator:</strong> ${sub.coord||'—'} | <strong>Cluster:</strong> ${normCluster(sub.cluster)}</div>`;
   h+=`<div class="kgrid k3" style="margin-bottom:12px;">
