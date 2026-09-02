@@ -771,6 +771,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sbi" onclick="nav('tracker')"><span class="ic">📋</span>Case Tracker</div>
     <div class="sbi" onclick="nav('warning-letter')"><span class="ic">✉️</span>Warning Letters</div>
     <div class="sb-sec">Analysis</div>
+    <div class="sbi" onclick="nav('actions')"><span class="ic">✅</span>Action Tracker</div>
     <div class="sbi" onclick="nav('fines')"><span class="ic">💰</span>Fines & Penalties</div>
     <div class="sbi" onclick="nav('scorecards')"><span class="ic">🏅</span>Subcon Scorecards</div>
     <div class="sbi" onclick="nav('performance')"><span class="ic">📋</span>Performance Report</div>
@@ -1101,6 +1102,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       <div style="max-width:860px;">
 
         <!-- STEP 1: SHEET HEADERS -->
+        <div class="card" style="margin-bottom:14px;border-left:4px solid #1b7a3e;">
+          <div class="chd"><h3>📁 Google Drive — Evidence Root Folder</h3><span class="bdg bgr">Required for Action Tracker</span></div>
+          <div class="cbd">
+            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Paste the ID of your Google Drive root folder. STAC evidence subfolders will be auto-created inside it, named after each STAC ID.</div>
+            <input id="cfg-drive-folder" type="text" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;font-family:monospace;margin-bottom:8px;">
+            <button class="btn bp bsm" onclick="saveDriveFolderId()">💾 Save Drive Folder ID</button>
+            <span id="cfg-drive-folder-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
+          </div>
+        </div>
         <div class="card" style="margin-bottom:14px;border-left:4px solid var(--orange);">
           <div class="chd"><h3>📋 STEP 1 — Add New Column Headers to Google Sheet</h3><span class="bdg bor">Do this first</span></div>
           <div class="cbd"><span id="cfg-nid" style="display:none;"></span><input id="cfg-usr" type="email" style="display:none;" autocomplete="off">
@@ -1194,7 +1204,166 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 
 <!-- HSE STATS FORM VIEW -->
-    <div id="view-hse-form" class="view">
+    
+<!-- ── ACTION TRACKER VIEW ─────────────────────────────────── -->
+<div id="view-actions" class="view">
+  <div style="padding:20px 24px 48px;box-sizing:border-box;width:100%;max-width:1400px;margin:0 auto;">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--text);">✅ Action Tracker</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px;">Corrective actions per STAC case — evidence upload · cluster HSE lead review · HSE manager approval · closeout</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn bk bsm" onclick="renderActions()">↻ Refresh</button>
+        <button class="btn bg bsm" onclick="exportActionsCSV()">⬇ CSV</button>
+        <button class="btn bp bsm" onclick="openAddActionModal()">＋ New Action</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end;">
+      <div style="min-width:160px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Status</div>
+        <select id="at-flt-status" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
+          <option value="">All Statuses</option>
+          <option value="Open">Open</option>
+          <option value="Evidence Uploaded">Evidence Uploaded</option>
+          <option value="Under Review">Under Review</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Closed">Closed</option>
+          <option value="Overdue">Overdue</option>
+        </select>
+      </div>
+      <div style="min-width:160px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Cluster</div>
+        <select id="at-flt-cluster" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
+          <option value="">All Clusters</option>
+          <option>Marmul WD</option>
+          <option>Nimr</option>
+          <option>Greater Birba</option>
+          <option>Amal</option>
+          <option>Marmul Projects</option>
+        </select>
+      </div>
+      <div style="min-width:200px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Subcontractor</div>
+        <select id="at-flt-co" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
+          <option value="">All Companies</option>
+        </select>
+      </div>
+      <div style="min-width:130px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Overdue Only</div>
+        <select id="at-flt-overdue" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
+          <option value="">All</option>
+          <option value="yes">Overdue Only</option>
+        </select>
+      </div>
+      <button class="btn bsm" style="background:var(--bg);border:1px solid var(--bdr);" onclick="atResetFilters()">✕ Reset</button>
+      <span id="at-rec-count" style="font-size:11px;color:var(--t3);align-self:center;"></span>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div class="kgrid k4" style="margin-bottom:18px;">
+      <div class="kpi kbl"><div class="klbl">Total Actions</div><div class="kval" id="at-k-total">—</div></div>
+      <div class="kpi kam"><div class="klbl">Open / Overdue</div><div class="kval" id="at-k-open">—</div></div>
+      <div class="kpi kpu"><div class="klbl">Pending Review</div><div class="kval" id="at-k-review">—</div></div>
+      <div class="kpi kgr"><div class="klbl">Closed Out</div><div class="kval" id="at-k-closed">—</div></div>
+    </div>
+
+    <!-- Table -->
+    <div class="tw" style="border-radius:var(--r);overflow:hidden;border:1px solid var(--bdr);">
+      <table class="tbl" id="at-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">STAC ID</th>
+            <th style="width:90px;">Date Raised</th>
+            <th style="width:120px;">Cluster</th>
+            <th style="width:180px;">Subcontractor</th>
+            <th style="width:90px;">Deadline</th>
+            <th>Corrective Action</th>
+            <th style="width:110px;">Status</th>
+            <th style="width:80px;">Evidence</th>
+            <th style="width:90px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="at-body">
+          <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3);">Loading actions…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── ADD / EDIT ACTION MODAL ───────────────────────────────── -->
+<div class="modal" id="m-action" style="display:none;">
+  <div class="mbox mbox-md">
+    <div class="mhd">
+      <h3 id="m-action-title">New Corrective Action</h3>
+      <button class="xbtn" onclick="cm('m-action')">✕</button>
+    </div>
+    <div class="mbd" style="padding:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">STAC Case ID *</label>
+          <select id="at-stac-sel" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;"></select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Action Type *</label>
+          <select id="at-type" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
+            <option>Stop non-compliant activity immediately</option>
+            <option>Root Cause Analysis (RCA)</option>
+            <option>CAPA Submission</option>
+            <option>Re-induction / Retraining</option>
+            <option>Implement preventive controls</option>
+            <option>Safety Qube logging</option>
+            <option>Custom Action</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Action Description *</label>
+          <textarea id="at-desc" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;resize:vertical;box-sizing:border-box;" placeholder="Describe the required corrective action…"></textarea>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Deadline *</label>
+          <input type="date" id="at-deadline" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Assigned To (Focal Point Email)</label>
+          <input type="email" id="at-assigned" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;" placeholder="focal@subcontractor.com">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Cluster HSE Lead Email</label>
+          <input type="email" id="at-lead" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;" placeholder="lead@altasnim.com">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">HSE Manager Email</label>
+          <input type="email" id="at-mgr" value="abubakar.rahi@altasnim.com" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--bdr);padding-top:12px;">
+        <button class="btn" style="background:var(--bg);border:1px solid var(--bdr);" onclick="cm('m-action')">Cancel</button>
+        <button class="btn bp" onclick="submitAction()">✅ Save Action &amp; Notify Subcon</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── REVIEW / APPROVE MODAL ───────────────────────────────── -->
+<div class="modal" id="m-review" style="display:none;">
+  <div class="mbox mbox-md">
+    <div class="mhd">
+      <h3 id="m-review-title">Review Evidence</h3>
+      <button class="xbtn" onclick="cm('m-review')">✕</button>
+    </div>
+    <div class="mbd" id="m-review-body" style="padding:16px;"></div>
+  </div>
+</div>
+
+<div id="view-hse-form" class="view">
 
   <!-- Loading screen -->
   <div id="sc-loading-screen" style="display:none;position:fixed;inset:0;background:var(--blue);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
@@ -1464,9 +1633,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b7a3e;margin-bottom:24px;">
             <strong>What happens next:</strong> Warning letter will be generated and dispatched to the subcontractor. Track progress in Case Tracker.
           </div>
-          <div style="display:flex;gap:12px;">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
             <button class="btn bp" style="flex:1;" onclick="document.getElementById('hseSuccessScreen').style.display='none';resetForm();nav('tracker');">
               📋 Go to Case Tracker
+            </button>
+            <button class="btn" style="flex:1;background:#f58220;color:#fff;border:none;border-radius:var(--r);font-weight:700;cursor:pointer;" onclick="var s=document.getElementById('hseSuccessScreen');var sid=s.dataset.stacId;s.style.display='none';resetForm();nav('actions');setTimeout(function(){if(sid)openAddActionModal(sid);},400);">
+              ⚡ Generate Actions
             </button>
             <button class="btn bo" style="flex:1;" onclick="document.getElementById('hseSuccessScreen').style.display='none';resetForm();">
               ➕ New STAC Case
@@ -1716,7 +1888,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   </div>
 </div>
 <div id="toast"></div>
-<script>
+<script>var DRIVE_FOLDER_ID = localStorage.getItem('stac_drive_folder_id') || 'YOUR_DRIVE_FOLDER_ID';
+
+function saveDriveFolderId(){
+  var val = (document.getElementById('cfg-drive-folder')||{}).value||'';
+  if(!val.trim()){toast('Paste the Drive folder ID first',2000,'warn');return;}
+  DRIVE_FOLDER_ID = val.trim();
+  try{localStorage.setItem('stac_drive_folder_id', DRIVE_FOLDER_ID);}catch(e){}
+  var st=document.getElementById('cfg-drive-folder-status');
+  if(st){st.textContent='✅ Saved';st.style.color='var(--green)';}
+  toast('✅ Drive Folder ID saved',3000);
+}
 
 // ============================================================
 // CONFIG & STATE
@@ -3240,6 +3422,14 @@ function calcYTDInst(co,cat,rule){
   updateComplianceDisplay(co);
 }
 
+function loadDriveFolderIdFromStorage(){
+  var stored = localStorage.getItem('stac_drive_folder_id');
+  if(stored) DRIVE_FOLDER_ID = stored;
+  // Also populate setup input if open
+  var inp = document.getElementById('cfg-drive-folder');
+  if(inp && stored) inp.value = stored;
+}
+
 function initForm(){
   const now=new Date();
   const localDate=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -3420,6 +3610,9 @@ async function doSubmit(e){
       const _sDate=document.getElementById('hseSuccessDate');
       if(_sScreen){
         if(_sRef) _sRef.textContent=stacId;
+          // Store stacId for action generation prompt
+          document.getElementById('hseSuccessScreen').dataset.stacId=stacId;
+          document.getElementById('hseSuccessScreen').dataset.inst=payload.ytdInstanceCount||1;
         if(_sComp) _sComp.textContent=payload.company||'';
         if(_sDate) _sDate.textContent=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
         document.getElementById('hseFormWrap')?document.getElementById('hseFormWrap').style.display='none':null;
@@ -4070,6 +4263,478 @@ function exportSCPDF(){
   }).catch(function(e){toast('❌ PDF error: '+e.message,4000,'warn');});
 }
 
+
+// ════════════════════════════════════════════════════════════
+// ACTION TRACKER MODULE
+// ════════════════════════════════════════════════════════════
+
+// In-memory action store (loaded from Apps Script / localStorage)
+var actionData=[];
+var AT_CACHE_KEY = 'stac_actions_v1';
+var activeActionId = null;
+
+// Standard corrective actions per WL instance
+var STD_ACTIONS = {
+  1: [
+    {type:'Stop Activity',     desc:'Stop non-compliant activity / rectify unsafe condition immediately.',  days:1},
+    {type:'RCA',               desc:'Root Cause Analysis (RCA) to be submitted within 48 hours.',          days:2},
+    {type:'CAPA',              desc:'Submit CAPA to ATNM HSE within 7 days.',                              days:7},
+    {type:'Re-induction',      desc:'Re-induct / retrain all personnel involved.',                          days:7},
+    {type:'Controls',          desc:'Implement controls to prevent recurrence.',                            days:7},
+    {type:'Safety Qube',       desc:'Log and track all actions in Safety Qube via Subcontract Coordinator.',days:7}
+  ],
+  2: [
+    {type:'Stop Activity',     desc:'Stop non-compliant activity immediately — 2nd occurrence.',            days:1},
+    {type:'RCA',               desc:'Enhanced Root Cause Analysis within 48 hours — identify systemic failures.',days:2},
+    {type:'CAPA',              desc:'Submit revised CAPA with management sign-off within 5 days.',          days:5},
+    {type:'MHIP',              desc:'Mandatory HSE Improvement Plan (MHIP) to be submitted within 48 hours.',days:2},
+    {type:'Re-induction',      desc:'Full re-induction of all site personnel — not just involved workers.', days:5},
+    {type:'Safety Qube',       desc:'Log in Safety Qube and provide weekly status update.',                 days:7}
+  ],
+  3: [
+    {type:'Stop Activity',     desc:'IMMEDIATE STOP — all non-compliant activities must cease.',            days:1},
+    {type:'RCA',               desc:'Formal RCA with senior management sign-off within 24 hours.',          days:1},
+    {type:'CAPA',              desc:'Comprehensive CAPA with Board-level commitment within 48 hours.',      days:2},
+    {type:'Escalation',        desc:'Escalate to Contract Manager and Commercial Manager — potential hold.', days:1},
+    {type:'Re-induction',      desc:'Full workforce re-induction before resuming work.',                    days:3},
+    {type:'Safety Qube',       desc:'Daily status update in Safety Qube until closure.',                    days:1}
+  ]
+};
+
+function genActionId(){
+  return 'ACT-'+String(CY)+'-'+String(Date.now()).slice(-5);
+}
+
+// ── Load actions (from localStorage cache or Apps Script) ───
+function loadActionData(){
+  try {
+    var cached = localStorage.getItem(AT_CACHE_KEY);
+    if(cached){
+      actionData = JSON.parse(cached);
+      renderActions();
+    }
+  } catch(e){}
+  // Always fetch fresh from Apps Script
+  fetchActionsFromSheet();
+}
+
+function fetchActionsFromSheet(){
+  // Fetch from SC_ACTIONS tab via gviz
+  fetchGvizData(CFG.sheetId, null, 'SC_ACTIONS', 1)
+    .then(function(rows){
+      if(rows && rows.length){
+        actionData = rows.map(function(r){
+          return {
+            id:         r[0]||'',
+            stacId:     r[1]||'',
+            dateRaised: r[2]||'',
+            cluster:    r[3]||'',
+            company:    r[4]||'',
+            focalEmail: r[5]||'',
+            leadEmail:  r[6]||'',
+            mgrEmail:   r[7]||'',
+            actionType: r[8]||'',
+            actionDesc: r[9]||'',
+            deadline:   r[10]||'',
+            status:     r[11]||'Open',
+            evidenceUrl:r[12]||'',
+            driveFolder:r[13]||'',
+            reviewedBy: r[14]||'',
+            reviewNote: r[15]||'',
+            closedDate: r[16]||''
+          };
+        });
+        try{localStorage.setItem(AT_CACHE_KEY, JSON.stringify(actionData));}catch(e){}
+        renderActions();
+      }
+    })
+    .catch(function(){
+      // Sheet not accessible — use cached data only
+      renderActions();
+    });
+}
+
+// ── Populate STAC selector in Add Action modal ───────────────
+function populateActionStacSel(){
+  var sel = document.getElementById('at-stac-sel');
+  if(!sel) return;
+  var ytd = stacData.filter(function(d){return d.date&&d.date.startsWith(String(CY));});
+  ytd.sort(function(a,b){return b.date.localeCompare(a.date);});
+  sel.innerHTML = '<option value="">— Select STAC Case —</option>';
+  ytd.forEach(function(d){
+    var opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = d.id + ' | ' + d.company.substring(0,25) + ' | ' + d.category.substring(0,20);
+    sel.appendChild(opt);
+  });
+}
+
+// ── Populate company filter ───────────────────────────────────
+function populateAtCompanyFilter(){
+  var sel = document.getElementById('at-flt-co');
+  if(!sel) return;
+  var cos = [...new Set(actionData.map(function(a){return a.company;}).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All Companies</option>';
+  cos.forEach(function(co){
+    var opt = document.createElement('option');
+    opt.value = co; opt.textContent = co;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Render action table ──────────────────────────────────────
+function renderActions(){
+  var tbody = document.getElementById('at-body');
+  if(!tbody) return;
+
+  var fStatus  = (document.getElementById('at-flt-status')||{value:''}).value;
+  var fCluster = (document.getElementById('at-flt-cluster')||{value:''}).value;
+  var fCo      = (document.getElementById('at-flt-co')||{value:''}).value;
+  var fOverdue = (document.getElementById('at-flt-overdue')||{value:''}).value;
+  var today    = new Date(); today.setHours(0,0,0,0);
+
+  var filtered = actionData.filter(function(a){
+    if(fStatus  && a.status !== fStatus)  return false;
+    if(fCluster && a.cluster!== fCluster) return false;
+    if(fCo      && a.company !== fCo)     return false;
+    if(fOverdue === 'yes'){
+      var dl = a.deadline ? new Date(a.deadline) : null;
+      if(!dl || dl >= today || a.status === 'Closed') return false;
+    }
+    return true;
+  });
+
+  // Update KPIs
+  var open    = actionData.filter(function(a){return a.status==='Open'||a.status==='Rejected';}).length;
+  var overdue = actionData.filter(function(a){
+    var dl=a.deadline?new Date(a.deadline):null;
+    return dl&&dl<today&&a.status!=='Closed'&&a.status!=='Approved';
+  }).length;
+  var review  = actionData.filter(function(a){return a.status==='Evidence Uploaded'||a.status==='Under Review';}).length;
+  var closed  = actionData.filter(function(a){return a.status==='Closed'||a.status==='Approved';}).length;
+
+  var k=document.getElementById('at-k-total');  if(k)k.textContent=actionData.length;
+  k=document.getElementById('at-k-open');       if(k){k.textContent=open+(overdue?' (+'+overdue+' OD)':'');k.style.color=overdue?'var(--red)':'var(--orange)';}
+  k=document.getElementById('at-k-review');     if(k)k.textContent=review;
+  k=document.getElementById('at-k-closed');     if(k)k.textContent=closed;
+
+  var rc = document.getElementById('at-rec-count');
+  if(rc) rc.textContent = filtered.length + ' record'+(filtered.length!==1?'s':'');
+
+  populateAtCompanyFilter();
+
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3);">No actions found. Click ＋ New Action to raise corrective actions for a STAC case.</td></tr>';
+    return;
+  }
+
+  var STATUS_STYLE = {
+    'Open':              'background:#fff3cd;color:#856404;',
+    'Evidence Uploaded': 'background:#cce5ff;color:#004085;',
+    'Under Review':      'background:#e2d9f3;color:#5a1b9a;',
+    'Approved':          'background:#d4edda;color:#155724;',
+    'Rejected':          'background:#f8d7da;color:#721c24;',
+    'Closed':            'background:#d4edda;color:#155724;font-weight:700;',
+    'Overdue':           'background:#f8d7da;color:#721c24;font-weight:700;'
+  };
+
+  var html = '';
+  filtered.forEach(function(a){
+    var dl   = a.deadline ? new Date(a.deadline) : null;
+    var isOD = dl && dl < today && a.status!=='Closed' && a.status!=='Approved';
+    var dispStatus = isOD && a.status==='Open' ? 'Overdue' : a.status;
+    var sStyle = STATUS_STYLE[dispStatus] || '';
+    var dlStr  = dl ? dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    var dlColor = isOD ? 'color:var(--red);font-weight:700;' : '';
+
+    html += '<tr>';
+    html += '<td class="sid" data-id="'+esc(a.stacId)+'" onclick="openStacCase(this.dataset.id)" style="cursor:pointer;color:var(--blue);font-family:monospace;font-size:11px;">'+esc(a.stacId)+'</td>';
+    html += '<td style="font-size:11px;">'+fd(a.dateRaised)+'</td>';
+    html += '<td><span class="cls-badge">'+esc(a.cluster)+'</span></td>';
+    html += '<td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(a.company)+'">'+esc(a.company)+'</td>';
+    html += '<td style="font-size:11px;'+dlColor+'">'+dlStr+(isOD?' ⚠':'')+'</td>';
+    html += '<td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(a.actionType)+': '+esc(a.actionDesc)+'"><strong>'+esc(a.actionType)+'</strong><br><span style="color:var(--t3);">'+esc(a.actionDesc).substring(0,60)+(a.actionDesc.length>60?'…':'')+'</span></td>';
+    html += '<td><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;'+sStyle+'">'+dispStatus+'</span></td>';
+    html += '<td style="text-align:center;">';
+    if(a.driveFolder){
+      html += '<a href="'+a.driveFolder+'" target="_blank" title="Open Drive folder" style="text-decoration:none;font-size:14px;">📁</a> ';
+    }
+    if(a.evidenceUrl){
+      html += '<a href="'+a.evidenceUrl+'" target="_blank" title="View evidence" style="text-decoration:none;font-size:14px;">📎</a>';
+    } else {
+      html += '<span style="color:var(--t3);font-size:11px;">None</span>';
+    }
+    html += '</td>';
+    html += '<td style="white-space:nowrap;">';
+    if(a.status==='Evidence Uploaded'||a.status==='Under Review'){
+      html += '<button class="btn bp bsm" data-id="'+esc(a.id)+'" onclick="openReviewModal(this.dataset.id)" style="font-size:10px;padding:3px 7px;">Review</button> ';
+    }
+    html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="openEditAction(this.dataset.id)" style="font-size:10px;padding:3px 7px;background:var(--bg);border:1px solid var(--bdr);">Edit</button>';
+    html += '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function atResetFilters(){
+  ['at-flt-status','at-flt-cluster','at-flt-co','at-flt-overdue'].forEach(function(id){
+    var el=document.getElementById(id); if(el)el.value='';
+  });
+  renderActions();
+}
+
+// ── Open Add Action modal ────────────────────────────────────
+function openAddActionModal(stacId){
+  populateActionStacSel();
+  if(stacId){
+    setTimeout(function(){
+      var sel=document.getElementById('at-stac-sel');
+      if(sel) sel.value=stacId;
+      // Auto-fill deadline based on standard framework (7 days)
+      var d=new Date(); d.setDate(d.getDate()+7);
+      var dl=document.getElementById('at-deadline');
+      if(dl) dl.value=d.toISOString().split('T')[0];
+    },50);
+  }
+  document.getElementById('m-action-title').textContent='New Corrective Action';
+  activeActionId=null;
+  openModal('m-action');
+}
+
+// ── Auto-generate standard actions for a STAC case ──────────
+function autoGenerateActions(stacId, inst){
+  var d = stacData.find(function(s){return s.id===stacId;});
+  if(!d){toast('STAC case not found',2000,'warn');return;}
+  inst = parseInt(inst)||parseInt(d.instances)||1;
+  var templates = STD_ACTIONS[Math.min(inst,3)]||STD_ACTIONS[1];
+  var sub = subconData.find(function(s){return s.company===d.company;});
+  var focal = sub ? (sub.focal||'') : '';
+  var generated = [];
+  var base = new Date(d.date||new Date());
+
+  templates.forEach(function(t){
+    var dl = new Date(base);
+    dl.setDate(dl.getDate()+t.days);
+    generated.push({
+      id:          genActionId()+'_'+Math.random().toString(36).slice(2,5),
+      stacId:      stacId,
+      dateRaised:  new Date().toISOString().split('T')[0],
+      cluster:     d.cluster||'',
+      company:     d.company||'',
+      focalEmail:  focal,
+      leadEmail:   '',
+      mgrEmail:    d.hseMgrEmail||'abubakar.rahi@altasnim.com',
+      actionType:  t.type,
+      actionDesc:  t.desc,
+      deadline:    dl.toISOString().split('T')[0],
+      status:      'Open',
+      evidenceUrl: '',
+      driveFolder: '',
+      reviewedBy:  '',
+      reviewNote:  '',
+      closedDate:  ''
+    });
+  });
+  return generated;
+}
+
+// ── Submit new action ────────────────────────────────────────
+function submitAction(){
+  var stacId   = gv('at-stac-sel');
+  var aType    = gv('at-type');
+  var aDesc    = gv('at-desc');
+  var deadline = gv('at-deadline');
+  var focal    = gv('at-assigned');
+  var lead     = gv('at-lead');
+  var mgr      = gv('at-mgr');
+
+  if(!stacId){toast('Select a STAC case',2000,'warn');return;}
+  if(!aDesc.trim()){toast('Action description required',2000,'warn');return;}
+  if(!deadline){toast('Deadline required',2000,'warn');return;}
+
+  var d = stacData.find(function(s){return s.id===stacId;});
+  var newAction = {
+    id:          genActionId(),
+    stacId:      stacId,
+    dateRaised:  new Date().toISOString().split('T')[0],
+    cluster:     d?d.cluster:'',
+    company:     d?d.company:'',
+    focalEmail:  focal,
+    leadEmail:   lead,
+    mgrEmail:    mgr,
+    actionType:  aType,
+    actionDesc:  aDesc,
+    deadline:    deadline,
+    status:      'Open',
+    evidenceUrl: '',
+    driveFolder: '',
+    reviewedBy:  '',
+    reviewNote:  '',
+    closedDate:  ''
+  };
+
+  // Save to Apps Script
+  var btn = document.querySelector('#m-action .btn.bp');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+
+  fetch(CFG.scriptUrl, {
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'writeAction', data:newAction})
+  }).then(function(){
+    actionData.push(newAction);
+    try{localStorage.setItem(AT_CACHE_KEY,JSON.stringify(actionData));}catch(e){}
+    cm('m-action');
+    renderActions();
+    toast('✅ Action saved — notification sent to '+focal,5000);
+    if(btn){btn.disabled=false;btn.textContent='✅ Save Action & Notify Subcon';}
+  }).catch(function(e){
+    // no-cors always resolves — treat as success
+    actionData.push(newAction);
+    try{localStorage.setItem(AT_CACHE_KEY,JSON.stringify(actionData));}catch(e){}
+    cm('m-action');
+    renderActions();
+    toast('✅ Action saved — notification sent',4000);
+    if(btn){btn.disabled=false;btn.textContent='✅ Save Action & Notify Subcon';}
+  });
+}
+
+// ── Open Review / Approve modal ──────────────────────────────
+function openReviewModal(actionId){
+  var a = actionData.find(function(x){return x.id===actionId;});
+  if(!a){toast('Action not found',2000,'warn');return;}
+  activeActionId = actionId;
+  document.getElementById('m-review-title').textContent = 'Review Evidence — '+a.stacId;
+
+  var html = '<div style="margin-bottom:14px;">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
+    + '<div style="background:var(--bg);padding:10px 14px;border-radius:var(--r);">'
+    + '<div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:3px;">STAC Case</div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--blue);">'+a.stacId+'</div>'
+    + '</div>'
+    + '<div style="background:var(--bg);padding:10px 14px;border-radius:var(--r);">'
+    + '<div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:3px;">Company</div>'
+    + '<div style="font-size:13px;font-weight:700;">'+a.company+'</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="background:var(--blt);border:1px solid var(--blue);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;">'
+    + '<div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:3px;">Action Required</div>'
+    + '<div style="font-size:12px;font-weight:700;">'+a.actionType+'</div>'
+    + '<div style="font-size:11px;color:var(--t2);margin-top:3px;">'+a.actionDesc+'</div>'
+    + '</div>';
+
+  if(a.evidenceUrl){
+    html += '<div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:var(--r);padding:10px 14px;margin-bottom:12px;">'
+      + '<div style="font-size:10px;color:#1b7a3e;font-weight:700;text-transform:uppercase;margin-bottom:6px;">📎 Evidence Submitted</div>'
+      + '<a href="'+a.evidenceUrl+'" target="_blank" style="color:var(--blue);font-size:12px;font-weight:600;">'+a.evidenceUrl+'</a>'
+      + '</div>';
+  }
+
+  html += '<div style="margin-bottom:12px;">'
+    + '<label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Review Notes (required for rejection)</label>'
+    + '<textarea id="rv-note" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;resize:vertical;box-sizing:border-box;" placeholder="Add comments, feedback or rejection reason…"></textarea>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--bdr);padding-top:12px;">'
+    + '<button class="btn bsm" style="background:var(--bg);border:1px solid var(--bdr);" onclick="cm(\'m-review\')">Cancel</button>'
+    + '<button class="btn bsm" style="background:#c0392b;color:#fff;" onclick="reviewAction(\'Rejected\')">❌ Reject</button>'
+    + '<button class="btn bsm" style="background:#d68910;color:#fff;" onclick="reviewAction(\'Under Review\')" title="Approve by Cluster Lead — passes to HSE Manager">🔄 Cluster Lead Approved</button>'
+    + '<button class="btn bp bsm" onclick="reviewAction(\'Approved\')">✅ HSE Manager Approved</button>'
+    + '</div>'
+    + '</div>';
+
+  document.getElementById('m-review-body').innerHTML = html;
+  openModal('m-review');
+}
+
+function reviewAction(newStatus){
+  var a = actionData.find(function(x){return x.id===activeActionId;});
+  if(!a){return;}
+  var note = gv('rv-note');
+  if(newStatus==='Rejected'&&!note.trim()){toast('Review note required for rejection',2000,'warn');return;}
+
+  a.status     = newStatus;
+  a.reviewNote = note;
+  a.reviewedBy = 'ATNM HSE';
+  if(newStatus==='Approved') a.closedDate = new Date().toISOString().split('T')[0];
+
+  // Push update to Apps Script
+  fetch(CFG.scriptUrl,{
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'updateAction', data:a})
+  }).then(function(){
+    try{localStorage.setItem(AT_CACHE_KEY,JSON.stringify(actionData));}catch(e){}
+    cm('m-review');
+    renderActions();
+    var msg = newStatus==='Approved'
+      ? '✅ Action approved and closed — notification sent'
+      : newStatus==='Rejected'
+      ? '❌ Action rejected — subcontractor notified to resubmit'
+      : '🔄 Passed to HSE Manager for final approval';
+    toast(msg, 5000);
+  });
+}
+
+// ── Open edit action ─────────────────────────────────────────
+function openEditAction(actionId){
+  var a = actionData.find(function(x){return x.id===actionId;});
+  if(!a) return;
+  activeActionId = actionId;
+  populateActionStacSel();
+  setTimeout(function(){
+    var s=document.getElementById('at-stac-sel'); if(s)s.value=a.stacId;
+    var t=document.getElementById('at-type');     if(t)t.value=a.actionType;
+    var d=document.getElementById('at-desc');     if(d)d.value=a.actionDesc;
+    var dl=document.getElementById('at-deadline');if(dl)dl.value=a.deadline;
+    var f=document.getElementById('at-assigned'); if(f)f.value=a.focalEmail;
+    var l=document.getElementById('at-lead');     if(l)l.value=a.leadEmail;
+    var m=document.getElementById('at-mgr');      if(m)m.value=a.mgrEmail;
+  },50);
+  document.getElementById('m-action-title').textContent='Edit Action — '+a.stacId;
+  openModal('m-action');
+}
+
+// ── Export actions as CSV ────────────────────────────────────
+function exportActionsCSV(){
+  if(!actionData.length){toast('No actions to export',2000,'warn');return;}
+  var hdrs=['Action ID','STAC ID','Date Raised','Cluster','Company','Action Type','Description','Deadline','Status','Evidence URL','Drive Folder','Reviewed By','Review Note','Closed Date'];
+  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
+  var csv=hdrs.map(q).join(',')+String.fromCharCode(13,10);
+  actionData.forEach(function(a){
+    csv+=[a.id,a.stacId,a.dateRaised,a.cluster,a.company,a.actionType,a.actionDesc,a.deadline,a.status,a.evidenceUrl,a.driveFolder,a.reviewedBy,a.reviewNote,a.closedDate].map(q).join(',')+String.fromCharCode(13,10);
+  });
+  var fname='ATNM-ActionTracker-'+new Date().toISOString().split('T')[0]+'.csv';
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=fname;a.style.display='none';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+  toast('✅ CSV downloaded: '+fname,3000);
+}
+
+// ── Open STAC case from Action Tracker ──────────────────────
+function openStacCase(stacId){
+  nav('tracker');
+  setTimeout(function(){
+    var el=document.getElementById('f-search'); if(el){el.value=stacId;renderTracker();}
+  },200);
+}
+
+// ── Init action tracker tab ──────────────────────────────────
+function initActionTracker(){
+  populateAtCompanyFilter();
+  if(!actionData.length){
+    loadActionData();
+  } else {
+    renderActions();
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// END ACTION TRACKER MODULE
+// ════════════════════════════════════════════════════════════
+
+
 // ============================================================
 // NAVIGATION
 // ============================================================
@@ -4077,6 +4742,7 @@ const PAGES={
   'dashboard':{t:'STAC Dashboard',s:'STAC — Subcontractor Tracking & Assurance for Compliance'},
   'new-stac':{t:'New STAC Form',s:'Raise a new subcontractor HSE non-compliance case'},
   'tracker':{t:'Case Tracker',s:'Filter, manage and export all STAC cases'},
+  'actions':{t:'Action Tracker',s:'Corrective action register — evidence upload, review and closeout per STAC case'},
   'fines':{t:'Fines & Penalties',s:'YTD penalty register, demerit matrix and financial analysis'},
   'performance':{t:'Performance Report',s:'Full subcontractor HSE compliance ranking — score out of 100'},
   'scorecards':{t:'Subcontractor Scorecards',s:'YTD compliance score per subcontractor'},
@@ -4170,6 +4836,10 @@ function nav(v){
     if(v==='hse-form'||v==='hse-stats'){
       cnt.classList.add('hse-active');
       cnt.style.padding='0';
+    } else if(v==='actions'){
+      cnt.classList.remove('hse-active');
+      cnt.style.padding='';
+      initActionTracker();
     } else {
       cnt.classList.remove('hse-active');
       cnt.style.padding='';
@@ -4441,7 +5111,10 @@ function doPost(e) {
   try {
     const d = JSON.parse(e.postData.contents);
     if (d.action === 'submit')       return R(writeSTAC(d));
-    if (d.action === 'markIssued')   return R(markIssued(d));
+    if (d.action === 'writeAction')   return R(writeAction(d.data||d));
+    if (d.action === 'updateAction')  return R(updateAction(d.data||d));
+    if (d.action === 'approveAction') return R(updateAction(Object.assign({},d.data||d,{status:'Approved'})));
+    if (d.action === 'markIssued')    return R(markIssued(d));
     if (d.action === 'deleteSTAC')   return R(deleteSTAC(d));
     if (d.action === 'setupHeaders') return R(setupHeadersAction());
     return R({ ok: false, error: 'Unknown action: ' + d.action });
@@ -4523,6 +5196,125 @@ function writeSTAC(d) {
   // Send email alerts
   sendAlerts(d, id, inst);
   return { ok: true, stacId: id, cols: row.length, row: lr };
+}
+
+// ── Write Corrective Action ─────────────────────────────────
+function writeAction(d) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('SC_ACTIONS');
+  if (!sh) {
+    // Create the tab if it doesn't exist
+    sh = ss.insertSheet('SC_ACTIONS');
+    sh.appendRow(['Action ID','STAC ID','Date Raised','Cluster','Company',
+      'Focal Email','Lead Email','Mgr Email','Action Type','Action Description',
+      'Deadline','Status','Evidence URL','Drive Folder URL',
+      'Reviewed By','Review Notes','Closed Date']);
+    sh.getRange(1,1,1,17).setFontWeight('bold').setBackground('#21409a').setFontColor('#ffffff');
+  }
+  // Create Drive folder for this STAC ID if not exists
+  var folderUrl = '';
+  try {
+    var rootFolder = DriveApp.getFolderById('YOUR_DRIVE_FOLDER_ID'); // Set in Setup
+    var stacFolders = rootFolder.getFoldersByName(d.stacId);
+    var stacFolder = stacFolders.hasNext() ? stacFolders.next() : rootFolder.createFolder(d.stacId);
+    var evidFolders = stacFolder.getFoldersByName('Evidence');
+    var evidFolder = evidFolders.hasNext() ? evidFolders.next() : stacFolder.createFolder('Evidence');
+    folderUrl = evidFolder.getUrl();
+    d.driveFolder = folderUrl;
+  } catch(e) { Logger.log('Drive folder error: '+e); }
+
+  sh.appendRow([
+    d.id, d.stacId, d.dateRaised, d.cluster, d.company,
+    d.focalEmail, d.leadEmail, d.mgrEmail, d.actionType, d.actionDesc,
+    d.deadline, d.status||'Open', d.evidenceUrl||'', folderUrl,
+    '', '', ''
+  ]);
+
+  // Email notification to Subcontractor Focal Point
+  if (d.focalEmail) {
+    try {
+      MailApp.sendEmail({
+        to: d.focalEmail,
+        cc: d.leadEmail + (d.mgrEmail ? ',' + d.mgrEmail : ''),
+        subject: '[ACTION REQUIRED] STAC ' + d.stacId + ' — ' + d.actionType,
+        htmlBody: buildActionEmail(d, folderUrl),
+        name: 'ATNM STAC Programme'
+      });
+    } catch(e) { Logger.log('Action email failed: '+e); }
+  }
+  return { ok: true, actionId: d.id, driveFolder: folderUrl };
+}
+
+// ── Update Action Status (review / approve / reject) ────────
+function updateAction(d) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('SC_ACTIONS');
+  if (!sh) return { ok: false, error: 'SC_ACTIONS tab not found' };
+  var data = sh.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === d.id) {
+      sh.getRange(i+1, 12).setValue(d.status);           // Status
+      sh.getRange(i+1, 15).setValue(d.reviewedBy||'');   // Reviewed By
+      sh.getRange(i+1, 16).setValue(d.reviewNote||'');   // Review Notes
+      if (d.status==='Approved') sh.getRange(i+1,17).setValue(new Date()); // Closed Date
+      if (d.evidenceUrl) sh.getRange(i+1, 13).setValue(d.evidenceUrl);     // Evidence URL
+      // Send notification
+      sendReviewNotification(d);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'Action not found: '+d.id };
+}
+
+// ── Action email HTML ────────────────────────────────────────
+function buildActionEmail(d, driveUrl) {
+  var deadline = d.deadline ? Utilities.formatDate(new Date(d.deadline),'Asia/Muscat','d MMMM yyyy') : '—';
+  return '<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;max-width:650px;">'
+    + '<div style="background:#f58220;color:#fff;padding:14px 20px;border-radius:6px 6px 0 0;">'
+    + '<div style="font-size:10pt;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">ACTION REQUIRED — ATNM STAC Programme</div>'
+    + '<div style="font-size:18pt;font-weight:800;margin-top:4px;">'+d.actionType+'</div>'
+    + '</div>'
+    + '<div style="background:#fff;border:1px solid #ddd;border-top:none;padding:20px;border-radius:0 0 6px 6px;">'
+    + '<p>Dear Sir/Madam,</p>'
+    + '<p>A corrective action has been raised for STAC case <strong>'+d.stacId+'</strong>. Please complete the action and upload evidence by the deadline.</p>'
+    + '<table style="width:100%;border-collapse:collapse;margin:14px 0;font-size:10pt;">'
+    + '<tr><td style="padding:6pt 10pt;background:#f5f5f5;font-weight:700;border:.5pt solid #ccc;width:35%;">STAC Reference</td><td style="padding:6pt 10pt;border:.5pt solid #ccc;font-weight:700;color:#21409a;">'+d.stacId+'</td></tr>'
+    + '<tr><td style="padding:6pt 10pt;background:#f5f5f5;font-weight:700;border:.5pt solid #ccc;">Company</td><td style="padding:6pt 10pt;border:.5pt solid #ccc;">'+d.company+'</td></tr>'
+    + '<tr><td style="padding:6pt 10pt;background:#f5f5f5;font-weight:700;border:.5pt solid #ccc;">Action Required</td><td style="padding:6pt 10pt;border:.5pt solid #ccc;font-weight:700;">'+d.actionType+'</td></tr>'
+    + '<tr><td style="padding:6pt 10pt;background:#f5f5f5;font-weight:700;border:.5pt solid #ccc;">Description</td><td style="padding:6pt 10pt;border:.5pt solid #ccc;">'+d.actionDesc+'</td></tr>'
+    + '<tr><td style="padding:6pt 10pt;background:#fff3cd;font-weight:700;border:.5pt solid #ccc;">Deadline</td><td style="padding:6pt 10pt;border:.5pt solid #ccc;color:#d4380d;font-weight:700;">'+deadline+'</td></tr>'
+    + '</table>'
+    + (driveUrl ? '<p style="background:#e8f4fd;border:1px solid #9ecbef;padding:10px 14px;border-radius:4px;">'
+      + '📁 <strong>Upload your evidence here:</strong> <a href="'+driveUrl+'" style="color:#21409a;">Open Evidence Folder</a>'
+      + '<br><small style="color:#666;">Accepted formats: PDF, PNG, JPG, PPT — Upload files and reply to confirm.</small></p>' : '')
+    + '<p style="color:#888;font-size:9pt;margin-top:16px;border-top:1px solid #eee;padding-top:10px;">ATNM STAC Digital Ecosystem | Automatic notification | Do not reply to this email.</p>'
+    + '</div></div>';
+}
+
+// ── Review / Approval notification ──────────────────────────
+function sendReviewNotification(d) {
+  var msgs = {
+    'Approved':     { subject:'[CLOSED] Action Approved — '+d.stacId, color:'#1b7a3e', msg:'Your corrective action has been reviewed and approved. The STAC case action is now closed.' },
+    'Rejected':     { subject:'[ACTION] Evidence Rejected — '+d.stacId, color:'#c0392b', msg:'Your evidence has been rejected. Reason: '+d.reviewNote+'. Please resubmit.' },
+    'Under Review': { subject:'[UPDATE] Passed to HSE Manager — '+d.stacId, color:'#d68910', msg:'Your evidence has been reviewed by the Cluster HSE Lead and passed to the HSE Manager for final approval.' }
+  };
+  var m = msgs[d.status];
+  if (!m) return;
+  var recipients = [d.focalEmail, d.leadEmail, d.mgrEmail].filter(function(e){return e;}).join(',');
+  try {
+    MailApp.sendEmail({
+      to: recipients,
+      subject: m.subject,
+      htmlBody: '<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;max-width:600px;">'
+        + '<div style="background:'+m.color+';color:#fff;padding:12px 18px;border-radius:6px;font-weight:700;">'+m.subject+'</div>'
+        + '<div style="padding:16px;border:1px solid #ddd;border-top:none;border-radius:0 0 6px 6px;">'
+        + '<p>'+m.msg+'</p>'
+        + '<p><strong>STAC ID:</strong> '+d.stacId+'<br><strong>Action:</strong> '+d.actionType+'</p>'
+        + (d.reviewNote ? '<p><strong>Review Notes:</strong> '+d.reviewNote+'</p>' : '')
+        + '</div></div>',
+      name: 'ATNM STAC Programme'
+    });
+  } catch(e) { Logger.log('Review notification failed: '+e); }
 }
 
 // ── Mark Warning Letter Issued ────────────────────────────────
@@ -4843,6 +5635,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   initForm();
   // Async live sync — 100ms delay to let DOM render first
   setTimeout(async()=>{
+    loadDriveFolderIdFromStorage();
     await loadMasters();
     await loadData();
     updateDraftBadge();
