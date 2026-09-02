@@ -5057,8 +5057,8 @@ function toast(msg,dur=3000,type=''){
   t.textContent=msg;t.className='show'+(type==='err'?' err':type==='warn'?' warn':'');
   _toastTimer=setTimeout(()=>{t.className='';_toastTimer=null;},dur);
 }
-function openModal(id){const e=document.getElementById(id);if(!e)return;if(id==='m-prev'){e.style.display='flex';}else{e.classList.add('open');}}
-function cm(id){const e=document.getElementById(id);if(e)e.classList.remove('open');}
+function openModal(id){const e=document.getElementById(id);if(!e)return;e.style.display='flex';e.classList.add('open');}
+function cm(id){const e=document.getElementById(id);if(!e)return;e.classList.remove('open');e.style.display='none';}
 
 const SCRIPT_CODE=`// ================================================================
 // ATNM STAC — Google Apps Script Web App
