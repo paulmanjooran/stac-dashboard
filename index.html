@@ -2419,7 +2419,8 @@ function parseGVizTable(data){
     const description=isWLInHSE?rawDesc:(rawDesc.toLowerCase().includes('warning')?'':rawDesc);
     rows.push({
       id,
-      date:parseXD(o['Timestamp']||o['Instance Date']),
+      date:parseXD(o['Instance Date']||o['Timestamp']),  // Instance Date (col O) takes priority over submission Timestamp (col B)
+      submissionDate:parseXD(o['Timestamp']),         // Submission timestamp (col B) — kept for audit
       cluster:o['Cluster Location']||'',
       company:o['Hired/Subcontractor Company Name']||'',
       owner:o['Owner Name']||'',
