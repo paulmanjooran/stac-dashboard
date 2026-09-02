@@ -1101,6 +1101,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div id="view-setup" class="view">
       <div style="max-width:860px;">
 
+        <!-- Admin Identity -->
+        <div class="card" style="margin-bottom:14px;border-left:4px solid #21409a;background:linear-gradient(135deg,#f0f2fa,#fff);">
+          <div class="chd"><h3>🔑 Admin Identity</h3><span class="bdg bbl" id="admin-id-badge">Not identified</span></div>
+          <div class="cbd">
+            <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Enter your ATNM email to activate admin features (delete buttons, user management). Your email is remembered in this browser.</div>
+            <div style="display:flex;gap:10px;align-items:flex-end;">
+              <div style="flex:1;">
+                <label style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Your Email</label>
+                <input type="email" id="admin-email-input" placeholder="paul.manjooran@altasnim.com" style="width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--r);font-size:13px;box-sizing:border-box;">
+              </div>
+              <button class="btn bp" onclick="setAdminIdentity()" style="white-space:nowrap;padding:9px 20px;">✓ Identify Me</button>
+              <button class="btn" style="background:var(--bg);border:1px solid var(--bdr);padding:9px 14px;white-space:nowrap;" onclick="clearAdminIdentity()">Sign Out</button>
+            </div>
+            <div id="admin-identity-status" style="margin-top:8px;font-size:12px;color:var(--t3);"></div>
+          </div>
+        </div>
+
         <!-- STEP 1: SHEET HEADERS -->
         <div class="card" style="margin-bottom:14px;border-left:4px solid #1b7a3e;">
           <div class="chd"><h3>📁 Google Drive — Evidence Root Folder</h3><span class="bdg bgr">Required for Action Tracker</span></div>
@@ -2028,7 +2045,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   </div>
 </div>
 <div id="toast"></div>
-<script>var DRIVE_FOLDER_ID = localStorage.getItem('stac_drive_folder_id') || 'YOUR_DRIVE_FOLDER_ID';
+<script>var DRIVE_FOLDER_ID = localStorage.getItem('stac_drive_folder_id') || '1JG_P4PIoeCpsLfMq-Ugq2dMsCXgTvTHa'; // ATNM STAC Evidence Root
 
 function saveDriveFolderId(){
   var val = (document.getElementById('cfg-drive-folder')||{}).value||'';
@@ -2744,7 +2761,9 @@ const ADMIN_EMAILS = ['paul.manjooran@altasnim.com','paulmanjooran@gmail.com'];
 
 async function checkAdminAccess(){
   isAdmin = false;
-  adminEmail = (CFG.userEmail||gv('cfg-usr')||'').trim().toLowerCase();
+  // Check stored admin email from previous session first
+  var storedAdminEmail = localStorage.getItem('stac_admin_email')||'';
+  adminEmail = (CFG.userEmail||gv('cfg-usr')||storedAdminEmail||'').trim().toLowerCase();
   // Check hardcoded admin list first (works before sheet loads)
   if(adminEmail && ADMIN_EMAILS.map(e=>e.toLowerCase()).includes(adminEmail)){
     isAdmin = true; updateAdminUI(); return;
@@ -4974,6 +4993,49 @@ function loadApprovers(){
   }catch(e){}
 }
 
+function setAdminIdentity(){
+  var email = (document.getElementById('admin-email-input')||{}).value||'';
+  if(!email.trim()||!email.includes('@')){toast('Enter a valid email',2000,'warn');return;}
+  email = email.trim().toLowerCase();
+  localStorage.setItem('stac_admin_email', email);
+  adminEmail = email;
+  isAdmin = ADMIN_EMAILS.map(function(e){return e.toLowerCase();}).includes(email);
+  if(!isAdmin){
+    // Check admin users list
+    isAdmin = adminUsers.some(function(u){return u.email.toLowerCase()===email&&u.role==='Admin';});
+  }
+  updateAdminUI();
+  var st=document.getElementById('admin-identity-status');
+  var badge=document.getElementById('admin-id-badge');
+  if(isAdmin){
+    if(st){st.textContent='✅ Admin access granted — delete buttons and user management are now visible';st.style.color='var(--green)';}
+    if(badge){badge.textContent='Admin: '+email;badge.style.background='#21409a';badge.style.color='#fff';}
+    toast('✅ Admin access activated',3000);
+    // Re-render current view to show delete buttons
+    renderAll();
+    if(typeof renderActions==='function')renderActions();
+  }else{
+    if(st){st.textContent='⚠ '+email+' is not in the admin list. Contact paul.manjooran@altasnim.com to be added.';st.style.color='var(--orange)';}
+    if(badge){badge.textContent='Not admin';badge.style.background='#888';badge.style.color='#fff';}
+  }
+  // Pre-fill the hidden cfg-usr field
+  var cu=document.getElementById('cfg-usr');if(cu)cu.value=email;
+}
+
+function clearAdminIdentity(){
+  localStorage.removeItem('stac_admin_email');
+  adminEmail='';isAdmin=false;
+  updateAdminUI();
+  var st=document.getElementById('admin-identity-status');
+  if(st){st.textContent='Signed out';st.style.color='var(--t3)';}
+  var badge=document.getElementById('admin-id-badge');
+  if(badge){badge.textContent='Not identified';badge.style.background='';badge.style.color='';}
+  var inp=document.getElementById('admin-email-input');if(inp)inp.value='';
+  renderAll();
+  if(typeof renderActions==='function')renderActions();
+  toast('Signed out',2000);
+}
+
 function saveApprovers(){
   var val = (document.getElementById('cfg-at-approvers')||{}).value||'';
   var emails = val.split(',').map(function(e){return e.trim().toLowerCase();}).filter(Boolean);
@@ -5392,7 +5454,20 @@ function nav(v){
   else if(v==='scorecards')renderScores();
   else if(v==='warning-letter')populateWLSel();
   else if(v==='new-stac'){initForm();}
-  else if(v==='setup'){const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;loadAdminUsers();}
+  else if(v==='setup'){
+    const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;
+    loadAdminUsers();
+    // Pre-fill admin email if stored
+    var _ae=document.getElementById('admin-email-input');
+    var _stored=localStorage.getItem('stac_admin_email')||'';
+    if(_ae&&_stored)_ae.value=_stored;
+    var _st=document.getElementById('admin-identity-status');
+    var _badge=document.getElementById('admin-id-badge');
+    if(_stored&&isAdmin){
+      if(_st){_st.textContent='✅ Admin access active as '+_stored;_st.style.color='var(--green)';}
+      if(_badge){_badge.textContent='Admin: '+_stored;_badge.style.background='#21409a';_badge.style.color='#fff';}
+    }
+  }
   else if(v==='hse-form'){
     scInit();
     // Always re-populate dropdowns on nav (in case masters loaded after init)
@@ -5742,7 +5817,7 @@ function writeAction(d) {
   // Create Drive folder for this STAC ID if not exists
   var folderUrl = '';
   try {
-    var rootFolder = DriveApp.getFolderById('YOUR_DRIVE_FOLDER_ID'); // Set in Setup
+    var rootFolder = DriveApp.getFolderById(PropertiesService.getScriptProperties().getProperty('DRIVE_FOLDER_ID')||'1JG_P4PIoeCpsLfMq-Ugq2dMsCXgTvTHa');
     var stacFolders = rootFolder.getFoldersByName(d.stacId);
     var stacFolder = stacFolders.hasNext() ? stacFolders.next() : rootFolder.createFolder(d.stacId);
     var evidFolders = stacFolder.getFoldersByName('Evidence');
@@ -6228,6 +6303,13 @@ window.addEventListener('DOMContentLoaded',()=>{
     loadDriveFolderIdFromStorage();
     loadApprovers();
     loadAdminUsers();
+    // Auto-restore admin identity from previous session
+    var _storedEmail = localStorage.getItem('stac_admin_email')||'';
+    if(_storedEmail){
+      adminEmail = _storedEmail.toLowerCase();
+      isAdmin = ADMIN_EMAILS.map(function(e){return e.toLowerCase();}).includes(adminEmail);
+      var cu=document.getElementById('cfg-usr');if(cu)cu.value=adminEmail;
+    }
     await loadMasters();
     await loadData();
     updateDraftBadge();
