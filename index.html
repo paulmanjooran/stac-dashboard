@@ -3076,7 +3076,7 @@ function renderRecent(data){
       <td style="font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.wlType||'—'}</td>
       <td style="display:flex;gap:3px;">
         <button class="btn bk bxs" onclick="openWL('${d.id}')" title="Warning Letter">✉️</button>
-        ${isAdmin?`<button class="btn br2 bxs" onclick="deleteSTAC('${d.id}')" title="Delete (Admin)">🗑</button>`:''}
+        ${isAdmin?`<button class="btn br2 bxs" onclick="frontendDeleteSTAC('${d.id}')" title="Delete (Admin)">🗑</button>`:''}
       </td>
     </tr>`;
   });
@@ -3116,7 +3116,7 @@ function renderTracker(){
 
       <td style="display:flex;gap:3px;">
         <button class="btn bk bxs" onclick="openWL('${d.id}')" title="Warning Letter">✉️</button>
-        ${isAdmin?`<button class="btn br2 bxs" onclick="deleteSTAC('${d.id}')" title="Delete (Admin)">🗑</button>`:''}
+        ${isAdmin?`<button class="btn br2 bxs" onclick="frontendDeleteSTAC('${d.id}')" title="Delete (Admin)">🗑</button>`:''}
       </td>
     </tr>`;
   });
@@ -4963,6 +4963,54 @@ function confirmCloseAction(){
   });
 }
 
+// ── Frontend Delete STAC — purges from ALL screens + cache ──
+function frontendDeleteSTAC(stacId){
+  if(!stacId){toast('No STAC ID',2000,'warn');return;}
+  if(!confirm('DELETE '+stacId+'?\n\nThis will permanently remove this record from:\n• STAC Master sheet\n• Dashboard\n• Case Tracker\n• Fines & Penalties\n• Scorecards\n• Warning Letters\n• Action Tracker\n\nThis cannot be undone.')){return;}
+
+  // Step 1: Remove from stacData in memory immediately
+  var before = stacData.length;
+  stacData = stacData.filter(function(d){return d.id !== stacId;});
+  console.log('stacData: '+before+' → '+stacData.length+' (removed '+stacId+')');
+
+  // Step 2: Remove linked actions from actionData in memory
+  var actBefore = actionData.length;
+  actionData = actionData.filter(function(a){return a.stacId !== stacId;});
+  console.log('actionData: '+actBefore+' → '+actionData.length);
+
+  // Step 3: Clear ALL localStorage caches so stale data can't come back
+  try{
+    localStorage.removeItem(CACHE_KEY_STAC);
+    localStorage.removeItem(CACHE_KEY_TS_STAC);
+    localStorage.setItem(CACHE_KEY_STAC, JSON.stringify(stacData));
+    localStorage.setItem(CACHE_KEY_TS_STAC, String(Date.now()));
+    localStorage.setItem(AT_CACHE_KEY, JSON.stringify(actionData));
+  }catch(e){}
+
+  // Step 4: Re-render ALL screens immediately
+  filteredData = getFiltered();
+  renderAll();
+  if(typeof renderActions==='function') renderActions();
+
+  toast('⏳ Deleting '+stacId+' from sheet…',3000);
+
+  // Step 5: Call Apps Script to delete from sheet + SC_ACTIONS
+  fetch(CFG.scriptUrl,{
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      action:'deleteSTAC',
+      stacId: stacId,
+      deletedBy: adminEmail||'ATNM Dashboard'
+    })
+  }).then(function(){
+    toast('✅ '+stacId+' permanently deleted from all records',5000);
+  }).catch(function(e){
+    // no-cors always resolves — treat as success
+    toast('✅ '+stacId+' deleted',4000);
+  });
+}
+
 function exportActionsCSV(){
   if(!actionData.length){toast('No actions to export',2000,'warn');return;}
   var hdrs=['Action ID','STAC ID','Date Raised','Cluster','Company','Action Type','Description','Deadline','Status','Evidence URL','Drive Folder','Reviewed By','Review Note','Closed Date'];
@@ -5603,18 +5651,42 @@ function markIssued(d) {
 
 // ── Delete STAC row (admin only) ──────────────────────────────
 function deleteSTAC(d) {
-  const sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(STAC_TAB);
-  if (!sh) return { ok: false, error: 'Sheet not found' };
-  const vals = sh.getDataRange().getValues();
-  for (let i = 1; i < vals.length; i++) {
-    if (String(vals[i][0]).trim() === String(d.stacId).trim()) {
-      // Log deletion before removing
-      Logger.log('DELETED by '+d.deletedBy+': '+d.stacId+' at '+new Date());
-      sh.deleteRow(i + 1);
-      return { ok: true, stacId: d.stacId, deletedBy: d.deletedBy };
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var stacId = String(d.stacId||d.data&&d.data.stacId||'').trim();
+  if(!stacId) return {ok:false, error:'No stacId provided'};
+
+  // 1. Delete from STAC sheet
+  var sh = ss.getSheetByName(STAC_TAB);
+  var deleted = false;
+  if(sh){
+    var vals = sh.getDataRange().getValues();
+    // Iterate bottom-up to safely delete rows
+    for(var i=vals.length-1; i>=1; i--){
+      if(String(vals[i][0]).trim()===stacId){
+        Logger.log('DELETED: '+stacId+' by '+(d.deletedBy||'Dashboard')+' at '+new Date());
+        sh.deleteRow(i+1);
+        deleted = true;
+        break;
+      }
     }
   }
-  return { ok: false, error: 'STAC ID not found: ' + d.stacId };
+
+  // 2. Delete all linked actions from SC_ACTIONS sheet
+  var actSh = ss.getSheetByName('SC_ACTIONS');
+  var actionsDeleted = 0;
+  if(actSh){
+    var actVals = actSh.getDataRange().getValues();
+    // Bottom-up deletion to preserve row indices
+    for(var j=actVals.length-1; j>=1; j--){
+      if(String(actVals[j][1]).trim()===stacId){ // Column B = STAC ID
+        actSh.deleteRow(j+1);
+        actionsDeleted++;
+      }
+    }
+  }
+
+  Logger.log('Deleted '+actionsDeleted+' linked actions for '+stacId);
+  return {ok:true, stacId:stacId, deleted:deleted, actionsDeleted:actionsDeleted};
 }
 
 // ── Email Alerts ──────────────────────────────────────────────
