@@ -1111,17 +1111,79 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <span id="cfg-drive-folder-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
           </div>
         </div>
-        <div class="card" style="margin-bottom:14px;border-left:4px solid #1b7a3e;">
-          <div class="chd"><h3>✅ Action Tracker — Approvers</h3><span class="bdg bgr">Admin Control</span></div>
+        <div class="card" style="margin-bottom:14px;border-left:4px solid #21409a;">
+          <div class="chd"><h3>👥 Admin Panel — User Access Control</h3><span class="bdg bbl">Admin Only</span></div>
           <div class="cbd">
-            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">
-              Enter email addresses of personnel authorised to <strong>close actions</strong> in the Action Tracker.<br>
-              Includes: Cluster HSE Lead, Site HSE Lead, HSE Manager.<br>
-              Separate multiple emails with commas.
+            <div style="font-size:12px;color:var(--t2);margin-bottom:14px;">
+              Register users and assign roles. <strong>Admin</strong> users can see delete buttons and access Setup. <strong>Approver</strong> users can close actions in Action Tracker.
             </div>
-            <textarea id="cfg-at-approvers" rows="3" placeholder="cluster.hselead@altasnim.com, site.hselead@altasnim.com, hse.manager@altasnim.com" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;resize:vertical;margin-bottom:8px;"></textarea>
-            <button class="btn bp bsm" onclick="saveApprovers()">💾 Save Approvers</button>
-            <span id="cfg-at-approvers-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
+
+            <!-- Current registered users table -->
+            <div id="admin-users-table" style="margin-bottom:16px;">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Registered Users</div>
+              <div id="admin-users-list" style="border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                  <thead><tr style="background:var(--blt);">
+                    <th style="padding:7px 10px;text-align:left;font-weight:700;font-size:10px;color:var(--t3);text-transform:uppercase;">Email</th>
+                    <th style="padding:7px 10px;text-align:left;font-weight:700;font-size:10px;color:var(--t3);text-transform:uppercase;">Name</th>
+                    <th style="padding:7px 10px;text-align:left;font-weight:700;font-size:10px;color:var(--t3);text-transform:uppercase;">Role</th>
+                    <th style="padding:7px 10px;text-align:left;font-weight:700;font-size:10px;color:var(--t3);text-transform:uppercase;">Cluster</th>
+                    <th style="padding:7px 10px;width:60px;"></th>
+                  </tr></thead>
+                  <tbody id="admin-users-tbody">
+                    <tr><td colspan="5" style="padding:16px;text-align:center;color:var(--t3);font-size:11px;">Loading users…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Add new user -->
+            <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Add / Update User</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div>
+                  <label style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Email *</label>
+                  <input type="email" id="new-user-email" placeholder="user@altasnim.com" style="width:100%;padding:7px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Full Name</label>
+                  <input type="text" id="new-user-name" placeholder="First Last" style="width:100%;padding:7px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Role *</label>
+                  <select id="new-user-role" style="width:100%;padding:7px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
+                    <option value="Approver">Approver (can close actions)</option>
+                    <option value="Admin">Admin (full access + delete)</option>
+                    <option value="HSE Lead">HSE Lead (view + close actions)</option>
+                    <option value="Cluster HSE Lead">Cluster HSE Lead (view + close)</option>
+                    <option value="HSE Manager">HSE Manager (view + final approval)</option>
+                    <option value="Viewer">Viewer (read only)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:4px;">Cluster</label>
+                  <select id="new-user-cluster" style="width:100%;padding:7px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
+                    <option value="All">All Clusters</option>
+                    <option>Marmul WD</option>
+                    <option>Nimr</option>
+                    <option>Greater Birba</option>
+                    <option>Amal</option>
+                    <option>Marmul Projects</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn bp bsm" onclick="saveUserToSheet()">➕ Add / Update User</button>
+              <span id="new-user-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
+            </div>
+
+            <!-- Action Tracker Approvers quick list -->
+            <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Action Tracker — Close Action Approvers</div>
+              <div style="font-size:11px;color:var(--t2);margin-bottom:8px;">Quick override — comma-separated emails allowed to close actions (supplements Users List above).</div>
+              <textarea id="cfg-at-approvers" rows="2" placeholder="hselead@altasnim.com, manager@altasnim.com" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;resize:vertical;margin-bottom:8px;"></textarea>
+              <button class="btn bp bsm" onclick="saveApprovers()">💾 Save Approvers</button>
+              <span id="cfg-at-approvers-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
+            </div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;border-left:4px solid var(--orange);">
@@ -4462,6 +4524,122 @@ function populateAtCompanyFilter(){
 }
 
 // ── Render action table ──────────────────────────────────────
+// ── Admin User Management ────────────────────────────────────
+var adminUsers = [];
+
+function loadAdminUsers(){
+  try{
+    var stored = localStorage.getItem('stac_admin_users');
+    if(stored) adminUsers = JSON.parse(stored);
+  }catch(e){}
+  // Also update approvers list from users with Approver/HSE roles
+  var approverEmails = adminUsers
+    .filter(function(u){ return u.role==='Approver'||u.role==='Admin'||u.role==='HSE Lead'||u.role==='Cluster HSE Lead'||u.role==='HSE Manager'; })
+    .map(function(u){ return u.email; });
+  // Merge with manually-entered approvers
+  approverEmails.forEach(function(e){ if(AT_APPROVERS.indexOf(e)===-1) AT_APPROVERS.push(e); });
+  renderAdminUsersTable();
+}
+
+function renderAdminUsersTable(){
+  var tbody = document.getElementById('admin-users-tbody');
+  if(!tbody) return;
+  // Build combined list: hardcoded ADMIN_EMAILS + registered users
+  var allUsers = [];
+  ADMIN_EMAILS.forEach(function(e){
+    allUsers.push({email:e, name:'Paul Manjooran', role:'Admin', cluster:'All', hardcoded:true});
+  });
+  adminUsers.forEach(function(u){
+    if(ADMIN_EMAILS.map(function(e){return e.toLowerCase();}).indexOf(u.email.toLowerCase())===-1){
+      allUsers.push(u);
+    }
+  });
+  if(!allUsers.length){
+    tbody.innerHTML='<tr><td colspan="5" style="padding:14px;text-align:center;color:var(--t3);font-size:11px;">No users registered yet</td></tr>';
+    return;
+  }
+  var ROLE_BADGE = {
+    'Admin':'background:#21409a;color:#fff;',
+    'Approver':'background:#1b7a3e;color:#fff;',
+    'HSE Lead':'background:#d68910;color:#fff;',
+    'Cluster HSE Lead':'background:#e07000;color:#fff;',
+    'HSE Manager':'background:#c0392b;color:#fff;',
+    'Viewer':'background:#888;color:#fff;'
+  };
+  var h='';
+  allUsers.forEach(function(u){
+    var badge = ROLE_BADGE[u.role]||'background:#888;color:#fff;';
+    h+='<tr style="border-top:1px solid var(--bdr);">';
+    h+='<td style="padding:7px 10px;font-size:11px;font-family:monospace;">'+u.email+'</td>';
+    h+='<td style="padding:7px 10px;font-size:11px;">'+( u.name||'—')+'</td>';
+    h+='<td style="padding:7px 10px;"><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;'+badge+'">'+u.role+'</span></td>';
+    h+='<td style="padding:7px 10px;font-size:11px;">'+(u.cluster||'All')+'</td>';
+    h+='<td style="padding:7px 10px;text-align:center;">';
+    if(!u.hardcoded){
+      h+='<button data-email="'+u.email+'" onclick="removeUser(this.dataset.email)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;" title="Remove user">✕</button>';
+    } else {
+      h+='<span style="font-size:10px;color:var(--t3);">Built-in</span>';
+    }
+    h+='</td></tr>';
+  });
+  tbody.innerHTML = h;
+}
+
+function saveUserToSheet(){
+  var email = (document.getElementById('new-user-email')||{}).value||'';
+  var name  = (document.getElementById('new-user-name')||{}).value||'';
+  var role  = (document.getElementById('new-user-role')||{}).value||'';
+  var cluster=(document.getElementById('new-user-cluster')||{}).value||'All';
+  var st = document.getElementById('new-user-status');
+
+  if(!email.trim()||!email.includes('@')){
+    if(st){st.textContent='❌ Valid email required';st.style.color='var(--red)';}
+    return;
+  }
+  if(!role){ if(st){st.textContent='❌ Select a role';st.style.color='var(--red)';}return; }
+
+  var newUser = {email:email.trim().toLowerCase(), name:name.trim(), role:role, cluster:cluster, added:new Date().toISOString().split('T')[0]};
+
+  // Update or add
+  var idx = adminUsers.findIndex(function(u){return u.email.toLowerCase()===newUser.email;});
+  if(idx !== -1) adminUsers[idx] = newUser;
+  else adminUsers.push(newUser);
+
+  // Save to localStorage
+  try{localStorage.setItem('stac_admin_users', JSON.stringify(adminUsers));}catch(e){}
+
+  // Update approvers if role warrants it
+  if(['Admin','Approver','HSE Lead','Cluster HSE Lead','HSE Manager'].indexOf(role)!==-1){
+    if(AT_APPROVERS.indexOf(newUser.email)===-1) AT_APPROVERS.push(newUser.email);
+    try{localStorage.setItem('stac_at_approvers', JSON.stringify(AT_APPROVERS));}catch(e){}
+  }
+
+  // Save to Apps Script (Users List sheet)
+  fetch(CFG.scriptUrl,{
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'saveUser', data:newUser})
+  }).then(function(){}).catch(function(){});
+
+  renderAdminUsersTable();
+  if(st){st.textContent='✅ User saved';st.style.color='var(--green)';}
+  // Clear form
+  ['new-user-email','new-user-name'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  toast('✅ '+email+' registered as '+role,3000);
+}
+
+function removeUser(email){
+  if(!confirm('Remove '+email+' from user list?')) return;
+  adminUsers = adminUsers.filter(function(u){return u.email.toLowerCase()!==email.toLowerCase();});
+  AT_APPROVERS = AT_APPROVERS.filter(function(e){return e.toLowerCase()!==email.toLowerCase();});
+  try{
+    localStorage.setItem('stac_admin_users', JSON.stringify(adminUsers));
+    localStorage.setItem('stac_at_approvers', JSON.stringify(AT_APPROVERS));
+  }catch(e){}
+  renderAdminUsersTable();
+  toast('User removed: '+email,3000);
+}
+
 function renderActions(){
   var tbody = document.getElementById('at-body');
   if(!tbody) return;
@@ -4554,6 +4732,10 @@ function renderActions(){
     }
     if(a.status!=='Closed'&&a.status!=='Approved'){
       html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="openEditAction(this.dataset.id)" style="font-size:10px;padding:3px 7px;background:var(--bg);border:1px solid var(--bdr);">Edit</button>';
+    }
+    // Delete button — admin only
+    if(isAdmin){
+      html += ' <button class="btn bsm" data-id="'+esc(a.id)+'" data-stac="'+esc(a.stacId)+'" onclick="deleteAction(this.dataset.id,this.dataset.stac)" style="font-size:10px;padding:3px 7px;background:#fdecea;color:#c0392b;border:1px solid #e57373;" title="Delete action (Admin only)">🗑</button>';
     }
     html += '</td>';
     html += '</tr>';
@@ -5011,6 +5193,34 @@ function frontendDeleteSTAC(stacId){
   });
 }
 
+// ── Delete Action (Admin only) ───────────────────────────────
+function deleteAction(actionId, stacId){
+  if(!isAdmin){toast('Admin access required',2000,'warn');return;}
+  if(!confirm('DELETE this action?\n\nAction ID: '+actionId+'\nSTAC: '+stacId+'\n\nThis cannot be undone.')){return;}
+
+  // Remove from actionData in memory
+  actionData = actionData.filter(function(a){return a.id !== actionId;});
+  try{localStorage.setItem(AT_CACHE_KEY, JSON.stringify(actionData));}catch(e){}
+
+  // Re-render immediately
+  renderActions();
+  toast('⏳ Deleting action from sheet…',2000);
+
+  // Delete from SC_ACTIONS sheet
+  fetch(CFG.scriptUrl,{
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      action:'deleteAction',
+      data:{id:actionId, stacId:stacId, deletedBy:adminEmail}
+    })
+  }).then(function(){
+    toast('✅ Action deleted',3000);
+  }).catch(function(){
+    toast('✅ Action deleted',3000);
+  });
+}
+
 function exportActionsCSV(){
   if(!actionData.length){toast('No actions to export',2000,'warn');return;}
   var hdrs=['Action ID','STAC ID','Date Raised','Cluster','Company','Action Type','Description','Deadline','Status','Evidence URL','Drive Folder','Reviewed By','Review Note','Closed Date'];
@@ -5182,7 +5392,7 @@ function nav(v){
   else if(v==='scorecards')renderScores();
   else if(v==='warning-letter')populateWLSel();
   else if(v==='new-stac'){initForm();}
-  else if(v==='setup'){const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;}
+  else if(v==='setup'){const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;loadAdminUsers();}
   else if(v==='hse-form'){
     scInit();
     // Always re-populate dropdowns on nav (in case masters loaded after init)
@@ -5430,6 +5640,8 @@ function doPost(e) {
     if (d.action === 'writeAction')   return R(writeAction(d.data||d));
     if (d.action === 'updateAction')  return R(updateAction(d.data||d));
     if (d.action === 'approveAction') return R(updateAction(Object.assign({},d.data||d,{status:'Approved'})));
+    if (d.action === 'deleteAction')  return R(deleteActionRow(d.data||d));
+    if (d.action === 'saveUser')      return R(saveUserToList(d.data||d));
     if (d.action === 'markIssued')    return R(markIssued(d));
     if (d.action === 'deleteSTAC')   return R(deleteSTAC(d));
     if (d.action === 'setupHeaders') return R(setupHeadersAction());
@@ -5650,6 +5862,42 @@ function markIssued(d) {
 }
 
 // ── Delete STAC row (admin only) ──────────────────────────────
+function saveUserToList(d) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('Users List');
+  if(!sh){
+    sh = ss.insertSheet('Users List');
+    sh.appendRow(['Email','Name','Role','Cluster','Added Date']);
+    sh.getRange(1,1,1,5).setFontWeight('bold').setBackground('#21409a').setFontColor('#ffffff');
+  }
+  var vals = sh.getDataRange().getValues();
+  // Check if email already exists — update row
+  for(var i=1; i<vals.length; i++){
+    if(String(vals[i][0]).trim().toLowerCase()===String(d.email||'').trim().toLowerCase()){
+      sh.getRange(i+1,1,1,5).setValues([[d.email,d.name||'',d.role||'',d.cluster||'All',d.added||new Date()]]);
+      return {ok:true, action:'updated', email:d.email};
+    }
+  }
+  // New user — append
+  sh.appendRow([d.email,d.name||'',d.role||'',d.cluster||'All',d.added||new Date()]);
+  return {ok:true, action:'added', email:d.email};
+}
+
+function deleteActionRow(d) {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('SC_ACTIONS');
+  if(!sh) return {ok:false, error:'SC_ACTIONS not found'};
+  var vals = sh.getDataRange().getValues();
+  for(var i=vals.length-1; i>=1; i--){
+    if(String(vals[i][0]).trim()===String(d.id||'').trim()){
+      Logger.log('ACTION DELETED: '+d.id+' by '+(d.deletedBy||'Admin')+' at '+new Date());
+      sh.deleteRow(i+1);
+      return {ok:true, id:d.id};
+    }
+  }
+  return {ok:false, error:'Action not found: '+d.id};
+}
+
 function deleteSTAC(d) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var stacId = String(d.stacId||d.data&&d.data.stacId||'').trim();
@@ -5979,6 +6227,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   setTimeout(async()=>{
     loadDriveFolderIdFromStorage();
     loadApprovers();
+    loadAdminUsers();
     await loadMasters();
     await loadData();
     updateDraftBadge();
