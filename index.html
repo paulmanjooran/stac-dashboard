@@ -1111,6 +1111,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <span id="cfg-drive-folder-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
           </div>
         </div>
+        <div class="card" style="margin-bottom:14px;border-left:4px solid #1b7a3e;">
+          <div class="chd"><h3>✅ Action Tracker — Approvers</h3><span class="bdg bgr">Admin Control</span></div>
+          <div class="cbd">
+            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">
+              Enter email addresses of personnel authorised to <strong>close actions</strong> in the Action Tracker.<br>
+              Includes: Cluster HSE Lead, Site HSE Lead, HSE Manager.<br>
+              Separate multiple emails with commas.
+            </div>
+            <textarea id="cfg-at-approvers" rows="3" placeholder="cluster.hselead@altasnim.com, site.hselead@altasnim.com, hse.manager@altasnim.com" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;resize:vertical;margin-bottom:8px;"></textarea>
+            <button class="btn bp bsm" onclick="saveApprovers()">💾 Save Approvers</button>
+            <span id="cfg-at-approvers-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
+          </div>
+        </div>
         <div class="card" style="margin-bottom:14px;border-left:4px solid var(--orange);">
           <div class="chd"><h3>📋 STEP 1 — Add New Column Headers to Google Sheet</h3><span class="bdg bor">Do this first</span></div>
           <div class="cbd"><span id="cfg-nid" style="display:none;"></span><input id="cfg-usr" type="email" style="display:none;" autocomplete="off">
@@ -1280,13 +1293,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           <tr>
             <th style="width:130px;">STAC ID</th>
             <th style="width:90px;">Date Raised</th>
-            <th style="width:120px;">Cluster</th>
-            <th style="width:180px;">Subcontractor</th>
-            <th style="width:90px;">Deadline</th>
+            <th style="width:110px;">Cluster</th>
+            <th style="width:160px;">Subcontractor</th>
+            <th style="width:85px;">Deadline</th>
             <th>Corrective Action</th>
-            <th style="width:110px;">Status</th>
-            <th style="width:80px;">Evidence</th>
-            <th style="width:90px;">Actions</th>
+            <th style="width:120px;">Status</th>
+            <th style="width:95px;">Evidence</th>
+            <th style="width:110px;">Actions</th>
           </tr>
         </thead>
         <tbody id="at-body">
@@ -1299,6 +1312,71 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 </div>
 
 <!-- ── ADD / EDIT ACTION MODAL ───────────────────────────────── -->
+<!-- ── Upload Evidence Modal ───────────────────────────── -->
+<div class="modal" id="m-upload-ev" style="display:none;">
+  <div class="mbox" style="max-width:480px;">
+    <div class="mhd">
+      <h3 id="m-upload-ev-title">📎 Upload Evidence</h3>
+      <button class="xbtn" onclick="cm('m-upload-ev')">✕</button>
+    </div>
+    <div class="mbd" style="padding:20px;">
+      <div style="background:var(--blt);border:1px solid var(--blue);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:4px;">Action</div>
+        <div id="m-upload-ev-action" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+        <div id="m-upload-ev-stac" style="font-size:11px;color:var(--blue);margin-top:3px;">—</div>
+      </div>
+      <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-size:11px;color:#1b7a3e;line-height:1.6;">
+        <strong>How to upload:</strong><br>
+        1. Upload your evidence file(s) to Google Drive / SharePoint<br>
+        2. Copy the shared link<br>
+        3. Paste the link below and submit
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:6px;">Evidence Link (Drive / SharePoint / OneDrive) *</label>
+        <input type="url" id="ev-link" placeholder="https://drive.google.com/file/d/..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:6px;">Submitted By (Your Name)</label>
+        <input type="text" id="ev-submitter" placeholder="Name of person submitting evidence" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:6px;">Comments (optional)</label>
+        <textarea id="ev-comment" rows="2" placeholder="Any comments about the evidence submitted…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--r);font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--bdr);padding-top:14px;">
+        <button class="btn" style="background:var(--bg);border:1px solid var(--bdr);" onclick="cm('m-upload-ev')">Cancel</button>
+        <button class="btn bp" onclick="submitEvidenceLink()" id="ev-submit-btn">📎 Submit Evidence</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Close Action Modal ─────────────────────────────────── -->
+<div class="modal" id="m-close-action" style="display:none;">
+  <div class="mbox" style="max-width:440px;">
+    <div class="mhd">
+      <h3>✓ Close Action</h3>
+      <button class="xbtn" onclick="cm('m-close-action')">✕</button>
+    </div>
+    <div class="mbd" style="padding:20px;">
+      <div id="m-close-action-detail" style="background:var(--bg);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:12px;"></div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:6px;">Your Email (Approver) *</label>
+        <input type="email" id="close-approver-email" placeholder="your@altasnim.com" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:6px;">Closeout Notes</label>
+        <textarea id="close-note" rows="2" placeholder="Action verified and closed…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--r);font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div id="close-action-err" style="display:none;background:#fdecea;border:1px solid #c0392b;border-radius:var(--r);padding:8px 12px;font-size:11px;color:#c0392b;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--bdr);padding-top:14px;">
+        <button class="btn" style="background:var(--bg);border:1px solid var(--bdr);" onclick="cm('m-close-action')">Cancel</button>
+        <button class="btn" style="background:#1b7a3e;color:#fff;" onclick="confirmCloseAction()" id="close-action-btn">✓ Confirm Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="m-action" style="display:none;">
   <div class="mbox mbox-md">
     <div class="mhd">
@@ -4430,13 +4508,14 @@ function renderActions(){
   }
 
   var STATUS_STYLE = {
-    'Open':              'background:#fff3cd;color:#856404;',
-    'Evidence Uploaded': 'background:#cce5ff;color:#004085;',
-    'Under Review':      'background:#e2d9f3;color:#5a1b9a;',
-    'Approved':          'background:#d4edda;color:#155724;',
-    'Rejected':          'background:#f8d7da;color:#721c24;',
-    'Closed':            'background:#d4edda;color:#155724;font-weight:700;',
-    'Overdue':           'background:#f8d7da;color:#721c24;font-weight:700;'
+    'Open':                  'background:#fff3cd;color:#856404;',
+    'Evidence Uploaded':     'background:#cce5ff;color:#004085;',
+    'Pending Verification':  'background:#f58220;color:#fff;font-weight:700;',
+    'Under Review':          'background:#e2d9f3;color:#5a1b9a;',
+    'Approved':              'background:#d4edda;color:#155724;',
+    'Rejected':              'background:#f8d7da;color:#721c24;',
+    'Closed':                'background:#1b7a3e;color:#fff;font-weight:700;',
+    'Overdue':               'background:#f8d7da;color:#721c24;font-weight:700;'
   };
 
   var html = '';
@@ -4456,21 +4535,26 @@ function renderActions(){
     html += '<td style="font-size:11px;'+dlColor+'">'+dlStr+(isOD?' ⚠':'')+'</td>';
     html += '<td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(a.actionType)+': '+esc(a.actionDesc)+'"><strong>'+esc(a.actionType)+'</strong><br><span style="color:var(--t3);">'+esc(a.actionDesc).substring(0,60)+(a.actionDesc.length>60?'…':'')+'</span></td>';
     html += '<td><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;'+sStyle+'">'+dispStatus+'</span></td>';
-    html += '<td style="text-align:center;">';
+    // Evidence column
+    html += '<td style="text-align:center;white-space:nowrap;">';
     if(a.driveFolder){
-      html += '<a href="'+a.driveFolder+'" target="_blank" title="Open Drive folder" style="text-decoration:none;font-size:14px;">📁</a> ';
+      html += '<a href="'+a.driveFolder+'" target="_blank" title="Open Drive folder" style="text-decoration:none;font-size:16px;margin-right:3px;">📁</a>';
     }
     if(a.evidenceUrl){
-      html += '<a href="'+a.evidenceUrl+'" target="_blank" title="View evidence" style="text-decoration:none;font-size:14px;">📎</a>';
-    } else {
-      html += '<span style="color:var(--t3);font-size:11px;">None</span>';
+      html += '<a href="'+a.evidenceUrl+'" target="_blank" title="View submitted evidence" style="text-decoration:none;font-size:16px;">📎</a>';
+    } else if(a.status!=='Closed'&&a.status!=='Approved'){
+      html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="openUploadEvidenceModal(this.dataset.id)" style="font-size:10px;padding:3px 8px;background:#e8edf8;color:var(--blue);border:1px solid var(--blue);">📎 Upload</button>';
     }
     html += '</td>';
+    // Actions column
     html += '<td style="white-space:nowrap;">';
-    if(a.status==='Evidence Uploaded'||a.status==='Under Review'){
-      html += '<button class="btn bp bsm" data-id="'+esc(a.id)+'" onclick="openReviewModal(this.dataset.id)" style="font-size:10px;padding:3px 7px;">Review</button> ';
+    // Close Action — approvers only (checked client-side)
+    if(a.status==='Pending Verification'||a.status==='Evidence Uploaded'||a.status==='Under Review'){
+      html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="attemptCloseAction(this.dataset.id)" style="font-size:10px;padding:3px 7px;background:#1b7a3e;color:#fff;border:none;margin-right:3px;">✓ Close</button>';
     }
-    html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="openEditAction(this.dataset.id)" style="font-size:10px;padding:3px 7px;background:var(--bg);border:1px solid var(--bdr);">Edit</button>';
+    if(a.status!=='Closed'&&a.status!=='Approved'){
+      html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="openEditAction(this.dataset.id)" style="font-size:10px;padding:3px 7px;background:var(--bg);border:1px solid var(--bdr);">Edit</button>';
+    }
     html += '</td>';
     html += '</tr>';
   });
@@ -4696,6 +4780,189 @@ function openEditAction(actionId){
 }
 
 // ── Export actions as CSV ────────────────────────────────────
+// ── APPROVER CONFIG (loaded from localStorage / Setup tab) ───
+var AT_APPROVERS = [];
+
+function loadApprovers(){
+  try{
+    var stored = localStorage.getItem('stac_at_approvers');
+    if(stored) AT_APPROVERS = JSON.parse(stored);
+    var inp = document.getElementById('cfg-at-approvers');
+    if(inp && AT_APPROVERS.length) inp.value = AT_APPROVERS.join(', ');
+  }catch(e){}
+}
+
+function saveApprovers(){
+  var val = (document.getElementById('cfg-at-approvers')||{}).value||'';
+  var emails = val.split(',').map(function(e){return e.trim().toLowerCase();}).filter(Boolean);
+  if(!emails.length){toast('Enter at least one approver email',2000,'warn');return;}
+  AT_APPROVERS = emails;
+  try{localStorage.setItem('stac_at_approvers', JSON.stringify(AT_APPROVERS));}catch(e){}
+  var st = document.getElementById('cfg-at-approvers-status');
+  if(st){st.textContent='✅ Saved — '+emails.length+' approver(s)';st.style.color='var(--green)';}
+  toast('✅ Approvers saved',3000);
+}
+
+function isApprover(email){
+  if(!email) return false;
+  // If no approvers configured, allow anyone with ATNM domain
+  if(!AT_APPROVERS.length) return email.toLowerCase().includes('@altasnim.com');
+  return AT_APPROVERS.indexOf(email.trim().toLowerCase()) !== -1;
+}
+
+// ── Upload Evidence Modal ─────────────────────────────────────
+var activeUploadActionId = null;
+
+function openUploadEvidenceModal(actionId){
+  var a = actionData.find(function(x){return x.id===actionId;});
+  if(!a){toast('Action not found',2000,'warn');return;}
+  activeUploadActionId = actionId;
+  var t = document.getElementById('m-upload-ev-title');
+  if(t) t.textContent = '📎 Upload Evidence — '+a.stacId;
+  var ad = document.getElementById('m-upload-ev-action');
+  if(ad) ad.textContent = a.actionType+': '+a.actionDesc.substring(0,80)+(a.actionDesc.length>80?'…':'');
+  var as = document.getElementById('m-upload-ev-stac');
+  if(as) as.textContent = a.stacId+' | '+a.company+' | Deadline: '+(a.deadline||'—');
+  // Clear previous inputs
+  var lnk = document.getElementById('ev-link'); if(lnk) lnk.value='';
+  var sub = document.getElementById('ev-submitter'); if(sub) sub.value='';
+  var cmt = document.getElementById('ev-comment'); if(cmt) cmt.value='';
+  var btn = document.getElementById('ev-submit-btn');
+  if(btn){btn.disabled=false;btn.textContent='📎 Submit Evidence';}
+  openModal('m-upload-ev');
+}
+
+function submitEvidenceLink(){
+  var link = (document.getElementById('ev-link')||{}).value||'';
+  var submitter = (document.getElementById('ev-submitter')||{}).value||'';
+  var comment = (document.getElementById('ev-comment')||{}).value||'';
+  if(!link.trim()){toast('Paste the evidence link first',2000,'warn');return;}
+  if(!link.startsWith('http')){toast('Link must start with http:// or https://',2500,'warn');return;}
+
+  var a = actionData.find(function(x){return x.id===activeUploadActionId;});
+  if(!a){toast('Action not found',2000,'warn');return;}
+
+  var btn = document.getElementById('ev-submit-btn');
+  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
+
+  // Update action data
+  a.evidenceUrl = link;
+  a.status = 'Pending Verification';
+  a.evidenceSubmittedBy = submitter;
+  a.evidenceComment = comment;
+  a.evidenceDate = new Date().toISOString().split('T')[0];
+
+  // Post to Apps Script
+  fetch(CFG.scriptUrl,{
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      action:'updateAction',
+      data:{
+        id: a.id,
+        stacId: a.stacId,
+        status: 'Pending Verification',
+        evidenceUrl: link,
+        reviewedBy: submitter,
+        reviewNote: 'Evidence submitted by: '+submitter+(comment?' | '+comment:''),
+        leadEmail: a.leadEmail,
+        mgrEmail:  a.mgrEmail,
+        company:   a.company,
+        actionType:a.actionType
+      }
+    })
+  }).then(function(){
+    try{localStorage.setItem(AT_CACHE_KEY,JSON.stringify(actionData));}catch(e){}
+    cm('m-upload-ev');
+    renderActions();
+    toast('✅ Evidence submitted — Cluster HSE Lead notified for verification',5000);
+    if(btn){btn.disabled=false;btn.textContent='📎 Submit Evidence';}
+  }).catch(function(){
+    // no-cors resolves — treat as success
+    try{localStorage.setItem(AT_CACHE_KEY,JSON.stringify(actionData));}catch(e){}
+    cm('m-upload-ev');
+    renderActions();
+    toast('✅ Evidence submitted — Cluster HSE Lead notified',5000);
+    if(btn){btn.disabled=false;btn.textContent='📎 Submit Evidence';}
+  });
+}
+
+// ── Close Action (approver only) ──────────────────────────────
+var activeCloseActionId = null;
+
+function attemptCloseAction(actionId){
+  var a = actionData.find(function(x){return x.id===actionId;});
+  if(!a){toast('Action not found',2000,'warn');return;}
+  activeCloseActionId = actionId;
+  var det = document.getElementById('m-close-action-detail');
+  if(det){
+    det.innerHTML = '<strong>STAC:</strong> '+esc(a.stacId)+
+      ' | <strong>Company:</strong> '+esc(a.company)+
+      '<br><strong>Action:</strong> '+esc(a.actionType)+
+      '<br><strong>Status:</strong> '+esc(a.status)+
+      (a.evidenceUrl?'<br><strong>Evidence:</strong> <a href="'+esc(a.evidenceUrl)+'" target="_blank" style="color:var(--blue);">View Evidence 📎</a>':'<br><span style="color:var(--orange);">⚠ No evidence link submitted</span>');
+  }
+  var err = document.getElementById('close-action-err'); if(err) err.style.display='none';
+  var note = document.getElementById('close-note'); if(note) note.value='';
+  // Pre-fill approver email from localStorage if saved
+  var ae = document.getElementById('close-approver-email');
+  if(ae) ae.value = localStorage.getItem('stac_approver_email')||'';
+  openModal('m-close-action');
+}
+
+function confirmCloseAction(){
+  var email = (document.getElementById('close-approver-email')||{}).value||'';
+  var note  = (document.getElementById('close-note')||{}).value||'';
+  var err   = document.getElementById('close-action-err');
+  var btn   = document.getElementById('close-action-btn');
+
+  if(!email.trim()){
+    if(err){err.style.display='block';err.textContent='Your email is required to close an action.';}
+    return;
+  }
+  if(!isApprover(email)){
+    if(err){err.style.display='block';err.textContent='❌ '+email+' is not in the approved list. Contact Admin to add your email in Setup → Action Tracker Approvers.';}
+    return;
+  }
+
+  var a = actionData.find(function(x){return x.id===activeCloseActionId;});
+  if(!a) return;
+
+  if(btn){btn.disabled=true;btn.textContent='Closing…';}
+  // Save approver email for next time
+  try{localStorage.setItem('stac_approver_email', email);}catch(e){}
+
+  a.status = 'Closed';
+  a.reviewedBy = email;
+  a.reviewNote = note||'Action verified and closed by '+email;
+  a.closedDate = new Date().toISOString().split('T')[0];
+
+  fetch(CFG.scriptUrl,{
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'updateAction', data:{
+      id:a.id, stacId:a.stacId, status:'Closed',
+      evidenceUrl:a.evidenceUrl||'',
+      reviewedBy:email,
+      reviewNote:a.reviewNote,
+      leadEmail:a.leadEmail, mgrEmail:a.mgrEmail,
+      company:a.company, actionType:a.actionType
+    }})
+  }).then(function(){
+    try{localStorage.setItem(AT_CACHE_KEY,JSON.stringify(actionData));}catch(e){}
+    cm('m-close-action');
+    renderActions();
+    toast('✅ Action closed by '+email+' — subcontractor notified',5000);
+    if(btn){btn.disabled=false;btn.textContent='✓ Confirm Close';}
+  }).catch(function(){
+    try{localStorage.setItem(AT_CACHE_KEY,JSON.stringify(actionData));}catch(e){}
+    cm('m-close-action');
+    renderActions();
+    toast('✅ Action closed',4000);
+    if(btn){btn.disabled=false;btn.textContent='✓ Confirm Close';}
+  });
+}
+
 function exportActionsCSV(){
   if(!actionData.length){toast('No actions to export',2000,'warn');return;}
   var hdrs=['Action ID','STAC ID','Date Raised','Cluster','Company','Action Type','Description','Deadline','Status','Evidence URL','Drive Folder','Reviewed By','Review Note','Closed Date'];
@@ -5257,7 +5524,7 @@ function updateAction(d) {
       sh.getRange(i+1, 12).setValue(d.status);           // Status
       sh.getRange(i+1, 15).setValue(d.reviewedBy||'');   // Reviewed By
       sh.getRange(i+1, 16).setValue(d.reviewNote||'');   // Review Notes
-      if (d.status==='Approved') sh.getRange(i+1,17).setValue(new Date()); // Closed Date
+      if (d.status==='Approved'||d.status==='Closed') sh.getRange(i+1,17).setValue(new Date()); // Closed Date
       if (d.evidenceUrl) sh.getRange(i+1, 13).setValue(d.evidenceUrl);     // Evidence URL
       // Send notification
       sendReviewNotification(d);
@@ -5295,6 +5562,8 @@ function buildActionEmail(d, driveUrl) {
 // ── Review / Approval notification ──────────────────────────
 function sendReviewNotification(d) {
   var msgs = {
+    'Pending Verification': { subject:'[REVIEW REQUIRED] Evidence Submitted — '+d.stacId, color:'#f58220', msg:'Evidence has been submitted for this corrective action. Please review the evidence and close the action in the ATNM STAC Dashboard.', to: d.leadEmail||d.mgrEmail },
+    'Closed':       { subject:'[CLOSED] Action Closed — '+d.stacId, color:'#1b7a3e', msg:'This corrective action has been verified and closed by '+d.reviewedBy+'. No further action required.' },
     'Approved':     { subject:'[CLOSED] Action Approved — '+d.stacId, color:'#1b7a3e', msg:'Your corrective action has been reviewed and approved. The STAC case action is now closed.' },
     'Rejected':     { subject:'[ACTION] Evidence Rejected — '+d.stacId, color:'#c0392b', msg:'Your evidence has been rejected. Reason: '+d.reviewNote+'. Please resubmit.' },
     'Under Review': { subject:'[UPDATE] Passed to HSE Manager — '+d.stacId, color:'#d68910', msg:'Your evidence has been reviewed by the Cluster HSE Lead and passed to the HSE Manager for final approval.' }
@@ -5637,6 +5906,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Async live sync — 100ms delay to let DOM render first
   setTimeout(async()=>{
     loadDriveFolderIdFromStorage();
+    loadApprovers();
     await loadMasters();
     await loadData();
     updateDraftBadge();
