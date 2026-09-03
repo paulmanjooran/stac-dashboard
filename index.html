@@ -6022,6 +6022,22 @@ function buildWLHtml(d, id, inst) {
   };
   var wlInfo = wlTypes[Math.min(inst, 3)] || wlTypes[3];
   var today  = Utilities.formatDate(new Date(), 'Asia/Muscat', 'd MMMM yyyy');
+
+  // Format any date string (YYYY-MM-DD or ISO) to "30 Aug 2026"
+  function fmtDate(raw) {
+    if (!raw) return today;
+    try {
+      var s = String(raw).trim();
+      // YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        var parts = s.substring(0, 10).split('-');
+        var dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+        return Utilities.formatDate(dt, 'Asia/Muscat', 'd MMM yyyy');
+      }
+      // Already a readable date string
+      return s;
+    } catch(e) { return raw; }
+  }
   var pen    = parseInt(d.penalty) || 0;
   var penRow = pen > 0
     ? '<tr style="background:#fff5f5;"><td style="font-weight:600;color:#c0392b;padding:6pt 8pt;border:.5pt solid #ccc;">Financial Penalty</td>'
@@ -6082,7 +6098,7 @@ function buildWLHtml(d, id, inst) {
     // Details table
     + '<table>'
     + '<tr><td>STAC Reference</td><td><strong>' + id + '</strong></td></tr>'
-    + '<tr><td>Date of Observation</td><td>' + (d.instanceDate||today) + '</td></tr>'
+    + '<tr><td>Date of Observation</td><td>' + fmtDate(d.instanceDate) + '</td></tr>'
     + '<tr><td>Cluster / Location</td><td>' + (d.cluster||'') + '</td></tr>'
     + '<tr><td>HSE Violation Category</td><td>' + (d.category||'') + '</td></tr>'
     + '<tr><td>YTD Instance #</td><td><strong>#' + inst + '</strong> (YTD — same company + same category)</td></tr>'
