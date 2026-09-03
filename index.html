@@ -5760,7 +5760,12 @@ function writeSTAC(d) {
     d.discipline   || '',                             // L  12 Work Activity Discipline
     d.category     || '',                             // M  13 HSE Key Requirements
     d.description  || '',                             // N  14 HSE Non-Compliance Description
-    d.instanceDate ? new Date(d.instanceDate) : now,  // O  15 Instance Date
+    (function(){  // O  15 Instance Date — parse manually to avoid UTC timezone shift
+      if(!d.instanceDate) return now;
+      var parts = String(d.instanceDate).substring(0,10).split('-');
+      if(parts.length===3) return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+      return new Date(d.instanceDate);
+    })(),
     '',                                               // P  16 Upload - HSE Default Form
     d.closeoutDate ? new Date(d.closeoutDate) : '',   // Q  17 Closeout Target Date
     pen > 0 ? 'OMR ' + pen : 'OMR 0',                // R  18 Penalty
