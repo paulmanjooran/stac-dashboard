@@ -3991,7 +3991,8 @@ function loadWL(stacId){
     +'<span style="display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:700;'+typeBadge[type]+'">'+typeLabels[type]+'</span>'
     +'<div style="margin-top:7px;font-size:11.5px;line-height:1.6;color:var(--t2);">'
     +'<strong style="color:var(--text);">STAC Ref: '+d.id+'</strong><br>'
-    +'Date: '+today
+    +'Letter Date: '+today+'<br>'
+    +'Observation Date: '+fd(d.date)
     +'</div></div></div>'
 
     // ── ADDRESSEE ──
@@ -5710,7 +5711,14 @@ var LOGO_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUcAAACaCAMAAAANQH
 
 function doPost(e) {
   try {
+    // Log raw request for debugging
+    Logger.log('doPost received. postData type: ' + (e.postData ? e.postData.type : 'none'));
+    if (!e.postData || !e.postData.contents) {
+      Logger.log('doPost: no postData.contents');
+      return R({ ok: false, error: 'No POST body received' });
+    }
     const d = JSON.parse(e.postData.contents);
+    Logger.log('doPost action: ' + d.action + ' stacId: ' + d.stacId);
     if (d.action === 'submit')       return R(writeSTAC(d));
     if (d.action === 'writeAction')   return R(writeAction(d.data||d));
     if (d.action === 'updateAction')  return R(updateAction(d.data||d));
@@ -5725,17 +5733,43 @@ function doPost(e) {
     return R({ ok: false, error: err.toString() });
   }
 }
-function doGet() {
+function doGet(e) {
+  // Health check endpoint — returns immediately, no sheet access
+  // This prevents server errors when fired by stale change triggers
   return ContentService
-    .createTextOutput('ATNM STAC Active ✅  ' + new Date())
-    .setMimeType(ContentService.MimeType.TEXT);
+    .createTextOutput(JSON.stringify({
+      status: 'ok',
+      app: 'ATNM STAC',
+      time: new Date().toISOString()
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ── Write new STAC row ────────────────────────────────────────
 function writeSTAC(d) {
+  // Defensive guard — handle undefined, null, or non-object payloads
+  if (!d || typeof d !== 'object') {
+    Logger.log('writeSTAC: invalid payload received: ' + JSON.stringify(d));
+    return { ok: false, error: 'Invalid payload — d is ' + typeof d };
+  }
+  Logger.log('writeSTAC called. stacId=' + d.stacId + ' company=' + d.company + ' action=' + d.action);
+
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  const sh = ss.getSheetByName(STAC_TAB);
-  if (!sh) return { ok: false, error: 'Tab "' + STAC_TAB + '" not found' };
+  // Try STAC_TAB first, then common fallback names
+  var sh = ss.getSheetByName(STAC_TAB);
+  if (!sh) {
+    // Try common alternate names
+    var altNames = ['STAC Master','STAC Cases','STAC Data','Sheet1','stac'];
+    for (var i=0; i<altNames.length; i++) {
+      sh = ss.getSheetByName(altNames[i]);
+      if (sh) { Logger.log('Found sheet as: ' + altNames[i]); break; }
+    }
+  }
+  if (!sh) {
+    var sheetList = ss.getSheets().map(function(s){return s.getName();}).join(', ');
+    Logger.log('Sheet "' + STAC_TAB + '" not found. Available: ' + sheetList);
+    return { ok: false, error: 'Tab "' + STAC_TAB + '" not found. Available: ' + sheetList };
+  }
 
   // Auto-generate ID if not supplied or placeholder
   const id = (d.stacId && d.stacId.indexOf('ATNM') === 0) ? d.stacId : generateId(sh);
@@ -6088,7 +6122,7 @@ function buildWLHtml(d, id, inst) {
     + '<div class="lh">'
     + '<img src="' + LOGO_B64 + '" style="height:52px;width:auto;" alt="Al Tasnim">'
     + '<div><div class="badge">' + wlInfo.label + '</div>'
-    + '<div class="ref"><strong>STAC Ref: ' + id + '</strong><br>Date: ' + today + '</div></div>'
+    + '<div class="ref"><strong>STAC Ref: ' + id + '</strong><br>Letter Date: ' + today + '<br>Observation: ' + fmtDate(d.instanceDate) + '</div></div>'
     + '</div>'
 
     // Body
