@@ -2659,12 +2659,28 @@ function parseScoringMatrixSheet(data){
 function parseXD(v){
   if(!v)return'';
   const s=String(v).trim();
+  // gviz Date(yyyy,m,d) — month is 0-indexed, +1 to get display month
   const gm=s.match(/^Date\((\d{4}),(\d+),(\d+)\)/);
   if(gm)return`${gm[1]}-${String(parseInt(gm[2])+1).padStart(2,'0')}-${String(gm[3]).padStart(2,'0')}`;
+  // Excel serial number
   const n=parseFloat(s);
-  if(!isNaN(n)&&n>40000&&n<60000){const d=new Date((n-25569)*86400*1000);return d.toISOString().split('T')[0];}
+  if(!isNaN(n)&&n>40000&&n<60000){
+    // Excel dates are UTC-noon to avoid DST issues
+    const d=new Date((n-25569)*86400*1000+43200000);
+    return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  // Already YYYY-MM-DD
   if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-  try{const d=new Date(s);if(!isNaN(d.getTime())&&d.getFullYear()>2000)return d.toISOString().split('T')[0];}catch(e){}
+  // M/D/YYYY (Sheets display) → YYYY-MM-DD
+  const sl=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(sl)return`${sl[3]}-${String(sl[1]).padStart(2,'0')}-${String(sl[2]).padStart(2,'0')}`;
+  // ISO string — extract date part only (no UTC conversion)
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s))return s.substring(0,10);
+  try{
+    const d=new Date(s);
+    if(!isNaN(d.getTime())&&d.getFullYear()>2000)
+      return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }catch(e){}
   return s;
 }
 
@@ -5642,10 +5658,23 @@ function fd(d){
   if(!d)return'—';
   try{
     const s=String(d).trim();
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const[yr,mo,dy]=s.split('-').map(Number);return new Date(yr,mo-1,dy).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+    // YYYY-MM-DD — parse manually to avoid UTC midnight timezone shift
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)){
+      const[yr,mo,dy]=s.substring(0,10).split('-').map(Number);
+      return new Date(yr,mo-1,dy).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    }
+    // DD/MM/YYYY or M/D/YYYY (Google Sheets display format)
+    const slash=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(slash){
+      // Sheets uses M/D/YYYY in display
+      return new Date(parseInt(slash[3]),parseInt(slash[1])-1,parseInt(slash[2]))
+             .toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    }
+    // Date object or other string
     const dt=new Date(s);if(isNaN(dt.getTime()))return s;
-    return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-  }catch{return d;}
+    return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate())
+           .toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  }catch(e){return String(d);}
 }
 function getPB(p){return p>=500?'pband pbh':p>=100?'pband pbm':'pband pbl';}
 function idots(n,sm){
@@ -6067,13 +6096,24 @@ function buildWLHtml(d, id, inst) {
     if (!raw) return today;
     try {
       var s = String(raw).trim();
-      // YYYY-MM-DD
+      // YYYY-MM-DD — parse manually (no UTC shift)
       if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-        var parts = s.substring(0, 10).split('-');
-        var dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+        var p = s.substring(0,10).split('-');
+        var dt = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
         return Utilities.formatDate(dt, 'Asia/Muscat', 'd MMM yyyy');
       }
-      // Already a readable date string
+      // M/D/YYYY (Google Sheets display) — month first
+      var sl = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (sl) {
+        var dt2 = new Date(parseInt(sl[3]), parseInt(sl[1])-1, parseInt(sl[2]));
+        return Utilities.formatDate(dt2, 'Asia/Muscat', 'd MMM yyyy');
+      }
+      // ISO with time — extract date only
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+        var p2 = s.substring(0,10).split('-');
+        var dt3 = new Date(parseInt(p2[0]), parseInt(p2[1])-1, parseInt(p2[2]));
+        return Utilities.formatDate(dt3, 'Asia/Muscat', 'd MMM yyyy');
+      }
       return s;
     } catch(e) { return raw; }
   }
