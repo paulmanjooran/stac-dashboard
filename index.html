@@ -5656,24 +5656,24 @@ function sv(id,v){
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fd(d){
   if(!d)return'—';
+  // Month names — fixed array, no locale dependency
+  const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   try{
     const s=String(d).trim();
-    // YYYY-MM-DD — parse manually to avoid UTC midnight timezone shift
-    if(/^\d{4}-\d{2}-\d{2}/.test(s)){
-      const[yr,mo,dy]=s.substring(0,10).split('-').map(Number);
-      return new Date(yr,mo-1,dy).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    // YYYY-MM-DD — parse parts manually, never use new Date(isoString)
+    const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(iso) return String(parseInt(iso[3])).padStart(2,'0')+' '+MN[parseInt(iso[2])-1]+' '+iso[1];
+    // M/D/YYYY (Sheets display format — month first)
+    const sl=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(sl) return String(parseInt(sl[2])).padStart(2,'0')+' '+MN[parseInt(sl[1])-1]+' '+sl[3];
+    // DD-Mon-YYYY (already formatted e.g. 29-Aug-2026)
+    if(/^\d{2}-[A-Za-z]{3}-\d{4}$/.test(s)) return s;
+    // Fallback — extract from Date object using UTC parts to avoid shift
+    const dt=new Date(s);
+    if(!isNaN(dt.getTime())){
+      return String(dt.getUTCDate()).padStart(2,'0')+' '+MN[dt.getUTCMonth()]+' '+dt.getUTCFullYear();
     }
-    // DD/MM/YYYY or M/D/YYYY (Google Sheets display format)
-    const slash=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if(slash){
-      // Sheets uses M/D/YYYY in display
-      return new Date(parseInt(slash[3]),parseInt(slash[1])-1,parseInt(slash[2]))
-             .toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-    }
-    // Date object or other string
-    const dt=new Date(s);if(isNaN(dt.getTime()))return s;
-    return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate())
-           .toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    return s;
   }catch(e){return String(d);}
 }
 function getPB(p){return p>=500?'pband pbh':p>=100?'pband pbm':'pband pbl';}
@@ -5888,6 +5888,9 @@ function writeAction(d) {
     var rootFolder = DriveApp.getFolderById(PropertiesService.getScriptProperties().getProperty('DRIVE_FOLDER_ID')||'1JG_P4PIoeCpsLfMq-Ugq2dMsCXgTvTHa');
     var stacFolders = rootFolder.getFoldersByName(d.stacId);
     var stacFolder = stacFolders.hasNext() ? stacFolders.next() : rootFolder.createFolder(d.stacId);
+    // Write folder URL back to Col P of the newly appended row
+    var lastRow2 = sh.getLastRow();
+    sh.getRange(lastRow2, 16).setValue(stacFolder.getUrl()); // Col P = index 16 (1-based)
     var evidFolders = stacFolder.getFoldersByName('Evidence');
     var evidFolder = evidFolders.hasNext() ? evidFolders.next() : stacFolder.createFolder('Evidence');
     folderUrl = evidFolder.getUrl();
@@ -6096,19 +6099,22 @@ function buildWLHtml(d, id, inst) {
     if (!raw) return today;
     try {
       var s = String(raw).trim();
-      // YYYY-MM-DD — parse manually (no UTC shift)
-      if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-        var p = s.substring(0,10).split('-');
-        var dt = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+      // YYYY-MM-DD — use Utilities.formatDate with manual Date construction
+      var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) {
+        // new Date(yr, mo-1, day) is LOCAL — Utilities.formatDate then uses Asia/Muscat
+        var dt = new Date(parseInt(iso[1]), parseInt(iso[2])-1, parseInt(iso[3]));
         return Utilities.formatDate(dt, 'Asia/Muscat', 'd MMM yyyy');
       }
-      // M/D/YYYY (Google Sheets display) — month first
+      // M/D/YYYY display format
       var sl = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (sl) {
         var dt2 = new Date(parseInt(sl[3]), parseInt(sl[1])-1, parseInt(sl[2]));
         return Utilities.formatDate(dt2, 'Asia/Muscat', 'd MMM yyyy');
       }
-      // ISO with time — extract date only
+      // DD-Mon-YYYY (already formatted)
+      if (/^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(s)) return s;
+      // ISO with time — date part only
       if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
         var p2 = s.substring(0,10).split('-');
         var dt3 = new Date(parseInt(p2[0]), parseInt(p2[1])-1, parseInt(p2[2]));
@@ -6191,6 +6197,9 @@ function buildWLHtml(d, id, inst) {
     + '<p style="margin:8px 0;">Failure to comply by the deadline will result in escalation per STAC three-instance protocol.</p>'
     + '<p style="margin:0 0 12px;"><strong>Acknowledge receipt within 24 hours.</strong></p>'
 
+    + (driveUrl ? '<div style="background:#e8f4fd;border:1px solid #b0d4f1;border-radius:6px;padding:10px 14px;margin:12px 0;">'
+    + '<strong>📁 Evidence Submission:</strong> Upload your corrective action evidence to: '
+    + '<a href="' + driveUrl + '" style="color:#21409a;font-weight:700;">Click here to open Evidence Folder</a></div>' : '')
     + '<hr style="border:none;border-top:.5pt solid #ccc;margin:12px 0;">'
     + '<p style="font-weight:700;margin:0 0 14px;">For Al Tasnim Enterprises LLC:</p>'
     + '<div class="sig-grid">'
@@ -6212,6 +6221,14 @@ function sendAlerts(d, id, inst) {
 
   // Build HTML Warning Letter
   var htmlBody = buildWLHtml(d, id, inst);
+
+  // Get Drive folder URL for this STAC case
+  var driveUrl = '';
+  try {
+    var rootF = DriveApp.getFolderById(getDriveFolderId());
+    var sIt = rootF.getFoldersByName(id);
+    if (sIt.hasNext()) driveUrl = sIt.next().getUrl();
+  } catch(e) { Logger.log('Drive URL fetch failed: ' + e); }
 
   // ── 1. Send WL to Subcontractor Owner + Focal Point ─────────
   var subconTo = [];
@@ -6272,9 +6289,12 @@ function sendAlerts(d, id, inst) {
     + '<tr><td style="padding:5px 8px;background:#f0f2f5;font-weight:600;border:.5pt solid #ccc;">WL Type</td><td style="padding:5px 8px;border:.5pt solid #ccc;color:#21409a;font-weight:700;">' + wlLabel + '</td></tr>'
     + '<tr><td style="padding:5px 8px;background:#f0f2f5;font-weight:600;border:.5pt solid #ccc;">Penalty</td><td style="padding:5px 8px;border:.5pt solid #ccc;">' + (pen>0?'OMR '+pen.toFixed(3):'None') + '</td></tr>'
     + '</table>'
-    + '<p style="margin:14px 0 4px;"><a href="https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/edit#gid=342483107" '
-    + 'style="background:#21409a;color:#fff;padding:8px 18px;border-radius:4px;text-decoration:none;font-weight:700;">Open in Sheet</a></p>'
-    + '<p style="font-size:9pt;color:#888;margin-top:12px;">Warning Letter has been dispatched to ' + (d.company||'subcontractor') + '. Track in ATNM STAC Dashboard.</p>'
+    + '<p style="margin:14px 0 4px;display:flex;gap:8px;flex-wrap:wrap;">'
+    + '<a href="https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/edit#gid=342483107" '
+    + 'style="background:#21409a;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;font-weight:700;display:inline-block;margin:2px;">📋 Open in Sheet</a>'
+    + (driveUrl ? '<a href="' + driveUrl + '" style="background:#1b7a3e;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;font-weight:700;display:inline-block;margin:2px;">📁 Evidence Folder</a>' : '')
+    + '</p>'
+    + '<p style="font-size:9pt;color:#888;margin-top:12px;">Warning Letter dispatched to ' + (d.company||'subcontractor') + '. Evidence folder linked above. Track in ATNM STAC Dashboard.</p>'
     + '</div>';
 
   try {
