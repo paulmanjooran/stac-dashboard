@@ -2259,8 +2259,22 @@ function findSubcon(company){
 
 function getRiskProfile(company){
   var sub=findSubcon(company);
-  if(!sub)return RISK_LEVELS['Medium-High'];
-  var rl=String(sub.riskLevel||'Medium-High').trim();
+  // Primary: from Sub Contractors sheet (subconData)
+  var rl=(sub&&sub.riskLevel)?String(sub.riskLevel).trim():'';
+  // Fallback: read from STAC sheet col U (riskLevel written on submission)
+  // Use most recent record for this company that has a riskLevel value
+  if(!rl||rl==='Medium-High'){
+    var coL=company.trim().toLowerCase();
+    var stacRecords=stacData.filter(function(d){
+      return d.riskLevel&&d.riskLevel.trim()&&
+             d.company.trim().toLowerCase()===coL;
+    }).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    if(stacRecords.length>0){
+      var stacRL=String(stacRecords[0].riskLevel||'').trim();
+      if(stacRL&&RISK_LEVELS[stacRL]) rl=stacRL;
+    }
+  }
+  if(!rl) rl='Medium-High';
   return RISK_LEVELS[rl]||RISK_LEVELS['Medium-High'];
 }
 
@@ -2574,6 +2588,14 @@ function parseGVizTable(data){
     const wlType=rawWLType.trim()||
       (isWLInHSE?rawCat:(rawDesc.toLowerCase().includes('warning')?rawDesc:''));
     const description=isWLInHSE?rawDesc:(rawDesc.toLowerCase().includes('warning')?'':rawDesc);
+    // Read Risk Level + Ceiling from STAC sheet cols U/V
+    var _rl  = String(o['Work Activity Risk Level']||'').trim();
+    var _acRaw = String(o['Annual Ceiling Score (pts)']||o['Annual Ceiling Score']||o['Annual  Ceiling  Score']||'').trim();
+    var _ac  = parseInt(_acRaw.replace(/[^0-9]/g,''))||0;
+    // Derive ceiling from risk level if numeric not stored
+    if(!_ac && _rl){
+      _ac = _rl.includes('Critical') ? 95 : _rl.includes('Medium-High') ? 92 : _rl.includes('Medium') ? 90 : 0;
+    }
     rows.push({
       id,
       date:parseXD(o['Instance Date']||o['Timestamp']),  // Instance Date (col O) takes priority over submission Timestamp (col B)
@@ -2585,7 +2607,9 @@ function parseGVizTable(data){
       instances:parseInt(o['YTD Instance #']||o['Instances']||'1')||1,
       wlIssued:o['Warning Letter Issued?']||o['Warning  Letter Issued ?']||'',
       contractNo:o['Contract / Agreement #']||'',
-      closeoutDate:parseXD(o['Closeout Target Date']||'')
+      closeoutDate:parseXD(o['Closeout Target Date']||''),
+      riskLevel: _rl,          // Col U — from Sub Contractors sheet at time of submit
+      annualCeiling: _ac||0    // Col V — ceiling pts at time of submit
     });
   });
   return rows;
@@ -3396,7 +3420,7 @@ function renderScores(){
       <div class="sc-co" title="${esc(x.co)}">${x.co.length>32?x.co.substring(0,32)+'…':x.co}</div>
       <div class="sc-cluster" style="display:flex;justify-content:space-between;align-items:center;">
         <span>${x.cluster}</span>
-        <span style="font-size:9px;padding:2px 7px;border-radius:4px;background:var(--blt);color:var(--blue);font-weight:700;">${x.riskLevel} · ${x.annualCeiling}pt</span>
+        <span style="font-size:9px;padding:2px 7px;border-radius:4px;background:var(--blt);color:var(--blue);font-weight:700;" title="Risk Level: ${x.riskLevel} | Ceiling: ${x.annualCeiling}pts | Source: Sub Contractors Sheet">${x.riskLevel} · ${x.annualCeiling}pt</span>
       </div>
       <div style="font-size:11px;font-weight:700;margin:5px 0 8px;color:${x.bandColor||bCol[x.band]};">
         ${x.instMax===0?'●':x.instMax===1?'⚠':x.instMax===2?'⚠⚠':x.instMax===3?'🔴':'⚫'} ${x.bandLabel}
@@ -3453,8 +3477,18 @@ function openSC(co){
   const bandBg = cs.bandColor || bc[cs.band] || '#e07000';
   const bandIcon = {green:'🟢',yellow:'🟡',orange:'🟠',amber:'🟡',red:'🔴',black:'⚫'}[cs.band]||'🟠';
   const t=document.getElementById('m-sc-title');if(t)t.textContent=co;
+  // Determine source of risk level for display
+  var _rlSource = 'Default';
+  if(sub && sub.riskLevel && sub.riskLevel.trim() && sub.riskLevel.trim()!=='Medium-High'){
+    _rlSource = 'Sub Contractors Sheet';
+  } else {
+    var _rlFromStac = stacData.filter(function(d){
+      return d.riskLevel&&d.company.trim().toLowerCase()===co.trim().toLowerCase();
+    });
+    if(_rlFromStac.length>0) _rlSource = 'STAC Sheet (Col U)';
+  }
   let h=`<div style="background:${bandBg};color:#fff;padding:14px 18px;border-radius:var(--r);margin-bottom:14px;">
-    <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.6px;">${cs.profile.label} Risk | Ceiling: ${cs.ceiling}pts</div>
+    <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.6px;">${cs.profile.label} Risk Level | Ceiling: ${cs.ceiling} pts <span style="opacity:.65;font-size:9px;">[Source: ${_rlSource}]</span></div>
     <div style="font-size:32px;font-weight:800;line-height:1.1;margin:4px 0;">${Math.max(0,cs.actualScore)}<span style="font-size:14px;opacity:.8;"> / ${cs.ceiling} pts</span></div>
     <div style="font-size:12px;margin-top:2px;opacity:.9;">${cs.fullDemerits} Full Demerit case(s) × 10 pts = -${cs.deductedPts} pts</div>
     <div style="font-size:13px;font-weight:700;margin-top:4px;">${bandIcon} ${cs.bandLabel}</div>
