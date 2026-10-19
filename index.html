@@ -778,6 +778,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sb-sec">HSE Stats</div>
     <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
     <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Statistics Dashboard</div>
+    <div class="sb-sec">Compliance</div>
+    <div class="sbi" onclick="nav('blacklist')"><span class="ic">⚫</span>Blacklist & Reinstatement</div>
     <div class="sb-sec">Tools</div>
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
@@ -1101,7 +1103,199 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     </div>
 
     <!-- SETUP -->
-    <div id="view-setup" class="view">
+    <div id="view-blacklist" class="view">
+  <div class="card" style="margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--navy);">⚫ Blacklist & Reinstatement Register</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px;">Subcontractors in Black band suspension — condition-based reinstatement tracking</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn bk bsm" onclick="exportBlacklistCSV()">⬇ Export CSV</button>
+        <button class="btn bp bsm" onclick="openReinstatementForm()">+ New Reinstatement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI TILES -->
+  <div class="kgrid k4" style="margin-bottom:14px;">
+    <div class="kpi" style="border-top:4px solid #1a1d24;">
+      <div class="klbl">Total Blacklisted</div>
+      <div class="kval" id="bl-k-total" style="color:#1a1d24;">—</div>
+      <div class="ksub" id="bl-k-total-s">YTD + historic</div>
+    </div>
+    <div class="kpi" style="border-top:4px solid #c0392b;">
+      <div class="klbl">Currently Suspended</div>
+      <div class="kval" id="bl-k-active" style="color:#c0392b;">—</div>
+      <div class="ksub">Work suspended — pending reinstatement</div>
+    </div>
+    <div class="kpi" style="border-top:4px solid #d68910;">
+      <div class="klbl">Under Reinstatement</div>
+      <div class="kval" id="bl-k-process" style="color:#d68910;">—</div>
+      <div class="ksub">Actions closed — awaiting endorsement</div>
+    </div>
+    <div class="kpi" style="border-top:4px solid #1b7a3e;">
+      <div class="klbl">Reinstated (Probation)</div>
+      <div class="kval" id="bl-k-probation" style="color:#1b7a3e;">—</div>
+      <div class="ksub">90-day enhanced monitoring</div>
+    </div>
+  </div>
+
+  <!-- BLACKLIST REGISTER TABLE -->
+  <div class="card" style="margin-bottom:14px;">
+    <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px;">⚫ Blacklisted Subcontractors</div>
+    <div class="tw">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Subcontractor</th>
+            <th>Cluster</th>
+            <th>Blacklisted Date</th>
+            <th>Category (3rd Instance)</th>
+            <th>Total Instances</th>
+            <th>All Actions</th>
+            <th>Endorsements</th>
+            <th>Status</th>
+            <th>Probation Ends</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="bl-body">
+          <tr><td colspan="10" style="text-align:center;padding:30px;color:var(--t3);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REINSTATEMENT HISTORY -->
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px;">✅ Reinstatement History</div>
+    <div class="tw">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Subcontractor</th>
+            <th>Suspended</th>
+            <th>Reinstated</th>
+            <th>Duration</th>
+            <th>Probation Ends</th>
+            <th>Endorsed By</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="bl-hist-body">
+          <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--t3);">No reinstatements recorded yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- REINSTATEMENT FORM MODAL -->
+<div id="m-reinstate" class="modal" style="display:none;">
+  <div class="modal-box" style="max-width:640px;width:95%;">
+    <div class="modal-hdr">
+      <span id="m-reinstate-title">⚫ Reinstatement Application</span>
+      <button class="modal-cls" onclick="cm('m-reinstate')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px 20px;max-height:80vh;overflow-y:auto;">
+
+      <!-- Company Select -->
+      <div class="fg" style="margin-bottom:12px;">
+        <label class="fl">Blacklisted Subcontractor *</label>
+        <select id="ri-company" class="fi" onchange="onReinstatementCompanyChange()">
+          <option value="">— Select Blacklisted Subcontractor —</option>
+        </select>
+      </div>
+
+      <!-- Status Summary -->
+      <div id="ri-status-panel" style="display:none;background:var(--bg);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:11px;">
+        <div id="ri-status-content"></div>
+      </div>
+
+      <!-- Gate Conditions -->
+      <div style="background:#fdecea;border:1px solid #e57373;border-radius:var(--r);padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:#c0392b;margin-bottom:8px;">⚠ REINSTATEMENT GATE CONDITIONS — ALL MUST BE MET</div>
+        <div id="ri-gate-1" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
+          <span id="ri-g1-icon">⬜</span> All corrective actions for this subcontractor are CLOSED
+        </div>
+        <div id="ri-gate-2" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
+          <span id="ri-g2-icon">⬜</span> HSE GM endorsement report uploaded
+        </div>
+        <div id="ri-gate-3" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
+          <span id="ri-g3-icon">⬜</span> Contract Holder endorsement report uploaded
+        </div>
+        <div id="ri-gate-4" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
+          <span id="ri-g4-icon">⬜</span> Construction Manager endorsement report uploaded
+        </div>
+      </div>
+
+      <!-- Endorsement Upload Section -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Endorsement Reports — Upload to Drive, paste link below</div>
+
+        <div class="fr fr2" style="gap:10px;margin-bottom:10px;">
+          <div class="fg">
+            <label class="fl">HSE GM Endorsement — Drive Link</label>
+            <input id="ri-hse-gm-link" class="fi" type="url" placeholder="https://drive.google.com/..." oninput="updateReinstatementGates()">
+          </div>
+          <div class="fg">
+            <label class="fl">Contract Holder Endorsement — Drive Link</label>
+            <input id="ri-ch-link" class="fi" type="url" placeholder="https://drive.google.com/..." oninput="updateReinstatementGates()">
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:10px;">
+          <label class="fl">Construction Manager Endorsement — Drive Link</label>
+          <input id="ri-cm-link" class="fi" type="url" placeholder="https://drive.google.com/..." oninput="updateReinstatementGates()">
+        </div>
+      </div>
+
+      <!-- Subcontractor Ownership & Leadership Confirmation -->
+      <div class="fg" style="margin-bottom:10px;">
+        <label class="fl">Ownership & Leadership Intervention — Notes</label>
+        <textarea id="ri-ownership-notes" class="fi" rows="3" placeholder="Describe the subcontractor leadership intervention, management commitment, and corrective culture changes demonstrated…"></textarea>
+      </div>
+
+      <!-- Reinstatement Date -->
+      <div class="fr fr2" style="gap:10px;margin-bottom:10px;">
+        <div class="fg">
+          <label class="fl">Proposed Reinstatement Date *</label>
+          <input id="ri-date" class="fi" type="date">
+        </div>
+        <div class="fg">
+          <label class="fl">Submitted By</label>
+          <input id="ri-submitted-by" class="fi" type="email" placeholder="your@email.com">
+        </div>
+      </div>
+
+      <!-- Gates summary -->
+      <div id="ri-gates-summary" style="background:var(--bg);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--t3);">
+        Fill in the company and endorsement links above to check gate conditions.
+      </div>
+
+      <!-- Submit -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--bdr);padding-top:12px;">
+        <button class="btn bsm" style="background:var(--bg);border:1px solid var(--bdr);" onclick="cm('m-reinstate')">Cancel</button>
+        <button id="ri-submit-btn" class="btn bp bsm" onclick="submitReinstatement()" disabled>
+          Submit Reinstatement Application
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REINSTATEMENT DETAIL MODAL -->
+<div id="m-bl-detail" class="modal" style="display:none;">
+  <div class="modal-box" style="max-width:600px;width:95%;">
+    <div class="modal-hdr">
+      <span id="m-bl-detail-title">Reinstatement Details</span>
+      <button class="modal-cls" onclick="cm('m-bl-detail')">✕</button>
+    </div>
+    <div class="modal-body" id="m-bl-detail-body" style="padding:18px 20px;max-height:80vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<div id="view-setup" class="view">
       <div style="max-width:860px;">
 
         <!-- Admin Identity -->
@@ -5454,7 +5648,8 @@ const PAGES={
   'warning-letter':{t:'Warning Letters',s:'Generate, preview, download and issue warning letters'},
   'setup':{t:'Setup',s:'Google Sheets connection and Apps Script deployment'},
   'hse-form':{t:'Subcontractor HSE Data Entry Form',s:'Monthly subcontractor HSE statistics submission — MTC, RWC, IVMS, Safety Qube'},
-  'hse-stats':{t:'Subcontractor HSE Statistics Dashboard',s:'Manhour exposure · Incident rates · IVMS · Observations — live from SC_HSE_TXN'}
+  'hse-stats':{t:'Subcontractor HSE Statistics Dashboard',s:'Manhour exposure · Incident rates · IVMS · Observations — live from SC_HSE_TXN'},
+  'blacklist':{t:'Blacklist & Reinstatement Register',s:'⚫ Suspended subcontractors — condition-based reinstatement with 3-signatory endorsement'}
 };
 
 // ════════════════════════════════════════════════════════════
@@ -5592,6 +5787,9 @@ function nav(v){
       setTimeout(scPopulateAllDropdowns, 100);
     }
   }
+  else if(v==='blacklist'){
+    renderBlacklist();
+  }
   else if(v==='hse-stats'){
     // Force view visible — belt-and-suspenders with inline style
     var _ve=document.getElementById('view-hse-stats');
@@ -5623,6 +5821,7 @@ function renderAll(){
   else if(document.querySelector('#view-scorecards.active'))renderScores();
   else if(document.querySelector('#view-warning-letter.active'))populateWLSel();
   else if(document.querySelector('#view-hse-stats.active'))renderHseStats();
+  else if(document.querySelector('#view-blacklist.active'))renderBlacklist();
   else if(document.querySelector('#view-hse-form.active')){/* form — no re-render needed */}
   updateIDs();
 }
@@ -5892,8 +6091,10 @@ function doPost(e) {
     if (d.action === 'approveAction') return R(updateAction(Object.assign({},d.data||d,{status:'Approved'})));
     if (d.action === 'deleteAction')  return R(deleteActionRow(d.data||d));
     if (d.action === 'saveUser')      return R(saveUserToList(d.data||d));
-    if (d.action === 'hse_stats')     return R(writeHSETxn(d));
-    if (d.action === 'markIssued')    return R(markIssued(d));
+    if (d.action === 'hse_stats')       return R(writeHSETxn(d));
+    if (d.action === 'markIssued')      return R(markIssued(d));
+    if (d.action === 'writeReinstatement')  return R(writeReinstatement(d.data||d));
+    if (d.action === 'updateReinstatement') return R(updateReinstatement(d.data||d));
     if (d.action === 'deleteSTAC')   return R(deleteSTAC(d));
     if (d.action === 'setupHeaders') return R(setupHeadersAction());
     return R({ ok: false, error: 'Unknown action: ' + d.action });
@@ -5971,7 +6172,7 @@ function writeSTAC(d) {
       if(!d.instanceDate) return now;
       var parts = String(d.instanceDate).substring(0,10).split('-');
       if(parts.length===3) return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-      return new Date(d.instanceDate);
+      return now; // safe fallback — frontend always sends YYYY-MM-DD
     })(),
     '',                                               // P  16 Upload - HSE Default Form
     d.closeoutDate ? new Date(d.closeoutDate) : '',   // Q  17 Closeout Target Date
@@ -6242,6 +6443,84 @@ function writeHSETxn(d) {
   } catch(e) { Logger.log('HSE Stats email error: ' + e); }
 
   return {ok:true, ref: (d.sc_name||'') + ' / ' + (d.report_month||'')};
+}
+
+// ── Write Reinstatement Record ─────────────────────────────────
+function writeReinstatement(d) {
+  if(!d||!d.company) return {ok:false, error:'No company provided'};
+  Logger.log('writeReinstatement: ' + d.company + ' status=' + d.status);
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('SC_REINSTATEMENT');
+  if(!sh){
+    sh = ss.insertSheet('SC_REINSTATEMENT');
+    sh.appendRow(['Reinstatement ID','Company','Cluster','Blacklisted Date',
+      'STAC ID (Trigger)','HSE GM Endorsement','Contract Holder Endorsement',
+      'Construction Manager Endorsement','Ownership Notes','Reinstated Date',
+      'Submitted By','Accepted By','Accepted Date','Status','Probation Ends','Created']);
+    sh.getRange(1,1,1,16).setFontWeight('bold').setBackground('#1a1d24').setFontColor('#ffffff');
+  }
+  // Check if record exists — update instead of append
+  var vals = sh.getDataRange().getValues();
+  for(var i=1; i<vals.length; i++){
+    if(String(vals[i][1]).trim().toLowerCase() === String(d.company).trim().toLowerCase()){
+      sh.getRange(i+1,1,1,16).setValues([[
+        d.id||vals[i][0], d.company, d.cluster||'',
+        d.blacklistedDate||vals[i][3], d.suspensionStacId||vals[i][4],
+        d.hseGmLink||'', d.chLink||'', d.cmLink||'',
+        d.ownershipNotes||'', d.reinstatedDate||'',
+        d.submittedBy||'', d.acceptedBy||'', d.acceptedDate||'',
+        d.status||'Pending Acceptance', d.probationEnds||'', vals[i][15]||new Date()
+      ]]);
+      sendReinstatementNotification(d, false);
+      return {ok:true, action:'updated', company:d.company};
+    }
+  }
+  // New record
+  sh.appendRow([
+    d.id||('RI-'+new Date().getTime()), d.company, d.cluster||'',
+    d.blacklistedDate||'', d.suspensionStacId||'',
+    d.hseGmLink||'', d.chLink||'', d.cmLink||'',
+    d.ownershipNotes||'', d.reinstatedDate||'',
+    d.submittedBy||'', d.acceptedBy||'', d.acceptedDate||'',
+    d.status||'Pending Acceptance', d.probationEnds||'', new Date()
+  ]);
+  sendReinstatementNotification(d, true);
+  return {ok:true, action:'created', company:d.company};
+}
+
+function updateReinstatement(d) {
+  return writeReinstatement(d);
+}
+
+function sendReinstatementNotification(d, isNew) {
+  var subject = isNew
+    ? '[STAC REINSTATEMENT] New Application — ' + (d.company||'')
+    : '[STAC REINSTATEMENT] ' + (d.status||'Updated') + ' — ' + (d.company||'');
+  var color = d.status==='Reinstated' ? '#1b7a3e' : d.status==='Pending Acceptance' ? '#d68910' : '#21409a';
+  var body = '<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;max-width:600px;">'
+    + '<div style="background:' + color + ';color:#fff;padding:14px 18px;border-radius:6px 6px 0 0;font-weight:700;">'
+    + subject + '</div>'
+    + '<div style="padding:16px;border:1px solid #ddd;border-top:none;border-radius:0 0 6px 6px;">'
+    + '<p><strong>Subcontractor:</strong> ' + (d.company||'') + '</p>'
+    + '<p><strong>Status:</strong> ' + (d.status||'') + '</p>'
+    + '<p><strong>Reinstatement Date:</strong> ' + (d.reinstatedDate||'—') + '</p>'
+    + '<p><strong>Probation Ends:</strong> ' + (d.probationEnds||'—') + '</p>'
+    + (d.status==='Reinstated'
+      ? '<p style="background:#e8f4ee;padding:8px 12px;border-radius:4px;color:#1b7a3e;font-weight:700;">✅ Subcontractor has been reinstated. 90-day enhanced monitoring begins now.</p>'
+      : '<p style="background:#fef9ec;padding:8px 12px;border-radius:4px;color:#8b6504;">⏳ Reinstatement application submitted — Admin acceptance required.</p>')
+    + '<p style="margin-top:14px;"><a href="https://paulmanjooran.github.io/stac-dashboard/#blacklist" '
+    + 'style="background:#21409a;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;font-weight:700;">'
+    + '⚫ Open Blacklist Register</a></p>'
+    + '</div></div>';
+  try {
+    MailApp.sendEmail({
+      to: 'abubakar.rahi@altasnim.com',
+      cc: d.submittedBy ? d.submittedBy : '',
+      subject: subject,
+      htmlBody: body,
+      name: 'ATNM STAC Programme'
+    });
+  } catch(e) { Logger.log('Reinstatement email error: ' + e); }
 }
 
 function deleteActionRow(d) {
@@ -6646,29 +6925,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     loadApprovers();
     loadAdminUsers();
     // Check script URL on startup — show warnings on forms if missing
-    (function checkScriptUrl(){
-      var url = localStorage.getItem('stac_script_url')||'';
-      // Auto-save the hardcoded URL if nothing is stored yet
-      if(!url){
-        url = 'https://script.google.com/macros/s/AKfycbx0NsLzlWRyHkgosA6OFKacVhgQaF1Zc6jHqDKT5Rl1kJka8n41cgXxgHzh-Pyam5EN/exec';
-        try{localStorage.setItem('stac_script_url', url);}catch(e){}
-      }
-      if(url) CFG.scriptUrl = url;
-      var noUrl = !url || !url.startsWith('https://script.google.com');
-      // Show warning banners on forms if URL not configured
-      ['hse-url-warning','stac-url-warning'].forEach(function(id){
-        var el=document.getElementById(id);
-        if(el) el.style.display = noUrl ? 'block' : 'none';
-      });
-      // Restore script URL input in Setup tab
-      var inp = document.getElementById('cfg-scr');
-      if(inp) inp.value = url || 'https://script.google.com/macros/s/AKfycbx0NsLzlWRyHkgosA6OFKacVhgQaF1Zc6jHqDKT5Rl1kJka8n41cgXxgHzh-Pyam5EN/exec';
-      // Also update CFG so all functions use the saved URL
-      if(url) CFG.scriptUrl = url;
-      if(noUrl){
-        console.warn('STAC: No script URL configured. Go to Setup tab to configure.');
-      }
-    })();
+    checkScriptUrl(); // URL check + auto-save hardcoded URL if not stored
     // Auto-restore admin identity from previous session
     var _storedEmail = localStorage.getItem('stac_admin_email')||'';
     if(_storedEmail){
@@ -6682,27 +6939,20 @@ window.addEventListener('DOMContentLoaded',()=>{
     startHealthCheck();
   },100);
   setTimeout(()=>{
-    loadHseStatsData(); // fires populateHseStatsSCDropdown + renderHseStats on completion
+    loadHseStatsData();
   }, 600);
-  // Hash routing: support direct deep-links e.g. index.html#hse-stats
+  // Hash routing
   const _hash=(window.location.hash||'').replace('#','').trim();
   const _validViews=['dashboard','tracker','fines','performance','scorecards',
-    'warning-letter','new-stac','setup','hse-form','hse-stats'];
-  if(_hash&&_validViews.includes(_hash)){
-    nav(_hash);
-  }
-  // Update hash on nav so browser back/forward works
+    'warning-letter','new-stac','setup','hse-form','hse-stats','blacklist'];
+  if(_hash&&_validViews.includes(_hash)){nav(_hash);}
   const _origNav=nav;
-  window.nav=function(v){
-    _origNav(v);
-    if(history.replaceState){history.replaceState(null,'','#'+v);}
-  };
+  window.nav=function(v){_origNav(v);if(history.replaceState){history.replaceState(null,'','#'+v);}};
   window.addEventListener('hashchange',()=>{
     const h=(window.location.hash||'').replace('#','').trim();
     if(h&&_validViews.includes(h))_origNav(h);
   });
 });
-
 
 
 
@@ -6803,7 +7053,7 @@ function renderHseStats() {
   var trir  = mh>0?((lti+mtc+rwc+fac)*200000/mh).toFixed(2):'—';
   var ltifr = mh>0?(lti*1000000/mh).toFixed(2):'—';
 
-  function sv(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  // sv() is defined above — this duplicate removed by audit
   sv('hk-mh',mh.toLocaleString()); sv('hk-emp',emp.toLocaleString());
   sv('hk-km',km.toLocaleString()); sv('hk-trir',trir); sv('hk-ltifr',ltifr);
   sv('hk-fat',fat); sv('hk-lti',lti); sv('hk-mtc',mtc); sv('hk-rwc',rwc); sv('hk-fac',fac);
@@ -7569,6 +7819,633 @@ async function scInit() {
   if(screen) screen.style.display = 'none';
 }
 
+
+// ════════════════════════════════════════════════════════════
+// BLACKLIST & REINSTATEMENT MODULE
+// ════════════════════════════════════════════════════════════
+
+var BL_CACHE_KEY = 'stac_reinstatement_v1';
+var blData = []; // reinstatement records
+
+// Load from localStorage + Apps Script
+function loadBlacklistData(){
+  try{
+    var cached = localStorage.getItem(BL_CACHE_KEY);
+    if(cached) blData = JSON.parse(cached);
+  }catch(e){}
+  fetchBlacklistFromSheet();
+}
+
+function fetchBlacklistFromSheet(){
+  fetchGvizData(CFG.sheetId, null, 'SC_REINSTATEMENT', 1)
+    .then(function(data){
+      if(!data||!data.table) return;
+      var cols = (data.table.cols||[]).map(function(c){return (c.label||'').trim().toLowerCase();});
+      blData = (data.table.rows||[]).filter(function(r){return r&&r.c;}).map(function(r){
+        function gc(col){
+          var i=cols.indexOf(col); if(i<0)return '';
+          var cell=r.c[i]; if(!cell)return '';
+          return cell.f!=null?String(cell.f):(cell.v!=null?String(cell.v):'');
+        }
+        return {
+          id:            gc('reinstatement id'),
+          company:       gc('company'),
+          cluster:       gc('cluster'),
+          blacklistedDate: gc('blacklisted date'),
+          suspensionStacId: gc('stac id (trigger)'),
+          hseGmLink:     gc('hse gm endorsement'),
+          chLink:        gc('contract holder endorsement'),
+          cmLink:        gc('construction manager endorsement'),
+          ownershipNotes:gc('ownership notes'),
+          reinstatedDate:gc('reinstated date'),
+          submittedBy:   gc('submitted by'),
+          acceptedBy:    gc('accepted by'),
+          acceptedDate:  gc('accepted date'),
+          status:        gc('status'),
+          probationEnds: gc('probation ends'),
+        };
+      }).filter(function(r){return r.company;});
+      try{localStorage.setItem(BL_CACHE_KEY, JSON.stringify(blData));}catch(e){}
+      renderBlacklist();
+    })
+    .catch(function(){renderBlacklist();});
+}
+
+// ── Get all currently black-banded subcontractors from stacData ──
+function getBlackBandedSubcons(){
+  var result = [];
+  var _seen = new Set();
+  var _norm = function(s){return (s||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
+  // Get all unique companies from stacData
+  var allCos = [...new Set(stacData.map(function(d){return d.company;}).filter(Boolean))];
+  allCos.forEach(function(co){
+    var cs = calcComplianceScore(co);
+    if(cs.band === 'black'){
+      var k = _norm(co);
+      if(_seen.has(k)) return;
+      _seen.add(k);
+      // Find the date of the triggering STAC (most recent)
+      var triggerCases = stacData.filter(function(d){
+        return d.company.trim().toLowerCase() === co.trim().toLowerCase();
+      }).sort(function(a,b){return b.date.localeCompare(a.date);});
+      result.push({
+        company: co,
+        cluster: triggerCases.length ? triggerCases[0].cluster : '—',
+        blacklistedDate: triggerCases.length ? triggerCases[0].date : '',
+        triggerStacId: triggerCases.length ? triggerCases[0].id : '',
+        maxCatInst: cs.maxCatInst,
+        totalInst: cs.totalInst,
+        catBreakdown: cs.catBreakdown,
+        cs: cs
+      });
+    }
+  });
+  return result;
+}
+
+// ── Check if all actions for a company are closed ──────────────
+function allActionsClosed(company){
+  var coL = (company||'').trim().toLowerCase();
+  var companyActions = actionData.filter(function(a){
+    return (a.company||'').trim().toLowerCase() === coL;
+  });
+  if(!companyActions.length) return {allClosed: true, total: 0, open: 0};
+  var open = companyActions.filter(function(a){
+    return a.status !== 'Closed' && a.status !== 'Approved';
+  });
+  return {allClosed: open.length === 0, total: companyActions.length, open: open.length};
+}
+
+// ── Get reinstatement record for a company ──────────────────────
+function getReinstatementRecord(company){
+  var coL = (company||'').trim().toLowerCase();
+  return blData.find(function(r){
+    return (r.company||'').trim().toLowerCase() === coL;
+  });
+}
+
+// ── Get probation status ────────────────────────────────────────
+function getProbationStatus(record){
+  if(!record || record.status !== 'Reinstated') return null;
+  if(!record.probationEnds) return null;
+  var today = new Date(); today.setHours(0,0,0,0);
+  var pEnd = new Date(record.probationEnds);
+  var daysLeft = Math.ceil((pEnd - today) / (1000*60*60*24));
+  return {
+    probationEnds: record.probationEnds,
+    daysLeft: daysLeft,
+    onProbation: daysLeft > 0,
+    pct: Math.min(100, Math.max(0, Math.round((1 - daysLeft/90)*100)))
+  };
+}
+
+// ── RENDER MAIN BLACKLIST SCREEN ────────────────────────────────
+function renderBlacklist(){
+  var blackBanded = getBlackBandedSubcons();
+  var reinstated = blData.filter(function(r){return r.status==='Reinstated';});
+  var inProcess  = blData.filter(function(r){return r.status==='Under Review'||r.status==='Pending Acceptance';});
+  var onProbation = reinstated.filter(function(r){
+    var p = getProbationStatus(r);
+    return p && p.onProbation;
+  });
+
+  // KPI tiles
+  function sk(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  sk('bl-k-total',    blackBanded.length + reinstated.length);
+  sk('bl-k-active',   blackBanded.filter(function(x){
+    var rec = getReinstatementRecord(x.company);
+    return !rec || rec.status === 'Suspended';
+  }).length);
+  sk('bl-k-process',  inProcess.length);
+  sk('bl-k-probation',onProbation.length);
+  var totS = blackBanded.filter(function(x){var r=getReinstatementRecord(x.company);return !r||r.status==='Suspended';}).length;
+  var totEl = document.getElementById('bl-k-total-s');
+  if(totEl) totEl.textContent = totS + ' currently suspended + ' + reinstated.length + ' previously reinstated';
+
+  // Blacklist register
+  var tbody = document.getElementById('bl-body');
+  if(!tbody) return;
+
+  // Combine: active black-band + historic reinstated
+  var allEntries = [];
+  blackBanded.forEach(function(x){
+    var rec = getReinstatementRecord(x.company);
+    allEntries.push({type:'active', sc:x, rec:rec});
+  });
+  // Add previously reinstated that are no longer black-band (historic)
+  blData.forEach(function(r){
+    var isStillBlack = blackBanded.some(function(x){
+      return x.company.trim().toLowerCase() === r.company.trim().toLowerCase();
+    });
+    if(!isStillBlack && r.status==='Reinstated'){
+      allEntries.push({type:'historic', sc:null, rec:r});
+    }
+  });
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var html = '';
+  allEntries.forEach(function(entry){
+    var rec = entry.rec;
+    var sc  = entry.sc;
+    var co  = sc ? sc.company : (rec ? rec.company : '—');
+    var cl  = sc ? sc.cluster : (rec ? rec.cluster : '—');
+    var blDate = sc ? fd(sc.blacklistedDate) : (rec ? fd(rec.blacklistedDate) : '—');
+
+    // Status badge
+    var statusBadge, statusColor;
+    if(rec && rec.status === 'Reinstated'){
+      var prob = getProbationStatus(rec);
+      if(prob && prob.onProbation){
+        statusBadge = '🟡 Probation (' + prob.daysLeft + ' days left)';
+        statusColor = '#d68910;font-weight:700;';
+      } else {
+        statusBadge = '🟢 Fully Reinstated';
+        statusColor = '#1b7a3e;font-weight:700;';
+      }
+    } else if(rec && (rec.status==='Under Review'||rec.status==='Pending Acceptance')){
+      statusBadge = '🔄 Under Review';
+      statusColor = '#6a1b9a;font-weight:700;';
+    } else {
+      statusBadge = '⚫ Suspended';
+      statusColor = '#1a1d24;font-weight:700;';
+    }
+
+    // Actions closed gate
+    var actCheck = allActionsClosed(co);
+    var actBadge = actCheck.allClosed
+      ? '<span style="color:#1b7a3e;font-weight:700;">✅ All Closed</span>'
+      : '<span style="color:#c0392b;font-weight:700;">⚠ ' + actCheck.open + ' Open</span>';
+
+    // Endorsements
+    var endorsements = '';
+    if(rec){
+      endorsements += rec.hseGmLink ? '<a href="' + rec.hseGmLink + '" target="_blank" title="HSE GM" style="text-decoration:none;margin-right:4px;">📄 GM</a>' : '<span style="color:var(--t3);font-size:10px;">GM ⬜</span> ';
+      endorsements += rec.chLink    ? '<a href="' + rec.chLink    + '" target="_blank" title="Contract Holder" style="text-decoration:none;margin-right:4px;">📄 CH</a>' : '<span style="color:var(--t3);font-size:10px;">CH ⬜</span> ';
+      endorsements += rec.cmLink    ? '<a href="' + rec.cmLink    + '" target="_blank" title="Construction Manager" style="text-decoration:none;">📄 CM</a>' : '<span style="color:var(--t3);font-size:10px;">CM ⬜</span>';
+    } else {
+      endorsements = '<span style="color:var(--t3);font-size:10px;">Not started</span>';
+    }
+
+    // Probation progress
+    var probCell = '—';
+    if(rec && rec.status==='Reinstated'){
+      var pr = getProbationStatus(rec);
+      if(pr){
+        probCell = pr.onProbation
+          ? '<div style="font-size:10px;color:#d68910;">' + fd(rec.probationEnds) + '</div>'
+            + '<div style="height:5px;background:#eee;border-radius:3px;width:80px;margin-top:3px;">'
+            + '<div style="height:5px;background:#d68910;border-radius:3px;width:' + pr.pct + '%;"></div></div>'
+          : '<span style="color:#1b7a3e;font-size:10px;">✅ Completed</span>';
+      }
+    }
+
+    // Trigger category
+    var trigCat = sc && sc.catBreakdown
+      ? Object.keys(sc.catBreakdown).filter(function(c){return sc.catBreakdown[c]>=3;}).map(function(c){return c.substring(0,30)+'…';}).join('<br>')
+      : (rec ? '<span style="color:var(--t3);">Historic</span>' : '—');
+
+    // Total instances
+    var totalInst = sc ? sc.totalInst : '—';
+
+    html += '<tr>';
+    html += '<td style="font-weight:700;min-width:160px;">' + esc(co) + '</td>';
+    html += '<td><span class="bdg bgy" style="font-size:9px;">' + esc(cl) + '</span></td>';
+    html += '<td style="font-size:11px;white-space:nowrap;">' + blDate + '</td>';
+    html += '<td style="font-size:10px;max-width:140px;">' + trigCat + '</td>';
+    html += '<td style="text-align:center;font-weight:700;color:#c0392b;">' + totalInst + '</td>';
+    html += '<td style="text-align:center;">' + actBadge + '</td>';
+    html += '<td style="white-space:nowrap;">' + endorsements + '</td>';
+    html += '<td style="color:' + statusColor + '">' + statusBadge + '</td>';
+    html += '<td>' + probCell + '</td>';
+    html += '<td style="white-space:nowrap;">';
+    if((!rec || rec.status === 'Suspended') && actCheck.allClosed){
+      html += '<button class="btn bp bsm" data-co="' + esc(co) + '" onclick="openReinstatementForm(this.dataset.co)" style="font-size:10px;padding:3px 8px;">🔄 Apply</button> ';
+    } else if(rec && (rec.status==='Under Review'||rec.status==='Pending Acceptance') && isAdmin){
+      html += '<button class="btn bsm" data-co="' + esc(co) + '" onclick="acceptReinstatement(this.dataset.co)" style="font-size:10px;padding:3px 8px;background:#1b7a3e;color:#fff;border:none;">✅ Accept</button> ';
+    }
+    html += '<button class="btn bsm" data-co="' + esc(co) + '" onclick="openBlacklistDetail(this.dataset.co)" style="font-size:10px;padding:3px 7px;background:var(--bg);border:1px solid var(--bdr);">View</button>';
+    html += '</td>';
+    html += '</tr>';
+  });
+
+  tbody.innerHTML = html || '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--t3);">No blacklisted subcontractors found. ⚫ Black band triggers when Max Instance ≥3 AND Total Instances >5.</td></tr>';
+
+  // Reinstatement history
+  var histBody = document.getElementById('bl-hist-body');
+  if(histBody){
+    var histHtml = '';
+    blData.filter(function(r){return r.status==='Reinstated';}).forEach(function(r){
+      var dur = '';
+      if(r.blacklistedDate && r.reinstatedDate){
+        var d1 = new Date(r.blacklistedDate), d2 = new Date(r.reinstatedDate);
+        var days = Math.ceil((d2-d1)/(1000*60*60*24));
+        dur = days + ' days';
+      }
+      var pr = getProbationStatus(r);
+      histHtml += '<tr>';
+      histHtml += '<td style="font-weight:600;">' + esc(r.company) + '</td>';
+      histHtml += '<td style="font-size:11px;">' + fd(r.blacklistedDate) + '</td>';
+      histHtml += '<td style="font-size:11px;">' + fd(r.reinstatedDate) + '</td>';
+      histHtml += '<td style="font-size:11px;color:var(--t3);">' + dur + '</td>';
+      histHtml += '<td style="font-size:11px;">' + fd(r.probationEnds) + '</td>';
+      histHtml += '<td style="font-size:10px;color:var(--t3);">' + esc(r.acceptedBy||'—') + '</td>';
+      histHtml += '<td>' + (pr && pr.onProbation
+        ? '<span style="color:#d68910;font-weight:700;font-size:10px;">🟡 Probation</span>'
+        : '<span style="color:#1b7a3e;font-weight:700;font-size:10px;">🟢 Active</span>') + '</td>';
+      histHtml += '</tr>';
+    });
+    histBody.innerHTML = histHtml || '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--t3);">No reinstatements recorded yet</td></tr>';
+  }
+}
+
+// ── Open Reinstatement Form ────────────────────────────────────
+function openReinstatementForm(preselect){
+  // Populate company dropdown with blacklisted subcons
+  var sel = document.getElementById('ri-company');
+  sel.innerHTML = '<option value="">— Select Blacklisted Subcontractor —</option>';
+  var bb = getBlackBandedSubcons();
+  bb.forEach(function(x){
+    var opt = document.createElement('option');
+    opt.value = x.company;
+    opt.textContent = x.company + ' | ' + x.cluster;
+    sel.appendChild(opt);
+  });
+  if(preselect){
+    for(var i=0;i<sel.options.length;i++){
+      if(sel.options[i].value===preselect){sel.selectedIndex=i;break;}
+    }
+  }
+  // Set today as default reinstatement date
+  var today = new Date();
+  var ri_date = document.getElementById('ri-date');
+  if(ri_date) ri_date.value = today.toISOString().split('T')[0];
+  // Pre-fill submitter
+  var ri_sub = document.getElementById('ri-submitted-by');
+  if(ri_sub) ri_sub.value = localStorage.getItem('stac_admin_email')||'';
+  // Reset gates
+  updateReinstatementGates();
+  if(preselect) onReinstatementCompanyChange();
+  openModal('m-reinstate');
+}
+
+// ── On company change — show status panel ─────────────────────
+function onReinstatementCompanyChange(){
+  var co = document.getElementById('ri-company').value;
+  var panel = document.getElementById('ri-status-panel');
+  var content = document.getElementById('ri-status-content');
+  if(!co || !panel || !content){ if(panel)panel.style.display='none'; return; }
+
+  var cs = calcComplianceScore(co);
+  var actCheck = allActionsClosed(co);
+  var rec = getReinstatementRecord(co);
+
+  panel.style.display = 'block';
+  content.innerHTML = ''
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">'
+    + '<div><div style="font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;">Max Instance</div>'
+    + '<div style="font-size:15px;font-weight:700;color:#c0392b;">' + cs.maxCatInst + '</div></div>'
+    + '<div><div style="font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;">Total Instances</div>'
+    + '<div style="font-size:15px;font-weight:700;color:#c0392b;">' + cs.totalInst + '</div></div>'
+    + '<div><div style="font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;">Open Actions</div>'
+    + '<div style="font-size:15px;font-weight:700;color:' + (actCheck.allClosed?'#1b7a3e':'#c0392b') + ';">'
+    + (actCheck.allClosed ? '0 ✅' : actCheck.open + ' ⚠') + '</div></div>'
+    + '</div>'
+    + (rec ? '<div style="margin-top:8px;font-size:10px;color:var(--t3);">Existing record: Status = <strong>' + rec.status + '</strong></div>' : '');
+
+  updateReinstatementGates();
+}
+
+// ── Update gate condition indicators ─────────────────────────
+function updateReinstatementGates(){
+  var co      = (document.getElementById('ri-company')||{}).value||'';
+  var gmLink  = (document.getElementById('ri-hse-gm-link')||{}).value||'';
+  var chLink  = (document.getElementById('ri-ch-link')||{}).value||'';
+  var cmLink  = (document.getElementById('ri-cm-link')||{}).value||'';
+
+  var actCheck = co ? allActionsClosed(co) : {allClosed:false};
+  var g1 = actCheck.allClosed;
+  var g2 = gmLink.startsWith('http');
+  var g3 = chLink.startsWith('http');
+  var g4 = cmLink.startsWith('http');
+  var allMet = g1 && g2 && g3 && g4;
+
+  function setGate(iconId, met){
+    var el = document.getElementById(iconId);
+    if(el) el.textContent = met ? '✅' : '⬜';
+  }
+  setGate('ri-g1-icon', g1);
+  setGate('ri-g2-icon', g2);
+  setGate('ri-g3-icon', g3);
+  setGate('ri-g4-icon', g4);
+
+  var summary = document.getElementById('ri-gates-summary');
+  var submitBtn = document.getElementById('ri-submit-btn');
+  if(summary){
+    if(!co){
+      summary.textContent = 'Select a company to check gate conditions.';
+      summary.style.color = 'var(--t3)';
+    } else if(allMet){
+      summary.innerHTML = '✅ All gate conditions met — reinstatement application can be submitted.';
+      summary.style.color = '#1b7a3e';
+      summary.style.fontWeight = '700';
+    } else {
+      var missing = [];
+      if(!g1) missing.push('Close all open actions (' + (actCheck.open||'?') + ' remaining)');
+      if(!g2) missing.push('HSE GM endorsement link');
+      if(!g3) missing.push('Contract Holder endorsement link');
+      if(!g4) missing.push('Construction Manager endorsement link');
+      summary.innerHTML = '⚠ Still required: ' + missing.join(' · ');
+      summary.style.color = '#c0392b';
+      summary.style.fontWeight = '600';
+    }
+  }
+  if(submitBtn) submitBtn.disabled = !allMet || !co;
+}
+
+// ── Submit Reinstatement Application ─────────────────────────
+function submitReinstatement(){
+  var co      = document.getElementById('ri-company').value;
+  var gmLink  = document.getElementById('ri-hse-gm-link').value;
+  var chLink  = document.getElementById('ri-ch-link').value;
+  var cmLink  = document.getElementById('ri-cm-link').value;
+  var notes   = document.getElementById('ri-ownership-notes').value;
+  var riDate  = document.getElementById('ri-date').value;
+  var subBy   = document.getElementById('ri-submitted-by').value;
+
+  if(!co || !gmLink || !chLink || !cmLink || !riDate){
+    toast('⚠ Fill all required fields and ensure all gates are met', 3000, 'warn');
+    return;
+  }
+
+  var btn = document.getElementById('ri-submit-btn');
+  if(btn){btn.disabled=true; btn.textContent='Submitting…';}
+
+  // Calculate probation end date (90 days from reinstatement)
+  var rDate = new Date(riDate);
+  var probEnd = new Date(rDate);
+  probEnd.setDate(probEnd.getDate() + 90);
+
+  var record = {
+    id:               'RI-' + Date.now(),
+    company:          co,
+    cluster:          (getBlackBandedSubcons().find(function(x){return x.company===co;})||{}).cluster||'',
+    blacklistedDate:  (getBlackBandedSubcons().find(function(x){return x.company===co;})||{}).blacklistedDate||'',
+    hseGmLink:        gmLink,
+    chLink:           chLink,
+    cmLink:           cmLink,
+    ownershipNotes:   notes,
+    reinstatedDate:   riDate,
+    submittedBy:      subBy,
+    acceptedBy:       '',
+    acceptedDate:     '',
+    status:           'Pending Acceptance',
+    probationEnds:    probEnd.toISOString().split('T')[0]
+  };
+
+  // Save to sheet via Apps Script
+  var url = getScriptUrl();
+  fetch(url, {
+    method: 'POST', mode: 'no-cors',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({action: 'writeReinstatement', data: record})
+  }).then(function(){
+    // Update local data
+    var existing = blData.findIndex(function(r){return r.company===co;});
+    if(existing !== -1) blData[existing] = record;
+    else blData.push(record);
+    try{localStorage.setItem(BL_CACHE_KEY, JSON.stringify(blData));}catch(e){}
+    cm('m-reinstate');
+    renderBlacklist();
+    toast('✅ Reinstatement application submitted — pending Admin acceptance', 5000);
+    if(btn){btn.disabled=false;btn.textContent='Submit Reinstatement Application';}
+  }).catch(function(){
+    var existing = blData.findIndex(function(r){return r.company===co;});
+    if(existing !== -1) blData[existing] = record;
+    else blData.push(record);
+    try{localStorage.setItem(BL_CACHE_KEY, JSON.stringify(blData));}catch(e){}
+    cm('m-reinstate');
+    renderBlacklist();
+    toast('✅ Reinstatement application submitted', 5000);
+    if(btn){btn.disabled=false;btn.textContent='Submit Reinstatement Application';}
+  });
+}
+
+// ── Admin: Accept Reinstatement ────────────────────────────────
+function acceptReinstatement(company){
+  if(!isAdmin){toast('Admin access required',2000,'warn');return;}
+  if(!confirm('Confirm: Accept reinstatement for ' + company + '? Scoring resets to GREEN. Historic data retained. 90-day probation starts. Cannot be undone.')){return;}
+
+  var rec = blData.find(function(r){return r.company===company;});
+  if(!rec){toast('Record not found',2000,'warn');return;}
+
+  rec.status = 'Reinstated';
+  rec.acceptedBy = adminEmail || 'Admin';
+  rec.acceptedDate = new Date().toISOString().split('T')[0];
+
+  var url = getScriptUrl();
+  fetch(url, {
+    method: 'POST', mode: 'no-cors',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({action: 'updateReinstatement', data: rec})
+  }).then(function(){
+    try{localStorage.setItem(BL_CACHE_KEY, JSON.stringify(blData));}catch(e){}
+    renderBlacklist();
+    toast('✅ ' + company + ' reinstated. 90-day probation period starts from ' + fd(rec.reinstatedDate), 6000);
+    // Reload STAC data to refresh scorecard (scoring period resets)
+    setTimeout(function(){loadData(true);}, 1000);
+  }).catch(function(){
+    try{localStorage.setItem(BL_CACHE_KEY, JSON.stringify(blData));}catch(e){}
+    renderBlacklist();
+    toast('✅ Reinstatement accepted', 4000);
+  });
+}
+
+// ── Open Blacklist Detail Modal ────────────────────────────────
+function openBlacklistDetail(company){
+  var rec = getReinstatementRecord(company);
+  var cs  = calcComplianceScore(company);
+  var actCheck = allActionsClosed(company);
+  var t = document.getElementById('m-bl-detail-title');
+  var b = document.getElementById('m-bl-detail-body');
+  if(t) t.textContent = '⚫ ' + company;
+  if(!b) return;
+
+  var prob = rec ? getProbationStatus(rec) : null;
+
+  var html = '<div style="background:#1a1d24;color:#fff;padding:14px 18px;border-radius:var(--r);margin-bottom:14px;">'
+    + '<div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.6px;">⚫ BLACK BAND — SUSPENSION / CONTRACT REVIEW</div>'
+    + '<div style="font-size:28px;font-weight:800;margin:4px 0;">' + cs.maxCatInst + '<span style="font-size:13px;opacity:.7;"> max instances | ' + cs.totalInst + ' total</span></div>'
+    + '<div style="font-size:12px;opacity:.85;">' + (rec ? 'Status: ' + rec.status : 'Suspended — no reinstatement filed') + '</div>'
+    + '</div>';
+
+  // Category breakdown
+  if(cs.catBreakdown && Object.keys(cs.catBreakdown).length){
+    html += '<div style="margin-bottom:14px;">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;">Violation Categories</div>';
+    Object.keys(cs.catBreakdown).forEach(function(cat){
+      var n = cs.catBreakdown[cat];
+      var col = n>=3?'#c0392b':n===2?'#e07000':'#d68910';
+      html += '<div style="display:flex;justify-content:space-between;padding:5px 8px;background:var(--bg);border-radius:4px;margin-bottom:4px;font-size:11px;">'
+        + '<span>' + esc(cat) + '</span>'
+        + '<span style="font-weight:700;color:' + col + ';">' + n + ' instance' + (n>1?'s':'') + (n>=3?' ⚫':'') + '</span>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Actions status
+  html += '<div style="margin-bottom:14px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;">Corrective Actions</div>';
+  html += '<div style="padding:8px 12px;background:' + (actCheck.allClosed?'#eaf4ee':'#fdecea') + ';border-radius:var(--r);font-size:11px;">';
+  html += actCheck.allClosed
+    ? '✅ All ' + actCheck.total + ' corrective actions are CLOSED — Gate 1 cleared'
+    : '⚠ ' + actCheck.open + ' of ' + actCheck.total + ' actions still OPEN — must close before reinstatement';
+  html += '</div></div>';
+
+  // Reinstatement record
+  if(rec){
+    html += '<div style="margin-bottom:14px;">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;">Reinstatement Application</div>';
+    html += '<table style="width:100%;font-size:11px;border-collapse:collapse;">';
+    [
+      ['Status', rec.status],
+      ['Submitted By', rec.submittedBy||'—'],
+      ['Reinstatement Date', fd(rec.reinstatedDate)],
+      ['Probation Ends', fd(rec.probationEnds)],
+      ['Accepted By', rec.acceptedBy||'Pending'],
+      ['Accepted Date', fd(rec.acceptedDate)],
+    ].forEach(function(row){
+      html += '<tr><td style="padding:4px 8px;background:var(--bg);font-weight:600;border:.5px solid var(--bdr);width:40%;">' + row[0] + '</td>'
+        + '<td style="padding:4px 8px;border:.5px solid var(--bdr);">' + row[1] + '</td></tr>';
+    });
+    html += '</table>';
+
+    // Endorsement links
+    html += '<div style="margin-top:10px;">';
+    [
+      ['HSE GM Endorsement', rec.hseGmLink],
+      ['Contract Holder Endorsement', rec.chLink],
+      ['Construction Manager Endorsement', rec.cmLink],
+    ].forEach(function(row){
+      html += '<div style="padding:5px 0;font-size:11px;">'
+        + '<strong>' + row[0] + ':</strong> '
+        + (row[1] ? '<a href="' + row[1] + '" target="_blank" style="color:var(--blue);">📄 View Document</a>' : '<span style="color:var(--t3);">Not uploaded</span>')
+        + '</div>';
+    });
+    html += '</div>';
+
+    if(rec.ownershipNotes){
+      html += '<div style="margin-top:10px;padding:8px 12px;background:var(--bg);border-radius:var(--r);font-size:11px;">';
+      html += '<strong>Ownership & Leadership Notes:</strong><br>' + esc(rec.ownershipNotes);
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Probation progress bar
+    if(prob){
+      html += '<div style="margin-bottom:14px;">';
+      html += '<div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;">90-Day Probation Progress</div>';
+      html += '<div style="background:var(--bg);padding:10px 14px;border-radius:var(--r);">';
+      html += '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;">'
+        + '<span>Probation started: ' + fd(rec.reinstatedDate) + '</span>'
+        + '<span>Ends: ' + fd(rec.probationEnds) + '</span>'
+        + '</div>';
+      html += '<div style="height:8px;background:#eee;border-radius:4px;"><div style="height:8px;background:' + (prob.onProbation?'#d68910':'#1b7a3e') + ';border-radius:4px;width:' + prob.pct + '%;transition:width .4s;"></div></div>';
+      html += '<div style="font-size:10px;color:var(--t3);margin-top:4px;">' + prob.pct + '% complete' + (prob.onProbation?' — ' + prob.daysLeft + ' days remaining':' — Probation complete') + '</div>';
+      html += '</div></div>';
+    }
+
+    // Admin accept button
+    if(isAdmin && rec.status === 'Pending Acceptance'){
+      html += '<div style="border-top:1px solid var(--bdr);padding-top:12px;text-align:right;">';
+      html += '<button class="btn bp bsm" data-co="'+esc(company)+'" onclick="closeDetailAndAccept(this.dataset.co)">Accept Reinstatement</button>';
+      html += '</div>';
+    }
+  } else {
+    html += '<div style="padding:14px;background:var(--bg);border-radius:var(--r);font-size:11px;color:var(--t3);">';
+    html += 'No reinstatement application filed yet.';
+    if(actCheck.allClosed){
+      html += '<br><br><button class="btn bp bsm" data-co="'+esc(company)+'" onclick="closeDetailAndApply(this.dataset.co)">Apply for Reinstatement</button>';
+    }
+    html += '</div>';
+  }
+
+  b.innerHTML = html;
+  openModal('m-bl-detail');
+}
+
+// ── Export Blacklist CSV ──────────────────────────────────────
+function exportBlacklistCSV(){
+  var bb = getBlackBandedSubcons();
+  var hdrs = ['Company','Cluster','Blacklisted Date','Max Instance','Total Instances',
+              'All Actions Closed','Status','Reinstated Date','Probation Ends','Accepted By'];
+  var q = function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
+  var csv = hdrs.map(q).join(',') + String.fromCharCode(13,10);
+  bb.forEach(function(x){
+    var rec = getReinstatementRecord(x.company);
+    var act = allActionsClosed(x.company);
+    csv += [
+      x.company, x.cluster, x.blacklistedDate,
+      x.maxCatInst, x.totalInst,
+      act.allClosed?'Yes':'No (' + act.open + ' open)',
+      rec ? rec.status : 'Suspended',
+      rec ? (rec.reinstatedDate||'—') : '—',
+      rec ? (rec.probationEnds||'—') : '—',
+      rec ? (rec.acceptedBy||'Pending') : '—'
+    ].map(q).join(',') + String.fromCharCode(13,10);
+  });
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿'+csv);
+  a.download = 'ATNM-Blacklist-Register-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){document.body.removeChild(a);}, 1000);
+  toast('✅ Blacklist register exported', 3000);
+}
+
+// ════════════════════════════════════════════════════════════
+// END BLACKLIST & REINSTATEMENT MODULE
+// ════════════════════════════════════════════════════════════
 
 // ================================================================
 // PERFORMANCE REPORT — full league table with scores out of ceiling
