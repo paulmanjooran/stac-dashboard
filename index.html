@@ -5851,6 +5851,7 @@ function doPost(e) {
     if (d.action === 'approveAction') return R(updateAction(Object.assign({},d.data||d,{status:'Approved'})));
     if (d.action === 'deleteAction')  return R(deleteActionRow(d.data||d));
     if (d.action === 'saveUser')      return R(saveUserToList(d.data||d));
+    if (d.action === 'hse_stats')     return R(writeHSETxn(d));
     if (d.action === 'markIssued')    return R(markIssued(d));
     if (d.action === 'deleteSTAC')   return R(deleteSTAC(d));
     if (d.action === 'setupHeaders') return R(setupHeadersAction());
@@ -6124,6 +6125,77 @@ function saveUserToList(d) {
   // New user — append
   sh.appendRow([d.email,d.name||'',d.role||'',d.cluster||'All',d.added||new Date()]);
   return {ok:true, action:'added', email:d.email};
+}
+
+// ── HSE Statistics Transaction Writer ─────────────────────────
+function writeHSETxn(d) {
+  if (!d || typeof d !== 'object') return {ok:false, error:'Invalid payload'};
+  Logger.log('writeHSETxn: company=' + d.sc_name + ' month=' + d.report_month);
+
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName('SC_HSE_TXN');
+  if (!sh) {
+    // Create tab with headers if missing
+    sh = ss.insertSheet('SC_HSE_TXN');
+    sh.appendRow([
+      'Timestamp','Company Name','Cluster','Contract No','Report Month',
+      'Period Start','Period End','Manhours','Workers','LTI','RWC','FAC',
+      'Near Miss','Dangerous Occurrence','Unsafe Acts','Unsafe Conditions',
+      'IVMS Red Events','Safety Qube Observations','HSE Manager Email',
+      'Submitted By'
+    ]);
+    sh.getRange(1,1,1,20).setFontWeight('bold').setBackground('#21409a').setFontColor('#ffffff');
+  }
+
+  var now = new Date();
+  sh.appendRow([
+    now,
+    d.sc_name       || '',
+    d.cluster       || '',
+    d.contract_no   || '',
+    d.report_month  || '',
+    d.period_start  || '',
+    d.period_end    || '',
+    parseFloat(d.manhours)      || 0,
+    parseFloat(d.workers)       || 0,
+    parseFloat(d.lti)           || 0,
+    parseFloat(d.rwc)           || 0,
+    parseFloat(d.fac)           || 0,
+    parseFloat(d.near_miss)     || 0,
+    parseFloat(d.dangerous_occ) || 0,
+    parseFloat(d.unsafe_acts)   || 0,
+    parseFloat(d.unsafe_cond)   || 0,
+    parseFloat(d.ivms_red)      || 0,
+    parseFloat(d.safety_qube)   || 0,
+    d.hse_manager_email || '',
+    d.submitted_by  || ''
+  ]);
+
+  // Send notification email to HSE Manager
+  try {
+    var mgr = d.hse_manager_email || '';
+    if (mgr) {
+      MailApp.sendEmail({
+        to: mgr,
+        subject: '[HSE STATS] ' + (d.sc_name||'Subcontractor') + ' — ' + (d.report_month||'Monthly') + ' Report Submitted',
+        htmlBody: '<div style="font-family:Arial,sans-serif;max-width:600px;">'
+          + '<div style="background:#21409a;color:#fff;padding:14px 18px;border-radius:6px 6px 0 0;">'
+          + '<h3 style="margin:0;">📊 HSE Statistics Report Submitted</h3></div>'
+          + '<div style="padding:16px;border:1px solid #ddd;border-radius:0 0 6px 6px;">'
+          + '<p><strong>Subcontractor:</strong> ' + (d.sc_name||'') + '</p>'
+          + '<p><strong>Report Month:</strong> ' + (d.report_month||'') + '</p>'
+          + '<p><strong>Cluster:</strong> ' + (d.cluster||'') + '</p>'
+          + '<p><strong>Man-hours:</strong> ' + (d.manhours||'0') + '</p>'
+          + '<p><strong>Submitted:</strong> ' + now.toString() + '</p>'
+          + '<p style="margin-top:14px;"><a href="https://docs.google.com/spreadsheets/d/'
+          + SHEET_ID + '/edit#gid=0" style="background:#21409a;color:#fff;padding:8px 16px;'
+          + 'border-radius:4px;text-decoration:none;font-weight:700;">📋 Open in Sheet</a></p>'
+          + '</div></div>'
+      });
+    }
+  } catch(e) { Logger.log('HSE Stats email error: ' + e); }
+
+  return {ok:true, ref: (d.sc_name||'') + ' / ' + (d.report_month||'')};
 }
 
 function deleteActionRow(d) {
@@ -7306,8 +7378,14 @@ async function scHandleSubmit(e) {
   const txtEl = document.getElementById('contract_no_txt');
   data['contract_no'] = (selEl.style.display !== 'none') ? selEl.value : txtEl.value;
 
-  // Always set action so GS doPost routes correctly to recordTransaction
+  // Always set action so GS doPost routes correctly to writeHSETxn
   data['action'] = 'hse_stats';
+  // Ensure key field names are mapped correctly
+  if(!data.sc_name)    data.sc_name    = data.company_name || data.subcontractor || '';
+  if(!data.report_month) data.report_month = data.month || data.period || '';
+  // Add submission metadata
+  data.submitted_by = localStorage.getItem('stac_admin_email') || 'STAC Dashboard';
+  data.submission_ts = new Date().toISOString();
 
   // Date validation
   if (data.period_start && data.period_end && data.period_start > data.period_end) {
@@ -7316,26 +7394,31 @@ async function scHandleSubmit(e) {
     return;
   }
 
+  const url = getScriptUrl();
+  if (!url || !url.startsWith('https://script.google.com')) {
+    scShowToast('❌ Script URL not configured. Go to Setup tab → paste Script URL → Save.', true);
+    btn.textContent = 'Submit Report →';
+    btn.disabled = false;
+    return;
+  }
+
   try {
-    if (!SUBMIT_URL || !SUBMIT_URL.startsWith('https://script.google.com')) {
-      // No script URL configured — demo mode only
-      await new Promise(r => setTimeout(r, 1200));
-      scShowSuccess('TXN-DEMO-0001');
-    } else {
-      const response = await fetch(SUBMIT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(data),
-        mode: 'no-cors'
-      });
-      // no-cors = opaque response — assume success on reach
-      scShowSuccess(data.report_month ? `${data.sc_name} / ${data.report_month}` : 'Recorded');
-    }
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data),
+      mode: 'no-cors'
+    });
+    // no-cors = opaque response — assume success on network reach
+    var ref = (data.sc_name && data.report_month)
+      ? data.sc_name + ' / ' + data.report_month
+      : 'HSE Stats Recorded';
+    scShowSuccess(ref);
   } catch(err) {
-    scShowToast('❌ Submission failed — check your connection or contact HSE Manager.', true);
+    scShowToast('❌ Submission failed — check connection or contact HSE Manager.', true);
     console.error('scHandleSubmit error:', err);
     btn.textContent = 'Submit Report →';
-    btn.disabled = false;  // re-enable so user can retry
+    btn.disabled = false;
   }
 }
 
