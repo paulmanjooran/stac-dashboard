@@ -871,7 +871,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <div style="margin-top:3px;font-size:10px;color:var(--t3);">YTD instance count used for penalty logic</div>
           </div>
         </div>
-        <form id="stac-form" onsubmit="doSubmit(event)">
+        <form id="stac-form" onsubmit="return false;">
           <!-- PART A -->
           <div class="fsec"><div class="fshd fbl">🔵 PART A — HSE Advisor (ATNM Internal)<span style="font-size:10px;font-weight:400;opacity:.8;margin-left:auto;">Site HSE Advisor / Cluster HSE Lead</span></div>
           <div class="fbd">
@@ -950,7 +950,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <div id="stac-url-warning" style="display:none;background:#fdecea;border:1.5px solid #c0392b;border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#c0392b;font-weight:700;">
             ⚠️ Apps Script URL not configured — submissions will fail. Go to <strong>Setup tab → Script URL → Save</strong>.
           </div>
-          <button type="submit" class="btn bp">📤 Submit to Google Sheets →</button>
+          <button type="button" class="btn bp" onclick="doSubmit(event)">📤 Submit to Google Sheets →</button>
           </div>
         </form>
       </div>
@@ -1457,7 +1457,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           <div class="chd"><h3>🔌 STEP 3 — Connect & Test</h3><span class="bdg bgr" id="conn-status">Not configured</span></div>
           <div class="cbd">
             <div class="fr fr2" style="margin-bottom:12px;">
-              <div class="fg"><label>Spreadsheet ID</label><input type="text" id="cfg-sid" value="18Tr6xLT9_2yuHbUaJELGeeSJAAanncBipmlvBbMqxMo"><div class="hint">STAC sheet GID: 342483107</div></div>
+              <div class="fg"><label>Spreadsheet ID</label><input type="text" id="cfg-sid" readonly style="color:var(--t3);cursor:not-allowed;" value="18Tr6xLT9_2yuHbUaJELGeeSJAAanncBipmlvBbMqxMo"><div class="hint">STAC sheet GID: 342483107</div></div>
               <div class="fg"><label>Apps Script Web App URL <span class="req">*</span></label><input type="url" id="cfg-scr" placeholder="https://script.google.com/macros/s/AKfy.../exec" oninput="checkScriptUrl()"><div class="hint" id="scr-hint">Paste the /exec URL from your deployment</div>
               <button class="btn bp bsm" style="margin-top:6px;" onclick="saveScriptUrlNow()">💾 Save Script URL</button>
               <span id="scr-save-status" style="font-size:11px;color:var(--t3);margin-left:8px;"></span>
@@ -1748,7 +1748,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
   <!-- Form wrapper — same max-width:900px pattern as New STAC form -->
   <div id="sc-form-wrap" style="padding:18px;">
   <div id="formWrap" style="max-width:900px;">
-  <form id="hseForm" onsubmit="scHandleSubmit(event)" novalidate>
+  <form id="hseForm" onsubmit="return false;" novalidate>
 
     <!-- SECTION 1: SUBCONTRACTOR DETAILS -->
     <div class="fsec" data-step="1">
@@ -1923,7 +1923,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           <div id="hse-url-warning" style="display:none;background:#fdecea;border:1.5px solid #c0392b;border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#c0392b;font-weight:700;">
       ⚠️ Apps Script URL not configured — submissions will fail. Go to <strong>Setup tab → Script URL → Save</strong>.
     </div>
-    <button type="submit" class="btn bo" id="submitBtn">Submit Report →</button>
+    <button type="button" class="btn bo" id="submitBtn" onclick="scHandleSubmit(event)">Submit Report →</button>
         </div>
       </div>
     </div>
