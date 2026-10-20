@@ -4023,7 +4023,7 @@ async function doSubmit(e){
     || '';
   if(!scriptUrl || !scriptUrl.startsWith('https://script.google.com')){
     toast('❌ Script URL not configured. Go to Setup tab → paste Script URL → 💾 Save',5000,'warn');
-    var wb=document.getElementById('sc-stac-submit')||document.querySelector('#stac-form button[type=submit]');
+    var wb=document.getElementById('sc-stac-submit')||document.querySelector('#stac-form button[type=button]')||document.querySelector('#stac-form .btn.bp');
     if(wb){wb.disabled=false;wb.textContent='📤 Submit to Google Sheets →';}
     return;
   }
@@ -4078,10 +4078,11 @@ async function doSubmit(e){
       resetForm(); nav('tracker');
       return;
     }
+    return; // ← CRITICAL: prevents fallthrough to showManualPaste after successful fetch
   }
-  // No Apps Script configured — save locally
+  // No Apps Script configured — save locally only
   addLocal(payload);
-  showManualPaste(payload, stacId);
+  toast('⚠️ Script URL not configured. Record saved locally only.',4000,'warn');
   resetForm(); nav('tracker');
 }
 function showManualPaste(payload,stacId){
@@ -4151,9 +4152,8 @@ function showManualPaste(payload,stacId){
       </div>`;
     document.body.appendChild(msg);
   }).catch(()=>{
-    const sheetUrl=`https://docs.google.com/spreadsheets/d/${CFG.sheetId}/edit#gid=342483107`;
-    toast(`✅ ${stacId} saved locally. Open sheet and paste manually.`,5000);
-    window.open(sheetUrl,'_blank');
+    // Clipboard failed — do NOT navigate to sheet. Show toast only.
+    toast('✅ ' + stacId + ' submitted. If data does not appear in dashboard within 60s, contact HSE Lead.',5000);
   });
 }
 function normalizePenalties(){
