@@ -153,7 +153,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .bsm{padding:4px 9px;font-size:11px;}
 .bxs{padding:3px 7px;font-size:10px;}
 /* CARDS */
-.card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);}
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);padding:16px;}
 .chd{padding:11px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
 .chd h3{font-size:12px;font-weight:600;}
 .cbd{padding:16px;}
@@ -161,6 +161,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .kgrid{display:grid;gap:12px;margin-bottom:16px;}
 .k4{grid-template-columns:repeat(4,1fr);}
 .k5{grid-template-columns:repeat(5,1fr);}
+.k6{grid-template-columns:repeat(6,1fr);}
 .k3{grid-template-columns:repeat(3,1fr);}
 .kpi{background:#fff;border-radius:var(--r);border:1px solid var(--bdr);padding:12px 14px;position:relative;overflow:hidden;}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
@@ -190,7 +191,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .tbl td{padding:8px 10px;border-bottom:1px solid #f0f2f5;vertical-align:middle;}
 .tbl tr:last-child td{border-bottom:none;}
 .tbl tr:hover td{background:#fafbfc;cursor:default;}
-.tw{overflow-x:auto;}
+.tw{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;}
 .sid{font-family:monospace;font-size:11px;color:var(--blue);font-weight:600;}
 .tdc{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* ALERTS */
@@ -248,7 +249,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .msr:last-child{border-bottom:none;}
 /* SCORECARD */
 .sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
-.sc-card{background:#fff;border-radius:var(--r);border:1px solid var(--bdr);padding:16px;cursor:pointer;transition:all .2s;}
+@media(max-width:1100px){.sc-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:650px) {.sc-grid{grid-template-columns:1fr;}}
+.sc-card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);padding:0;cursor:pointer;transition:box-shadow .2s,transform .15s;overflow:hidden;}
 .sc-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12);transform:translateY(-2px);}
 .sc-band{height:5px;border-radius:3px;margin-bottom:12px;}
 .sc-co{font-weight:700;font-size:13px;margin-bottom:2px;line-height:1.3;}
@@ -702,7 +705,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .hs-k5    { grid-template-columns: repeat(5, 1fr); }
 .hs-k4    { grid-template-columns: repeat(4, 1fr); }
 .hs-k3    { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 1100px) { .hs-k5 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1100px) {
+  .hs-k5 { grid-template-columns: repeat(3, 1fr); }
+  .k6 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .hs-k4 { grid-template-columns: repeat(2, 1fr); }
+  .k5, .k6 { grid-template-columns: repeat(3, 1fr); }
+  .k4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 650px) {
+  .k4, .k5, .k6 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .k4, .k5, .k6 { grid-template-columns: 1fr; }
+}
 @media (max-width: 900px)  { .hs-k4 { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 700px)  { .hs-k5, .hs-k4, .hs-k3 { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px)  { .hs-k5, .hs-k4, .hs-k3 { grid-template-columns: 1fr; } }
@@ -826,11 +843,37 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
       </div>
       <!-- KPIs — NO PENALTY -->
-      <div class="kgrid k4">
-        <div class="kpi kbl"><div class="klbl">Total STAC (YTD Filtered)</div><div class="kval" id="k-tot">—</div><div class="ksub" id="k-tot-s">—</div></div>
-        <div class="kpi kam"><div class="klbl">Warning Letters Issued (YTD)</div><div class="kval" id="k-op">—</div><div class="ksub" id="k-op-s">All cases = 1 WL each</div></div>
-        <div class="kpi krd"><div class="klbl">3rd+ Category-Level Escalations</div><div class="kval" id="k-3i">—</div><div class="ksub">Same violation ×3 — escalate</div></div>
-        <div class="kpi kgr"><div class="klbl">Unique Categories at 3rd+</div><div class="kval" id="k-cl">—</div><div class="ksub" id="k-cl-s">Company+Category combos</div></div>
+      <div class="kgrid k6" style="margin-bottom:16px;">
+        <div class="kpi" style="border-top:3px solid var(--blue);">
+          <div class="klbl">Total STAC Cases</div>
+          <div class="kval" id="k-tot">—</div>
+          <div class="ksub" id="k-tot-s">YTD records</div>
+        </div>
+        <div class="kpi" style="border-top:3px solid var(--orange);">
+          <div class="klbl">Warning Letters (YTD)</div>
+          <div class="kval" id="k-op">—</div>
+          <div class="ksub" id="k-op-s">All cases = 1 WL</div>
+        </div>
+        <div class="kpi" style="border-top:3px solid #e07000;">
+          <div class="klbl">3rd+ Escalations</div>
+          <div class="kval" id="k-3i">—</div>
+          <div class="ksub">Same violation ×3</div>
+        </div>
+        <div class="kpi" style="border-top:3px solid #8b2500;">
+          <div class="klbl">Companies to Escalate</div>
+          <div class="kval" id="k-cl">—</div>
+          <div class="ksub" id="k-cl-s">Final WL triggered</div>
+        </div>
+        <div class="kpi" style="border-top:3px solid #c0392b;">
+          <div class="klbl">🔴 Red Band</div>
+          <div class="kval" id="k-red-band" style="color:#c0392b;">—</div>
+          <div class="ksub">Final WL (scorecard)</div>
+        </div>
+        <div class="kpi" style="border-top:3px solid #1a1d24;">
+          <div class="klbl">⚫ Black Band</div>
+          <div class="kval" id="k-black" style="color:#1a1d24;">—</div>
+          <div class="ksub">Suspension (scorecard)</div>
+        </div>
       </div>
       <!-- CHARTS -->
       <div class="ch2">
@@ -3326,11 +3369,18 @@ function renderDash(){
   ytd.forEach(function(d){var k=d.company+'|||'+d.category;catMap[k]=(catMap[k]||0)+1;});
   var esc3=Object.values(catMap).filter(function(v){return v>=3;}).length;
   var coEsc=[...new Set(Object.entries(catMap).filter(function(e){return e[1]>=3;}).map(function(e){return e[0].split('|||')[0];}))].length;
+  // Count companies in Black band (uses same calcComplianceScore as scorecards)
+  var _allDashCos=[...new Set(ytd.map(function(d){return d.company;}).filter(Boolean))];
+  var _blackCount=_allDashCos.filter(function(co){return calcComplianceScore(co).band==='black';}).length;
+  var _redCount  =_allDashCos.filter(function(co){return calcComplianceScore(co).band==='red';}).length;
 
   sv('k-tot',data.length);var kts=document.getElementById('k-tot-s');if(kts)kts.textContent=(hasFilter?'Filtered':'YTD')+': '+ytd.length+' records';
   sv('k-op',wlIssued);
   sv('k-3i',esc3);
   sv('k-cl',coEsc);var kcls=document.getElementById('k-cl-s');if(kcls)kcls.textContent=coEsc+' company(s) to escalate';
+  // Update Black/Red band tiles to match scorecard
+  var kbl=document.getElementById('k-black');if(kbl)kbl.textContent=_blackCount;
+  var krd=document.getElementById('k-red-band');if(krd)krd.textContent=_redCount;
 
   // Alerts
   let alertH='';
