@@ -139,7 +139,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 #topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:0 20px;height:50px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
 #pg-title{font-size:14px;font-weight:600;}
 #pg-sub{font-size:11px;color:var(--t3);margin-left:8px;}
-.tb-r{display:flex;align-items:center;gap:8px;}
+.tb-r{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow:hidden;}
 #cnt{padding:18px;flex:1;overflow-y:auto;}#cnt.hse-active{padding:0 !important;width:100%;}
 .view{display:none;}.view.active{display:block;}
 /* BUTTONS */
@@ -1386,6 +1386,35 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 <div id="view-setup" class="view">
       <div style="max-width:860px;">
 
+        <!-- System Status Banner -->
+        <div id="setup-status-banner" class="card" style="margin-bottom:14px;border-left:4px solid var(--blue);background:linear-gradient(135deg,#f0f2fa,#fff);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--navy);">⚙️ STAC System Configuration</div>
+              <div style="font-size:11px;color:var(--t3);margin-top:2px;" id="setup-status-line">Loading status…</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span id="setup-conn-badge" class="bdg bgy" style="font-size:11px;">Checking…</span>
+              <button class="btn bp bsm" onclick="testScriptUrl()">🔌 Test Connection</button>
+              <button class="btn bk bsm" onclick="loadData(true)">↻ Sync Now</button>
+            </div>
+          </div>
+          <div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="setup-stat-grid">
+            <div style="background:var(--bg);border-radius:var(--r);padding:8px 12px;">
+              <div style="font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;">STAC Records</div>
+              <div style="font-size:18px;font-weight:800;color:var(--navy);" id="ss-stac-count">—</div>
+            </div>
+            <div style="background:var(--bg);border-radius:var(--r);padding:8px 12px;">
+              <div style="font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;">Last Sync</div>
+              <div style="font-size:12px;font-weight:700;color:var(--navy);" id="ss-sync-time">—</div>
+            </div>
+            <div style="background:var(--bg);border-radius:var(--r);padding:8px 12px;">
+              <div style="font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;">Script URL</div>
+              <div style="font-size:10px;font-weight:700;word-break:break-all;color:var(--navy);" id="ss-script-url">Not configured</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Admin Identity -->
         <div class="card" style="margin-bottom:14px;border-left:4px solid #21409a;background:linear-gradient(135deg,#f0f2fa,#fff);">
           <div class="chd"><h3>🔑 Admin Identity</h3><span class="bdg bbl" id="admin-id-badge">Not identified</span></div>
@@ -1404,13 +1433,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
         </div>
 
         <!-- STEP 1: SHEET HEADERS -->
-        <div class="card" style="margin-bottom:14px;border-left:4px solid #1b7a3e;">
-          <div class="chd"><h3>📁 Google Drive — Evidence Root Folder</h3><span class="bdg bgr">Required for Action Tracker</span></div>
+        <div class="card" style="margin-bottom:14px;border-left:4px solid var(--blue);">
+          <div class="chd"><h3>📁 Google Drive — Evidence Root Folder</h3><span class="bdg bbl">Required for Action Tracker</span></div>
           <div class="cbd">
-            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Paste the ID of your Google Drive root folder. STAC evidence subfolders will be auto-created inside it, named after each STAC ID.</div>
-            <input id="cfg-drive-folder" type="text" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;font-family:monospace;margin-bottom:8px;">
-            <button class="btn bp bsm" onclick="saveDriveFolderId()">💾 Save Drive Folder ID</button>
-            <span id="cfg-drive-folder-status" style="font-size:11px;color:var(--t3);margin-left:10px;"></span>
+            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Paste the ID of your Google Drive root folder (the long string after /folders/ in the Drive URL). STAC evidence subfolders will be auto-created inside it.</div>
+            <div style="font-size:11px;color:var(--t3);margin-bottom:8px;font-family:monospace;background:var(--bg);padding:6px 10px;border-radius:var(--r);">
+              Current: <span id="cfg-drive-current">Not set</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input id="cfg-drive-folder" type="text" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-sizing:border-box;font-family:monospace;">
+              <button class="btn bp bsm" onclick="saveDriveFolderId()">💾 Save</button>
+              <span id="cfg-drive-folder-status" style="font-size:11px;color:var(--t3);"></span>
+            </div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;border-left:4px solid #21409a;">
@@ -1558,7 +1592,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
               <button class="btn bp" onclick="saveConfig()">💾 Save</button>
               <button class="btn bk" onclick="loadData()">🔄 Sync Data</button>
-              <button class="btn bg" onclick="testConnection()">🔌 Test Connection</button>
+              <button class="btn bg" id="btn-test-url" onclick="testScriptUrl()">🔌 Test Connection</button>
               <button class="btn bo" onclick="autoAddHeaders()">⚡ Auto-Add Headers</button>
               <span id="cfg-st" style="font-size:11px;color:var(--t3);"></span>
             </div>
@@ -1587,7 +1621,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     
 <!-- ── ACTION TRACKER VIEW ─────────────────────────────────── -->
 <div id="view-actions" class="view">
-  <div style="padding:16px 18px;box-sizing:border-box;width:100%;max-width:1400px;margin:0 auto;">
+  <div style="padding:36px 18px 18px;box-sizing:border-box;width:100%;max-width:1400px;margin:0 auto;">
 
     <!-- Header row -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
@@ -2361,7 +2395,9 @@ function saveDriveFolderId(){
   try{localStorage.setItem('stac_drive_folder_id', DRIVE_FOLDER_ID);}catch(e){}
   var st=document.getElementById('cfg-drive-folder-status');
   if(st){st.textContent='✅ Saved';st.style.color='var(--green)';}
-  toast('✅ Drive Folder ID saved',3000);
+  var cur=document.getElementById('cfg-drive-current');
+  if(cur)cur.textContent=DRIVE_FOLDER_ID.substring(0,30)+'…';
+  toast('✅ Drive Folder ID saved — Action Tracker evidence will use this folder',3000);
 }
 
 // ============================================================
@@ -3362,7 +3398,37 @@ function showDrill(title,data){
 }
 
 function exportDrillXL(){if(drillData.length)doXL(drillData,'Drill-Down');}
-function exportDrillPDF(){if(drillData.length)doPDF(drillData,'Drill-Down Cases');}
+function exportDrillPDF(){
+  if(!drillData.length){toast('No data to export',2000,'warn');return;}
+  var el=document.getElementById('m-drill-body');
+  if(!el){toast('Open a drill-down first',2000,'warn');return;}
+  if(typeof html2canvas!=='function'){toast('PDF library loading, retry in 2s',2500,'warn');return;}
+  var titleEl=document.getElementById('m-drill-title');
+  var title=titleEl?titleEl.textContent:'Drill-Down';
+  var fname='ATNM-Drill-'+title.replace(/[^a-zA-Z0-9 ]/g,'-').substring(0,40)+'-'+new Date().toISOString().split('T')[0]+'.pdf';
+  toast('Generating drill-down PDF…',3000);
+  var prevH=el.style.maxHeight; el.style.maxHeight='none';
+  html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:el.scrollWidth,height:el.scrollHeight})
+  .then(function(canvas){
+    el.style.maxHeight=prevH;
+    var imgData=canvas.toDataURL('image/jpeg',0.95);
+    var jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    if(!jsPDFCtor){toast('jsPDF not loaded',3000,'warn');return;}
+    var orient=canvas.width>canvas.height?'landscape':'portrait';
+    var pdf=new jsPDFCtor({orientation:orient,unit:'mm',format:'a4'});
+    var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),margin=12;
+    var imgW=pw-(margin*2),imgH=(canvas.height*imgW)/canvas.width;
+    if(imgH>ph-(margin*2)){imgH=ph-(margin*2);imgW=(canvas.width*imgH)/canvas.height;}
+    pdf.addImage(imgData,'JPEG',(pw-imgW)/2,margin,imgW,imgH);
+    pdf.setFontSize(7);pdf.setTextColor(150);
+    pdf.text('ATNM STAC | '+title+' | '+new Date().toLocaleDateString(),margin,ph-4);
+    pdf.save(fname);
+    toast('PDF downloaded: '+fname,3000);
+  }).catch(function(e){
+    el.style.maxHeight=prevH;
+    toast('PDF error: '+e.message,4000,'warn');
+  });
+}
 
 // ============================================================
 // DASHBOARD
@@ -5914,6 +5980,18 @@ function nav(v){
   else if(v==='setup'){
     const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;
     loadAdminUsers();
+    loadApprovers();
+    // Pre-fill Script URL from localStorage
+    var _savedUrl=localStorage.getItem('stac_script_url')||CFG.scriptUrl||'';
+    var _scrInp=document.getElementById('cfg-scr');
+    if(_scrInp&&_savedUrl)_scrInp.value=_savedUrl;
+    checkScriptUrl();
+    // Pre-fill Drive Folder ID from localStorage
+    var _dfInp=document.getElementById('cfg-drive-folder');
+    var _dfVal=localStorage.getItem('stac_drive_folder_id')||'';
+    if(_dfInp&&_dfVal)_dfInp.value=_dfVal;
+    var _dfCur=document.getElementById('cfg-drive-current');
+    if(_dfCur)_dfCur.textContent=_dfVal?_dfVal.substring(0,30)+'…':'Not set ❌';
     // Pre-fill admin email if stored
     var _ae=document.getElementById('admin-email-input');
     var _stored=localStorage.getItem('stac_admin_email')||'';
@@ -5923,6 +6001,34 @@ function nav(v){
     if(_stored&&isAdmin){
       if(_st){_st.textContent='✅ Admin access active as '+_stored;_st.style.color='var(--green)';}
       if(_badge){_badge.textContent='Admin: '+_stored;_badge.style.background='#21409a';_badge.style.color='#fff';}
+    }
+    // Update AT approvers display
+    var _atA=document.getElementById('cfg-at-approvers');
+    if(_atA&&AT_APPROVERS.length)_atA.value=AT_APPROVERS.join(', ');
+    // Update connection status badge
+    var _cs=document.getElementById('conn-status');
+    if(_cs){
+      if(_savedUrl&&_savedUrl.includes('/exec')){
+        _cs.textContent='URL Configured';_cs.className='bdg bgr';
+      }
+    }
+    // Populate system status banner
+    var _ssBanner=document.getElementById('setup-status-banner');
+    if(_ssBanner){
+      var _stacC=document.getElementById('ss-stac-count');
+      var _syncT=document.getElementById('ss-sync-time');
+      var _scrU=document.getElementById('ss-script-url');
+      var _sconn=document.getElementById('setup-conn-badge');
+      var _sline=document.getElementById('setup-status-line');
+      if(_stacC) _stacC.textContent=stacData.length+' ('+stacData.filter(function(d){return d.date&&d.date.startsWith(String(CY));}).length+' YTD '+CY+')';
+      var _ts=parseInt(localStorage.getItem(CACHE_KEY_TS_STAC)||'0');
+      if(_syncT) _syncT.textContent=_ts>0?new Date(_ts).toLocaleTimeString():'Never';
+      if(_scrU) _scrU.textContent=_savedUrl?_savedUrl.substring(0,40)+'…':'Not configured ❌';
+      if(_sconn){
+        if(_savedUrl&&_savedUrl.includes('/exec')){_sconn.textContent='✅ URL Configured';_sconn.className='bdg bgr';}
+        else{_sconn.textContent='⚠ URL Not Set';_sconn.className='bdg bam';}
+      }
+      if(_sline) _sline.textContent='Sheet ID: '+CFG.sheetId.substring(0,20)+'… | Admin: '+(adminEmail||'Not set')+' | isAdmin: '+isAdmin;
     }
   }
   else if(v==='hse-form'){
@@ -5994,7 +6100,7 @@ function loadConfig(){
   }catch(e){}
 }
 function saveConfig(){
-  CFG.sheetId=gv('cfg-sid')||CFG.sheetId;
+  // cfg-sid is readonly — never overwrite hardcoded sheetId from UI
   CFG.scriptUrl=gv('cfg-scr')||'';
   CFG.userEmail=gv('cfg-usr')||'';
   CFG.stacSheet='STAC';
@@ -6020,6 +6126,52 @@ async function checkAndSaveAdmin(){
   toast(isAdmin?'✅ Admin access confirmed — delete buttons now visible':'ℹ️ Standard user — no delete access',4000,isAdmin?'':'warn');
 }
 function copyScript(){navigator.clipboard.writeText(SCRIPT_CODE).then(()=>toast('✅ Apps Script copied!',2000));}
+function testScriptUrl(){
+  var url = (document.getElementById('cfg-scr')||{}).value || localStorage.getItem('stac_script_url') || '';
+  var btn = document.getElementById('btn-test-url');
+  var st  = document.getElementById('conn-status');
+  if(!url || !url.startsWith('https://script.google.com')){
+    toast('Paste a valid Apps Script URL first',3000,'warn');
+    return;
+  }
+  if(btn){btn.disabled=true;btn.textContent='Testing…';}
+  if(st){st.textContent='Testing…';st.className='bdg bgy';}
+  fetch(url+'?ping=1&_='+Date.now(),{method:'GET',mode:'cors',cache:'no-store'})
+    .then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.text();
+    })
+    .then(function(text){
+      var ok = text.includes('"status"') || text.includes('ok') || text.includes('STAC');
+      if(btn){btn.disabled=false;btn.textContent='🔌 Test Connection';}
+      if(ok){
+        if(st){st.textContent='✅ Connected';st.className='bdg bgr';}
+        toast('✅ Apps Script is live and responding',4000);
+      } else {
+        if(st){st.textContent='⚠ Unexpected response';st.className='bdg bam';}
+        toast('⚠ Script responded but output unexpected — check doGet function',4000,'warn');
+      }
+    })
+    .catch(function(err){
+      if(btn){btn.disabled=false;btn.textContent='🔌 Test Connection';}
+      // No-cors fallback — if we get a CORS error the script IS reachable
+      if(err.message&&(err.message.includes('CORS')||err.message.includes('NetworkError')||err.message.includes('Failed to fetch'))){
+        if(st){st.textContent='⚠ CORS — try direct test';st.className='bdg bam';}
+        // Try as no-cors ping
+        fetch(url+'?ping=1',{method:'GET',mode:'no-cors'}).then(function(){
+          if(st){st.textContent='✅ URL reachable (CORS blocked — normal for Apps Script)';st.className='bdg bgr';}
+          toast('✅ Script URL is reachable',4000);
+        }).catch(function(){
+          if(st){st.textContent='❌ Not reachable';st.className='bdg brd';}
+          toast('❌ Cannot reach Apps Script URL',3000,'warn');
+        });
+      } else {
+        if(st){st.textContent='❌ Error: '+err.message.substring(0,30);st.className='bdg brd';}
+        toast('❌ Connection error: '+err.message.substring(0,60),4000,'warn');
+      }
+    });
+}
+
 function testConnection(){
   try{
     localStorage.removeItem(CACHE_KEY_STAC);
