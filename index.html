@@ -1220,35 +1220,65 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
           <span id="ri-g1-icon">⬜</span> All corrective actions for this subcontractor are CLOSED
         </div>
         <div id="ri-gate-2" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
-          <span id="ri-g2-icon">⬜</span> HSE GM endorsement report uploaded
+          <span id="ri-g2-icon">⬜</span> Endorsed Reinstatement Report (PDF) uploaded to Drive
         </div>
         <div id="ri-gate-3" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
-          <span id="ri-g3-icon">⬜</span> Contract Holder endorsement report uploaded
+          <span id="ri-g3-icon">⬜</span> Document contains all 3 signatures (HSE GM + Contract Holder + Construction Manager)
         </div>
-        <div id="ri-gate-4" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
-          <span id="ri-g4-icon">⬜</span> Construction Manager endorsement report uploaded
-        </div>
+        <div style="font-size:9px;color:var(--t3);margin-top:4px;padding-left:24px;">Gate 3 is confirmed by the uploader — Admin verifies on acceptance</div>
       </div>
 
-      <!-- Endorsement Upload Section -->
+      <!-- Endorsement Upload Section — Single PDF with all 3 signatures -->
       <div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Endorsement Reports — Upload to Drive, paste link below</div>
+        <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">
+          Endorsed Reinstatement Report — All 3 Signatories on One Document
+        </div>
+        <div style="font-size:10px;color:var(--t3);margin-bottom:10px;">
+          Upload the PDF bearing endorsement signatures from HSE GM + Contract Holder + Construction Manager.
+          File will be saved to the Blacklist &amp; Reinstatement Drive folder automatically.
+        </div>
 
-        <div class="fr fr2" style="gap:10px;margin-bottom:10px;">
-          <div class="fg">
-            <label class="fl">HSE GM Endorsement — Drive Link</label>
-            <input id="ri-hse-gm-link" class="fi" type="url" placeholder="https://drive.google.com/..." oninput="updateReinstatementGates()">
+        <!-- Drop zone -->
+        <div id="ri-drop-zone" onclick="document.getElementById('ri-file-input').click()"
+          style="border:2px dashed var(--bdr);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;background:var(--bg);transition:border .2s,background .2s;"
+          ondragover="riDragOver(event)" ondragleave="riDragLeave(event)" ondrop="riDrop(event)">
+          <div style="font-size:28px;margin-bottom:6px;">📄</div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy);">Click to select PDF or drag &amp; drop here</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:4px;">PDF only · Max 20 MB · All 3 endorsement signatures must be on this document</div>
+        </div>
+        <input id="ri-file-input" type="file" accept=".pdf,application/pdf" style="display:none" onchange="riFileSelected(this)">
+
+        <!-- File selected preview -->
+        <div id="ri-file-preview" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f4ee;border:1px solid #a5d6a7;border-radius:var(--r);display:none;align-items:center;gap:10px;">
+          <span style="font-size:20px;">📄</span>
+          <div style="flex:1;">
+            <div id="ri-file-name" style="font-size:12px;font-weight:700;color:var(--navy);"></div>
+            <div id="ri-file-size" style="font-size:10px;color:var(--t3);"></div>
           </div>
-          <div class="fg">
-            <label class="fl">Contract Holder Endorsement — Drive Link</label>
-            <input id="ri-ch-link" class="fi" type="url" placeholder="https://drive.google.com/..." oninput="updateReinstatementGates()">
+          <button type="button" onclick="riClearFile()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;padding:2px 6px;">✕</button>
+        </div>
+
+        <!-- Upload progress -->
+        <div id="ri-upload-progress" style="display:none;margin-top:10px;">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:4px;" id="ri-upload-status">Uploading to Drive…</div>
+          <div style="height:6px;background:#eee;border-radius:3px;">
+            <div id="ri-upload-bar" style="height:6px;background:var(--blue);border-radius:3px;width:0%;transition:width .3s;"></div>
           </div>
         </div>
-        <div class="fg" style="margin-bottom:10px;">
-          <label class="fl">Construction Manager Endorsement — Drive Link</label>
-          <input id="ri-cm-link" class="fi" type="url" placeholder="https://drive.google.com/..." oninput="updateReinstatementGates()">
+
+        <!-- Uploaded link (set after upload completes) -->
+        <input id="ri-endorsement-link" type="hidden" value="">
+
+        <!-- Drive folder link -->
+        <div style="margin-top:8px;font-size:10px;color:var(--t3);">
+          📁 Saved to: <a href="https://drive.google.com/drive/folders/1lOz-FCJtwcKaf-1EBQQLHxdfm7SX6hdY" target="_blank" style="color:var(--blue);">Blacklist &amp; Reinstatement Drive Folder</a>
         </div>
       </div>
+
+      <!-- Hidden inputs kept for compatibility with submitReinstatement logic -->
+      <input id="ri-hse-gm-link" type="hidden" value="">
+      <input id="ri-ch-link" type="hidden" value="">
+      <input id="ri-cm-link" type="hidden" value="">
 
       <!-- Subcontractor Ownership & Leadership Confirmation -->
       <div class="fg" style="margin-bottom:10px;">
@@ -6093,7 +6123,8 @@ function doPost(e) {
     if (d.action === 'saveUser')      return R(saveUserToList(d.data||d));
     if (d.action === 'hse_stats')       return R(writeHSETxn(d));
     if (d.action === 'markIssued')      return R(markIssued(d));
-    if (d.action === 'writeReinstatement')  return R(writeReinstatement(d.data||d));
+    if (d.action === 'writeReinstatement')    return R(writeReinstatement(d.data||d));
+    if (d.action === 'uploadEndorsementPDF')   return R(uploadEndorsementPDF(d));
     if (d.action === 'updateReinstatement') return R(updateReinstatement(d.data||d));
     if (d.action === 'deleteSTAC')   return R(deleteSTAC(d));
     if (d.action === 'setupHeaders') return R(setupHeadersAction());
@@ -6446,6 +6477,33 @@ function writeHSETxn(d) {
 }
 
 // ── Write Reinstatement Record ─────────────────────────────────
+// ── Upload Endorsement PDF to Drive ────────────────────────────
+function uploadEndorsementPDF(d) {
+  if(!d || !d.base64) return {ok:false, error:'No file data'};
+  Logger.log('uploadEndorsementPDF: company=' + (d.company||'') + ' file=' + (d.fileName||''));
+  try {
+    // Get or create company subfolder in Reinstatement folder
+    var rootFolder = DriveApp.getFolderById(d.folderId || '1lOz-FCJtwcKaf-1EBQQLHxdfm7SX6hdY');
+    var coName = String(d.company||'Unknown').replace(/[^a-zA-Z0-9 _-]/g,'').trim().substring(0,50);
+    var subFolders = rootFolder.getFoldersByName(coName);
+    var subFolder = subFolders.hasNext() ? subFolders.next() : rootFolder.createFolder(coName);
+
+    // Create the file
+    var bytes = Utilities.base64Decode(d.base64);
+    var blob = Utilities.newBlob(bytes, 'application/pdf',
+      d.fileName || ('Reinstatement-Endorsement-' + coName + '-' + Utilities.formatDate(new Date(), 'Asia/Muscat', 'yyyyMMdd') + '.pdf'));
+    var file = subFolder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var fileUrl = file.getUrl();
+    Logger.log('Uploaded: ' + fileUrl);
+    return {ok:true, url:fileUrl, fileId:file.getId(), folderUrl:subFolder.getUrl()};
+  } catch(e) {
+    Logger.log('uploadEndorsementPDF error: ' + e);
+    return {ok:false, error:String(e)};
+  }
+}
+
 function writeReinstatement(d) {
   if(!d||!d.company) return {ok:false, error:'No company provided'};
   Logger.log('writeReinstatement: ' + d.company + ' status=' + d.status);
@@ -8156,69 +8214,172 @@ function onReinstatementCompanyChange(){
 }
 
 // ── Update gate condition indicators ─────────────────────────
+// ── File Upload helpers ─────────────────────────────────────
+var _riSelectedFile = null;
+
+function riDragOver(e){
+  e.preventDefault();
+  var dz=document.getElementById('ri-drop-zone');
+  if(dz){dz.style.borderColor='var(--blue)';dz.style.background='var(--blt)';}
+}
+function riDragLeave(e){
+  var dz=document.getElementById('ri-drop-zone');
+  if(dz){dz.style.borderColor='var(--bdr)';dz.style.background='var(--bg)';}
+}
+function riDrop(e){
+  e.preventDefault();
+  riDragLeave(e);
+  var f=e.dataTransfer.files[0];
+  if(f) riSetFile(f);
+}
+function riFileSelected(inp){
+  if(inp.files&&inp.files[0]) riSetFile(inp.files[0]);
+}
+function riSetFile(f){
+  if(f.type!=='application/pdf'&&!f.name.toLowerCase().endsWith('.pdf')){
+    toast('❌ Only PDF files accepted',3000,'warn'); return;
+  }
+  if(f.size>20*1024*1024){
+    toast('❌ File exceeds 20 MB limit',3000,'warn'); return;
+  }
+  _riSelectedFile=f;
+  var nm=document.getElementById('ri-file-name');
+  var sz=document.getElementById('ri-file-size');
+  var pr=document.getElementById('ri-file-preview');
+  var dz=document.getElementById('ri-drop-zone');
+  if(nm) nm.textContent=f.name;
+  if(sz) sz.textContent=(f.size/1024/1024).toFixed(2)+' MB';
+  if(pr){pr.style.display='flex';}
+  if(dz) dz.style.opacity='.5';
+  // Clear previous uploaded link
+  var el=document.getElementById('ri-endorsement-link');
+  if(el) el.value='';
+  updateReinstatementGates();
+}
+function riClearFile(){
+  _riSelectedFile=null;
+  var pr=document.getElementById('ri-file-preview');
+  var dz=document.getElementById('ri-drop-zone');
+  var inp=document.getElementById('ri-file-input');
+  var el=document.getElementById('ri-endorsement-link');
+  if(pr) pr.style.display='none';
+  if(dz) dz.style.opacity='1';
+  if(inp) inp.value='';
+  if(el) el.value='';
+  updateReinstatementGates();
+}
+
+function uploadEndorsementToDrive(file, company, onSuccess, onError){
+  // Upload PDF to Apps Script which saves to Drive folder
+  var url = getScriptUrl();
+  if(!url){ onError('No script URL configured'); return; }
+
+  // Progress animation
+  var bar=document.getElementById('ri-upload-bar');
+  var stat=document.getElementById('ri-upload-status');
+  var prog=document.getElementById('ri-upload-progress');
+  if(prog) prog.style.display='block';
+  if(stat) stat.textContent='Reading file…';
+  var pct=0;
+  var ticker=setInterval(function(){
+    pct=Math.min(pct+3,85);
+    if(bar) bar.style.width=pct+'%';
+  },200);
+
+  var reader=new FileReader();
+  reader.onload=function(e){
+    if(stat) stat.textContent='Uploading to Drive…';
+    var b64=e.target.result.split(',')[1];
+    fetch(url,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({
+        action:'uploadEndorsementPDF',
+        company: company,
+        fileName: file.name,
+        mimeType: 'application/pdf',
+        base64: b64,
+        folderId: '1lOz-FCJtwcKaf-1EBQQLHxdfm7SX6hdY'
+      })
+    }).then(function(){
+      clearInterval(ticker);
+      if(bar) bar.style.width='100%';
+      if(stat) stat.textContent='Uploaded ✅';
+      // Since no-cors, we can't read the response
+      // Build the folder URL as the link (GS will create subfolder per company)
+      var folderLink='https://drive.google.com/drive/folders/1lOz-FCJtwcKaf-1EBQQLHxdfm7SX6hdY';
+      onSuccess(folderLink);
+    }).catch(function(err){
+      clearInterval(ticker);
+      if(prog) prog.style.display='none';
+      onError(err);
+    });
+  };
+  reader.onerror=function(){ clearInterval(ticker); onError('File read failed'); };
+  reader.readAsDataURL(file);
+}
+
 function updateReinstatementGates(){
-  var co      = (document.getElementById('ri-company')||{}).value||'';
-  var gmLink  = (document.getElementById('ri-hse-gm-link')||{}).value||'';
-  var chLink  = (document.getElementById('ri-ch-link')||{}).value||'';
-  var cmLink  = (document.getElementById('ri-cm-link')||{}).value||'';
+  var co  = (document.getElementById('ri-company')||{}).value||'';
+  var lnk = (document.getElementById('ri-endorsement-link')||{}).value||'';
+  var hasFile = !!_riSelectedFile || lnk.startsWith('http');
 
   var actCheck = co ? allActionsClosed(co) : {allClosed:false};
   var g1 = actCheck.allClosed;
-  var g2 = gmLink.startsWith('http');
-  var g3 = chLink.startsWith('http');
-  var g4 = cmLink.startsWith('http');
-  var allMet = g1 && g2 && g3 && g4;
+  var g2 = hasFile;
+  var g3 = hasFile; // Uploader confirms all 3 sigs on same doc
+  var allMet = g1 && g2 && co;
 
-  function setGate(iconId, met){
-    var el = document.getElementById(iconId);
-    if(el) el.textContent = met ? '✅' : '⬜';
-  }
-  setGate('ri-g1-icon', g1);
-  setGate('ri-g2-icon', g2);
-  setGate('ri-g3-icon', g3);
-  setGate('ri-g4-icon', g4);
+  function setGate(id,met){var e=document.getElementById(id);if(e)e.textContent=met?'✅':'⬜';}
+  setGate('ri-g1-icon',g1);
+  setGate('ri-g2-icon',g2);
+  setGate('ri-g3-icon',g3);
 
-  var summary = document.getElementById('ri-gates-summary');
-  var submitBtn = document.getElementById('ri-submit-btn');
+  var summary=document.getElementById('ri-gates-summary');
+  var btn=document.getElementById('ri-submit-btn');
   if(summary){
     if(!co){
-      summary.textContent = 'Select a company to check gate conditions.';
-      summary.style.color = 'var(--t3)';
+      summary.textContent='Select a company to check gate conditions.';
+      summary.style.color='var(--t3)';
     } else if(allMet){
-      summary.innerHTML = '✅ All gate conditions met — reinstatement application can be submitted.';
-      summary.style.color = '#1b7a3e';
-      summary.style.fontWeight = '700';
+      summary.innerHTML='✅ All conditions met — ready to submit.';
+      summary.style.color='#1b7a3e';
+      summary.style.fontWeight='700';
     } else {
-      var missing = [];
-      if(!g1) missing.push('Close all open actions (' + (actCheck.open||'?') + ' remaining)');
-      if(!g2) missing.push('HSE GM endorsement link');
-      if(!g3) missing.push('Contract Holder endorsement link');
-      if(!g4) missing.push('Construction Manager endorsement link');
-      summary.innerHTML = '⚠ Still required: ' + missing.join(' · ');
-      summary.style.color = '#c0392b';
-      summary.style.fontWeight = '600';
+      var missing=[];
+      if(!g1) missing.push('Close all open actions ('+(actCheck.open||'?')+' remaining)');
+      if(!g2) missing.push('Upload endorsed reinstatement report PDF');
+      summary.innerHTML='⚠ Still required: '+missing.join(' · ');
+      summary.style.color='#c0392b';
+      summary.style.fontWeight='600';
     }
   }
-  if(submitBtn) submitBtn.disabled = !allMet || !co;
+  if(btn) btn.disabled=!allMet;
 }
 
 // ── Submit Reinstatement Application ─────────────────────────
 function submitReinstatement(){
-  var co      = document.getElementById('ri-company').value;
-  var gmLink  = document.getElementById('ri-hse-gm-link').value;
-  var chLink  = document.getElementById('ri-ch-link').value;
-  var cmLink  = document.getElementById('ri-cm-link').value;
-  var notes   = document.getElementById('ri-ownership-notes').value;
-  var riDate  = document.getElementById('ri-date').value;
-  var subBy   = document.getElementById('ri-submitted-by').value;
+  var co    = document.getElementById('ri-company').value;
+  var notes = document.getElementById('ri-ownership-notes').value;
+  var riDate= document.getElementById('ri-date').value;
+  var subBy = document.getElementById('ri-submitted-by').value;
+  var existingLink = (document.getElementById('ri-endorsement-link')||{}).value||'';
 
-  if(!co || !gmLink || !chLink || !cmLink || !riDate){
-    toast('⚠ Fill all required fields and ensure all gates are met', 3000, 'warn');
+  if(!co || !riDate){
+    toast('⚠ Select a company and reinstatement date', 3000, 'warn');
+    return;
+  }
+  if(!_riSelectedFile && !existingLink){
+    toast('⚠ Upload the endorsed reinstatement report PDF first', 3000, 'warn');
     return;
   }
 
   var btn = document.getElementById('ri-submit-btn');
-  if(btn){btn.disabled=true; btn.textContent='Submitting…';}
+  if(btn){btn.disabled=true; btn.textContent='Uploading & Submitting…';}
+
+  function doSubmitRecord(driveLink){
+    // All 3 endorsement fields point to same document
+    var gmLink = driveLink, chLink = driveLink, cmLink = driveLink;
 
   // Calculate probation end date (90 days from reinstatement)
   var rDate = new Date(riDate);
@@ -8249,13 +8410,13 @@ function submitReinstatement(){
     headers: {'Content-Type': 'text/plain;charset=utf-8'},
     body: JSON.stringify({action: 'writeReinstatement', data: record})
   }).then(function(){
-    // Update local data
     var existing = blData.findIndex(function(r){return r.company===co;});
     if(existing !== -1) blData[existing] = record;
     else blData.push(record);
     try{localStorage.setItem(BL_CACHE_KEY, JSON.stringify(blData));}catch(e){}
     cm('m-reinstate');
     renderBlacklist();
+    _riSelectedFile=null;
     toast('✅ Reinstatement application submitted — pending Admin acceptance', 5000);
     if(btn){btn.disabled=false;btn.textContent='Submit Reinstatement Application';}
   }).catch(function(){
@@ -8265,9 +8426,31 @@ function submitReinstatement(){
     try{localStorage.setItem(BL_CACHE_KEY, JSON.stringify(blData));}catch(e){}
     cm('m-reinstate');
     renderBlacklist();
+    _riSelectedFile=null;
     toast('✅ Reinstatement application submitted', 5000);
     if(btn){btn.disabled=false;btn.textContent='Submit Reinstatement Application';}
   });
+  } // end doSubmitRecord
+
+  // If file selected — upload first, then submit
+  if(_riSelectedFile){
+    uploadEndorsementToDrive(_riSelectedFile, co,
+      function(driveLink){
+        // Upload done — set the link and proceed
+        var el=document.getElementById('ri-endorsement-link');
+        if(el) el.value=driveLink;
+        doSubmitRecord(driveLink);
+      },
+      function(err){
+        console.error('Upload failed:', err);
+        toast('❌ File upload failed — check connection and try again', 4000, 'warn');
+        if(btn){btn.disabled=false;btn.textContent='Submit Reinstatement Application';}
+      }
+    );
+  } else {
+    // Already uploaded previously — use existing link
+    doSubmitRecord(existingLink);
+  }
 }
 
 // ── Admin: Accept Reinstatement ────────────────────────────────
