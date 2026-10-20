@@ -187,6 +187,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .bpu{background:var(--pbg);color:var(--purple);}
 /* TABLES */
 .tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl thead th{background:var(--blue);color:#fff;padding:9px 11px;font-size:11px;font-weight:700;text-align:left;position:sticky;top:0;z-index:1;white-space:nowrap;}
+.tbl tbody td{padding:9px 11px;border-top:1px solid var(--bdr);vertical-align:middle;}
+.tbl tbody tr:hover{background:var(--blt)!important;}
+.cls-badge{background:var(--blt);color:var(--blue);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;}
 .tbl th{background:var(--bg);color:var(--t2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--bdr);white-space:nowrap;}
 .tbl td{padding:8px 10px;border-bottom:1px solid #f0f2f5;vertical-align:middle;}
 .tbl tr:last-child td{border-bottom:none;}
@@ -1583,13 +1587,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     
 <!-- ── ACTION TRACKER VIEW ─────────────────────────────────── -->
 <div id="view-actions" class="view">
-  <div style="padding:20px 24px 48px;box-sizing:border-box;width:100%;max-width:1400px;margin:0 auto;">
+  <div style="padding:16px 18px;box-sizing:border-box;width:100%;max-width:1400px;margin:0 auto;">
 
-    <!-- Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+    <!-- Header row -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
       <div>
-        <div style="font-size:18px;font-weight:800;color:var(--text);">✅ Action Tracker</div>
-        <div style="font-size:12px;color:var(--t3);margin-top:2px;">Corrective actions per STAC case — evidence upload · cluster HSE lead review · HSE manager approval · closeout</div>
+        <div style="font-size:17px;font-weight:800;color:var(--text);">✅ Action Tracker</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;">Corrective actions per STAC case — evidence upload · cluster HSE lead review · HSE manager approval · closeout</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn bk bsm" onclick="renderActions()">↻ Refresh</button>
@@ -1598,77 +1602,93 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
       </div>
     </div>
 
-    <!-- Filters -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end;">
-      <div style="min-width:160px;">
-        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Status</div>
-        <select id="at-flt-status" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
-          <option value="">All Statuses</option>
-          <option value="Open">Open</option>
-          <option value="Evidence Uploaded">Evidence Uploaded</option>
-          <option value="Under Review">Under Review</option>
-          <option value="Approved">Approved</option>
-          <option value="Rejected">Rejected</option>
-          <option value="Closed">Closed</option>
-          <option value="Overdue">Overdue</option>
-        </select>
+    <!-- KPI tiles -->
+    <div class="kgrid k4" style="margin-bottom:14px;">
+      <div class="kpi" style="border-top:3px solid var(--blue);">
+        <div class="klbl">Total Actions</div>
+        <div class="kval" id="at-k-total">—</div>
       </div>
-      <div style="min-width:160px;">
-        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Cluster</div>
-        <select id="at-flt-cluster" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
-          <option value="">All Clusters</option>
-          <option>Marmul WD</option>
-          <option>Nimr</option>
-          <option>Greater Birba</option>
-          <option>Amal</option>
-          <option>Marmul Projects</option>
-        </select>
+      <div class="kpi" style="border-top:3px solid var(--red);">
+        <div class="klbl">Open / Overdue</div>
+        <div class="kval" id="at-k-open" style="color:var(--red);">—</div>
       </div>
-      <div style="min-width:200px;">
-        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Subcontractor</div>
-        <select id="at-flt-co" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
-          <option value="">All Companies</option>
-        </select>
+      <div class="kpi" style="border-top:3px solid #6a1b9a;">
+        <div class="klbl">Pending Review</div>
+        <div class="kval" id="at-k-review" style="color:#6a1b9a;">—</div>
       </div>
-      <div style="min-width:130px;">
-        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Overdue Only</div>
-        <select id="at-flt-overdue" onchange="renderActions()" style="width:100%;padding:6px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;">
-          <option value="">All</option>
-          <option value="yes">Overdue Only</option>
-        </select>
+      <div class="kpi" style="border-top:3px solid var(--green);">
+        <div class="klbl">Closed Out</div>
+        <div class="kval" id="at-k-closed" style="color:var(--green);">—</div>
       </div>
-      <button class="btn bsm" style="background:var(--bg);border:1px solid var(--bdr);" onclick="atResetFilters()">✕ Reset</button>
-      <span id="at-rec-count" style="font-size:11px;color:var(--t3);align-self:center;"></span>
     </div>
 
-    <!-- KPI Summary Row -->
-    <div class="kgrid k4" style="margin-bottom:18px;">
-      <div class="kpi kbl"><div class="klbl">Total Actions</div><div class="kval" id="at-k-total">—</div></div>
-      <div class="kpi kam"><div class="klbl">Open / Overdue</div><div class="kval" id="at-k-open">—</div></div>
-      <div class="kpi kpu"><div class="klbl">Pending Review</div><div class="kval" id="at-k-review">—</div></div>
-      <div class="kpi kgr"><div class="klbl">Closed Out</div><div class="kval" id="at-k-closed">—</div></div>
+    <!-- Filters row inside card -->
+    <div class="card" style="padding:12px 16px;margin-bottom:14px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:140px;">
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Status</div>
+          <select id="at-flt-status" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+            <option value="">All Statuses</option>
+            <option>Open</option>
+            <option>Evidence Uploaded</option>
+            <option>Under Review</option>
+            <option>Approved</option>
+            <option>Rejected</option>
+            <option>Closed</option>
+            <option>Overdue</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:130px;">
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Cluster</div>
+          <select id="at-flt-cluster" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+            <option value="">All Clusters</option>
+            <option>Marmul WD</option><option>Nimr</option>
+            <option>Greater Birba</option><option>Amal</option>
+            <option>Marmul Projects</option>
+          </select>
+        </div>
+        <div style="flex:2;min-width:180px;">
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Subcontractor</div>
+          <select id="at-flt-co" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+            <option value="">All Companies</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:110px;">
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Overdue Only</div>
+          <select id="at-flt-overdue" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+            <option value="">All</option>
+            <option value="yes">Overdue Only</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-end;padding-bottom:1px;">
+          <button class="btn bsm" style="background:var(--bg);border:1px solid var(--bdr);" onclick="atResetFilters()">✕ Reset</button>
+          <span id="at-rec-count" style="font-size:11px;color:var(--t3);white-space:nowrap;line-height:30px;"></span>
+        </div>
+      </div>
     </div>
 
     <!-- Table -->
-    <div class="tw" style="border-radius:var(--r);overflow:hidden;border:1px solid var(--bdr);">
-      <table class="tbl" id="at-table">
-        <thead>
-          <tr>
-            <th style="width:130px;">STAC ID</th>
-            <th style="width:90px;">Date Raised</th>
-            <th style="width:110px;">Cluster</th>
-            <th style="width:160px;">Subcontractor</th>
-            <th style="width:85px;">Deadline</th>
-            <th>Corrective Action</th>
-            <th style="width:120px;">Status</th>
-            <th style="width:95px;">Evidence</th>
-            <th style="width:110px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="at-body">
-          <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3);">Loading actions…</td></tr>
-        </tbody>
-      </table>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="tw">
+        <table class="tbl" id="at-table">
+          <thead>
+            <tr>
+              <th style="width:115px;white-space:nowrap;">STAC ID</th>
+              <th style="width:85px;">Date</th>
+              <th style="width:95px;">Cluster</th>
+              <th style="width:170px;">Subcontractor</th>
+              <th style="width:80px;">Deadline</th>
+              <th>Corrective Action</th>
+              <th style="width:115px;">Status</th>
+              <th style="width:80px;text-align:center;">Evidence</th>
+              <th style="width:105px;text-align:center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="at-body">
+            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3);">Loading actions…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -3705,7 +3725,13 @@ function renderScores(){
   const cnt=document.getElementById('sc-cnt');if(cnt)cnt.textContent=filt.length+' subcontractors';
   const bCol={green:'#1b7a3e',yellow:'#c8960c',amber:'#e07000',orange:'#e07000',red:'#c0392b',black:'#1a1d24'};
   let h='';
-  filt.sort((a,b)=>a.score-b.score).forEach(x=>{
+  // Sort: Black → Red → Orange → Yellow → Green, then by score within each band
+  var _bandOrder={black:0,red:1,orange:2,yellow:3,green:4};
+  filt.sort(function(a,b){
+    var bo=(_bandOrder[a.band]||4)-(_bandOrder[b.band]||4);
+    if(bo!==0)return bo;
+    return a.score-b.score; // within same band: lowest score first
+  }).forEach(x=>{
     // Violation count label for progress bar
     var _instLabel=['0 — Compliant','1 — Advisory (1st WL)','2 — At Risk (2nd WL)','3 — Non-Compliant (Final WL)'];
     var _isBlack=x.band==='black';
@@ -8782,7 +8808,11 @@ function renderPerformance(){
     if(srch&&x.name.toLowerCase().indexOf(srch)<0)return false;
     return true;
   }).sort(function(a,b){
-    return b.cs.actualScore-a.cs.actualScore||(a.name.localeCompare(b.name));
+    // Sort: Black → Red → Orange → Yellow → Green, then score desc within band
+    var _bo={black:0,red:1,orange:2,yellow:3,green:4};
+    var bDiff=(_bo[a.cs.band]||4)-(_bo[b.cs.band]||4);
+    if(bDiff!==0)return bDiff;
+    return b.cs.actualScore-a.cs.actualScore;
   });
 
   // KPI tiles
