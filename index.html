@@ -120,7 +120,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
   --r:8px;--sh:0 1px 4px rgba(0,0,0,.08);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;}
 /* SIDEBAR */
 #sb{width:220px;background:var(--blue);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
 .sb-brand{padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,.15);}
@@ -135,7 +135,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .sbi .ic{font-size:14px;width:17px;text-align:center;}
 .sb-foot{padding:8px 14px;border-top:1px solid rgba(255,255,255,.12);font-size:9px;opacity:.4;line-height:1.6;}
 /* MAIN */
-#main{margin-left:220px;display:flex;flex-direction:column;height:100vh;}
+#main{margin-left:220px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 #topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:0 16px;height:50px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
 #pg-title{font-size:14px;font-weight:600;}
 #pg-sub{font-size:11px;color:var(--t3);margin-left:8px;}
