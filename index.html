@@ -800,7 +800,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     <div class="sbi" onclick="nav('hse-form')"><span class="ic">📝</span>Subcontractor HSE Data Entry Form</div>
     <div class="sbi" onclick="nav('hse-stats')"><span class="ic">📊</span>Subcontractor HSE Statistics Dashboard</div>
     <div class="sb-sec">Compliance</div>
-    <div class="sbi" onclick="nav('blacklist')"><span class="ic">⚫</span>Blacklist & Reinstatement</div>
+    <div class="sbi" onclick="nav('blacklist')"><span class="ic">🔄</span>Subcon Reinstatement</div>
     <div class="sb-sec">Tools</div>
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
@@ -1621,111 +1621,114 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
     
 <!-- ── ACTION TRACKER VIEW ─────────────────────────────────── -->
 <div id="view-actions" class="view">
-  <div style="padding:36px 18px 18px;box-sizing:border-box;width:100%;max-width:1400px;margin:0 auto;">
 
-    <!-- Header row -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <div>
-        <div style="font-size:17px;font-weight:800;color:var(--text);">✅ Action Tracker</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:2px;">Corrective actions per STAC case — evidence upload · cluster HSE lead review · HSE manager approval · closeout</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn bk bsm" onclick="renderActions()">↻ Refresh</button>
-        <button class="btn bg bsm" onclick="exportActionsCSV()">⬇ CSV</button>
-        <button class="btn bp bsm" onclick="openAddActionModal()">＋ New Action</button>
+  <!-- ── Header bar ──────────────────────────────────────────── -->
+  <div style="display:flex;justify-content:space-between;align-items:center;
+              margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div>
+      <div style="font-size:17px;font-weight:800;color:var(--text);">✅ Action Tracker</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px;">
+        Corrective actions per STAC case — evidence upload · cluster HSE lead review · HSE manager approval · closeout
       </div>
     </div>
-
-    <!-- KPI tiles -->
-    <div class="kgrid k4" style="margin-bottom:14px;">
-      <div class="kpi" style="border-top:3px solid var(--blue);">
-        <div class="klbl">Total Actions</div>
-        <div class="kval" id="at-k-total">—</div>
-      </div>
-      <div class="kpi" style="border-top:3px solid var(--red);">
-        <div class="klbl">Open / Overdue</div>
-        <div class="kval" id="at-k-open" style="color:var(--red);">—</div>
-      </div>
-      <div class="kpi" style="border-top:3px solid #6a1b9a;">
-        <div class="klbl">Pending Review</div>
-        <div class="kval" id="at-k-review" style="color:#6a1b9a;">—</div>
-      </div>
-      <div class="kpi" style="border-top:3px solid var(--green);">
-        <div class="klbl">Closed Out</div>
-        <div class="kval" id="at-k-closed" style="color:var(--green);">—</div>
-      </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn bk bsm" onclick="renderActions()">↻ Refresh</button>
+      <button class="btn bg bsm" onclick="exportActionsCSV()">⬇ CSV</button>
+      <button class="btn bp bsm" onclick="openAddActionModal()">＋ New Action</button>
     </div>
-
-    <!-- Filters row inside card -->
-    <div class="card" style="padding:12px 16px;margin-bottom:14px;">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-        <div style="flex:1;min-width:140px;">
-          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Status</div>
-          <select id="at-flt-status" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
-            <option value="">All Statuses</option>
-            <option>Open</option>
-            <option>Evidence Uploaded</option>
-            <option>Under Review</option>
-            <option>Approved</option>
-            <option>Rejected</option>
-            <option>Closed</option>
-            <option>Overdue</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:130px;">
-          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Cluster</div>
-          <select id="at-flt-cluster" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
-            <option value="">All Clusters</option>
-            <option>Marmul WD</option><option>Nimr</option>
-            <option>Greater Birba</option><option>Amal</option>
-            <option>Marmul Projects</option>
-          </select>
-        </div>
-        <div style="flex:2;min-width:180px;">
-          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Subcontractor</div>
-          <select id="at-flt-co" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
-            <option value="">All Companies</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:110px;">
-          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Overdue Only</div>
-          <select id="at-flt-overdue" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
-            <option value="">All</option>
-            <option value="yes">Overdue Only</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:6px;align-items:flex-end;padding-bottom:1px;">
-          <button class="btn bsm" style="background:var(--bg);border:1px solid var(--bdr);" onclick="atResetFilters()">✕ Reset</button>
-          <span id="at-rec-count" style="font-size:11px;color:var(--t3);white-space:nowrap;line-height:30px;"></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="card" style="padding:0;overflow:hidden;">
-      <div class="tw">
-        <table class="tbl" id="at-table">
-          <thead>
-            <tr>
-              <th style="width:115px;white-space:nowrap;">STAC ID</th>
-              <th style="width:85px;">Date</th>
-              <th style="width:95px;">Cluster</th>
-              <th style="width:170px;">Subcontractor</th>
-              <th style="width:80px;">Deadline</th>
-              <th>Corrective Action</th>
-              <th style="width:115px;">Status</th>
-              <th style="width:80px;text-align:center;">Evidence</th>
-              <th style="width:105px;text-align:center;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="at-body">
-            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3);">Loading actions…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
   </div>
+
+  <!-- ── KPI tiles ───────────────────────────────────────────── -->
+  <div class="kgrid k4" style="margin-bottom:14px;">
+    <div class="kpi" style="border-top:3px solid var(--blue);">
+      <div class="klbl">Total Actions</div>
+      <div class="kval" id="at-k-total">—</div>
+    </div>
+    <div class="kpi" style="border-top:3px solid var(--red);">
+      <div class="klbl">Open / Overdue</div>
+      <div class="kval" id="at-k-open" style="color:var(--red);">—</div>
+    </div>
+    <div class="kpi" style="border-top:3px solid #6a1b9a;">
+      <div class="klbl">Pending Review</div>
+      <div class="kval" id="at-k-review" style="color:#6a1b9a;">—</div>
+    </div>
+    <div class="kpi" style="border-top:3px solid var(--green);">
+      <div class="klbl">Closed Out</div>
+      <div class="kval" id="at-k-closed" style="color:var(--green);">—</div>
+    </div>
+  </div>
+
+  <!-- ── Filters ─────────────────────────────────────────────── -->
+  <div class="card" style="padding:12px 16px;margin-bottom:14px;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div style="flex:1;min-width:130px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Status</div>
+        <select id="at-flt-status" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+          <option value="">All Statuses</option>
+          <option>Open</option>
+          <option>Evidence Uploaded</option>
+          <option>Under Review</option>
+          <option>Approved</option>
+          <option>Rejected</option>
+          <option>Closed</option>
+          <option>Overdue</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Cluster</div>
+        <select id="at-flt-cluster" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+          <option value="">All Clusters</option>
+          <option>Marmul WD</option>
+          <option>Nimr</option>
+          <option>Greater Birba</option>
+          <option>Amal</option>
+          <option>Marmul Projects</option>
+        </select>
+      </div>
+      <div style="flex:2;min-width:160px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Subcontractor</div>
+        <select id="at-flt-co" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+          <option value="">All Companies</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:110px;">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px;">Overdue Only</div>
+        <select id="at-flt-overdue" onchange="renderActions()" class="fi" style="padding:6px 10px;font-size:12px;">
+          <option value="">All</option>
+          <option value="yes">Overdue Only</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:flex-end;">
+        <button class="btn bsm" style="background:var(--bg);border:1px solid var(--bdr);" onclick="atResetFilters()">✕ Reset</button>
+        <span id="at-rec-count" style="font-size:11px;color:var(--t3);white-space:nowrap;line-height:32px;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Table ───────────────────────────────────────────────── -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="tw">
+      <table class="tbl" id="at-table">
+        <thead>
+          <tr>
+            <th style="width:115px;white-space:nowrap;">STAC ID</th>
+            <th style="width:85px;">Date</th>
+            <th style="width:95px;">Cluster</th>
+            <th style="width:170px;">Subcontractor</th>
+            <th style="width:80px;">Deadline</th>
+            <th>Corrective Action</th>
+            <th style="width:115px;">Status</th>
+            <th style="width:80px;text-align:center;">Evidence</th>
+            <th style="width:105px;text-align:center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="at-body">
+          <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3);">Loading actions…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <!-- ── ADD / EDIT ACTION MODAL ───────────────────────────────── -->
