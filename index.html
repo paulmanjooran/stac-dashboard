@@ -135,12 +135,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .sbi .ic{font-size:14px;width:17px;text-align:center;}
 .sb-foot{padding:8px 14px;border-top:1px solid rgba(255,255,255,.12);font-size:9px;opacity:.4;line-height:1.6;}
 /* MAIN */
-#main{margin-left:220px;flex:1;display:flex;flex-direction:column;}
-#topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:0 20px;height:50px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+#main{margin-left:220px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+#topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:0 16px;height:50px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
 #pg-title{font-size:14px;font-weight:600;}
 #pg-sub{font-size:11px;color:var(--t3);margin-left:8px;}
-.tb-r{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow:hidden;}
-#cnt{padding:18px;flex:1;overflow-y:auto;}#cnt.hse-active{padding:0 !important;width:100%;}
+.tb-r{display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:nowrap;}
+#cnt{padding:18px;flex:1;overflow-y:auto;min-height:0;}#cnt.hse-active{padding:0 !important;width:100%;}
 .view{display:none;}.view.active{display:block;}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit;white-space:nowrap;}
@@ -809,9 +809,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 <div id="main">
   <div id="topbar">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <div id="pg-title">STAC Dashboard</div>
-      <div id="pg-sub">STAC — Subcontractor Tracking & Assurance for Compliance</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <div id="pg-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">STAC Dashboard</div>
+      <div id="pg-sub" style="font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;"></div>
     </div>
     <div class="tb-r"><div style="display:flex;align-items:center;gap:5px;margin-right:10px;font-size:11px;"><span id="health-dot" style="width:8px;height:8px;border-radius:50%;background:#1b7a3e;display:inline-block;flex-shrink:0;"></span><span id="health-lbl" style="color:#1b7a3e;font-weight:600;">Live</span><span id="health-ts" style="color:var(--t3);font-size:10px;margin-left:4px;"></span></div><span id="draft-badge" onclick="retryDrafts()" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;cursor:pointer;margin-right:8px;" title="Pending drafts — click to retry"></span><span id="admin-status" style="display:none;"></span><span id="admin-badge" style="display:none;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.4px;margin-right:4px;">ADMIN</span>
       <span id="dsrc" class="bdg bgy" style="font-size:10px;">⏳ Loading...</span>
@@ -5953,6 +5953,11 @@ function nav(v){
     } else if(v==='actions'){
       cnt.classList.remove('hse-active');
       cnt.style.padding='';
+      // Hide STAC topbar buttons - AT has its own inside the view
+      var _stBat=document.getElementById('stac-topbar-btns');
+      var _luBat=document.getElementById('lu');
+      if(_stBat)_stBat.style.display='none';
+      if(_luBat)_luBat.style.display='none';
       initActionTracker();
     } else {
       cnt.classList.remove('hse-active');
@@ -5963,6 +5968,8 @@ function nav(v){
       var _hseB2=document.getElementById('hse-topbar-btns');
       if(_stacB2)_stacB2.style.display='inline';
       if(_hseB2)_hseB2.style.display='none';
+      var _luR=document.getElementById('lu');
+      if(_luR)_luR.style.display='';
     }
   }
   const ve=document.getElementById('view-'+v);
