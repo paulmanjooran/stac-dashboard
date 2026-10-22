@@ -339,7 +339,7 @@ body::after{
 .modal-hdr{padding:16px 20px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--blue-lt),#f4f6fb);flex-shrink:0;font-size:14px;font-weight:700;color:var(--navy);}
 .modal-cls{background:var(--bg2);border:none;width:28px;height:28px;border-radius:7px;color:var(--t2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .2s;}
 .modal-cls:hover{background:var(--red-lt);color:var(--red);}
-.modal-body{overflow-y:auto;flex:1;}
+.modal-
 
 /* Toast */
 #toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:12px;background:#fff;border:1px solid var(--card-border);color:var(--navy);font-size:12px;font-weight:600;box-shadow:0 8px 32px rgba(30,45,74,.15);opacity:0;transform:translateY(8px);transition:all .3s;z-index:9999;max-width:360px;display:flex;align-items:center;gap:8px;}
@@ -1029,21 +1029,31 @@ body::after{
         </div>
       </div>
       <div class="fbar" style="margin-bottom:14px;">
-        <span class="fl">Cluster</span>
-        <select id="pf-cl" onchange="renderPerformance()"><option value="">All Clusters</option></select>
-        <span class="fl">Band</span>
-        <span id="pf-yr-label" style="font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-lt);padding:3px 10px;border-radius:20px;white-space:nowrap;">YTD</span>
-      <select id="pf-band" onchange="renderPerformance()"><option value="">All Bands</option><option value="green">🟢 Green — Compliant</option><option value="yellow">🟡 Yellow — Advisory</option><option value="orange">🟠 Orange — At Risk</option><option value="red">🔴 Red — Non-Compliant</option><option value="black">⚫ Black — Suspension</option></select>
-        <span class="fl">Year</span>
-        <select id="pf-yr" onchange="renderPerformance()"><option value="">Current Year</option></select>
-        <div class="fdiv"></div>
-        <input type="text" id="pf-s" placeholder="Search..." oninput="renderPerformance()"
-          style="border:1px solid var(--bdr);border-radius:var(--r);padding:5px 10px;font-size:12px;width:180px;">
+        <select id="pf-cl" onchange="renderPerformance()" style="min-width:110px;">
+          <option value="">All Clusters</option>
+        </select>
+        <select id="pf-band" onchange="renderPerformance()" style="min-width:160px;">
+          <option value="">All Bands</option>
+          <option value="green">🟢 Green — Compliant</option>
+          <option value="yellow">🟡 Yellow — Advisory</option>
+          <option value="orange">🟠 Orange — At Risk</option>
+          <option value="red">🔴 Red — Non-Compliant</option>
+          <option value="black">⚫ Black — Suspension</option>
+        </select>
+        <select id="pf-yr" onchange="renderPerformance()" style="min-width:110px;">
+          <option value="">Current Year</option>
+        </select>
+        <span id="pf-yr-label" style="display:none;"></span>
+        <input type="text" id="pf-s" placeholder="🔍 Search subcontractor..."
+          oninput="renderPerformance()"
+          style="flex:1;min-width:160px;border:1px solid var(--card-border);border-radius:7px;
+                 padding:6px 10px;font-size:12px;outline:none;">
         <button class="btn bk bsm" onclick="clearPF()">Reset</button>
         <div class="fdiv"></div>
         <button class="btn bg bsm" onclick="exportPerfXL()">⬇ CSV</button>
-        <button class="btn bk bsm" onclick="exportPerfPDF()">PDF</button>
-        <span id="pf-cnt" style="font-size:11px;color:var(--t3);margin-left:6px;"></span>
+        <button class="btn bk bsm" onclick="exportPerfPDF()">🖨 PDF</button>
+        <span id="pf-cnt" style="font-size:11px;color:var(--blue);font-weight:700;
+          background:var(--blue-lt);padding:3px 10px;border-radius:20px;white-space:nowrap;"></span>
       </div>
       <div class="kgrid" style="grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;">
         <div class="kpi" style="border-top:4px solid #1b7a3e;">
@@ -1066,7 +1076,7 @@ body::after{
           <div class="kval" id="pf-k-red" style="color:#c0392b;">—</div>
           <div class="ksub">Non-Compliant — Final WL</div>
         </div>
-        <div class="kpi" style="border-top:4px solid #1a1d24;">
+        <div class="kpi" style="border-top:4px solid #374151;">
           <div class="klbl">⚫ Black</div>
           <div class="kval" id="pf-k-black" style="color:#374151;">—</div>
           <div class="ksub">Suspension review</div>
@@ -1110,7 +1120,7 @@ body::after{
 
   <!-- KPI TILES -->
   <div class="kgrid k4" style="margin-bottom:14px;">
-    <div class="kpi" style="border-top:4px solid #1a1d24;">
+    <div class="kpi" style="border-top:4px solid #374151;">
       <div class="klbl">Total Blacklisted</div>
       <div class="kval" id="bl-k-total" style="color:#374151;">—</div>
       <div class="ksub" id="bl-k-total-s">YTD + historic</div>
@@ -2757,7 +2767,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
           <div class="kval" id="pf-k-red" style="color:#c0392b;">—</div>
           <div class="ksub">Non-Compliant — Final WL</div>
         </div>
-        <div class="kpi" style="border-top:4px solid #1a1d24;">
+        <div class="kpi" style="border-top:4px solid #374151;">
           <div class="klbl">⚫ Black</div>
           <div class="kval" id="pf-k-black" style="color:#374151;">—</div>
           <div class="ksub">Suspension review</div>
@@ -2801,7 +2811,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
 
   <!-- KPI TILES -->
   <div class="kgrid k4" style="margin-bottom:14px;">
-    <div class="kpi" style="border-top:4px solid #1a1d24;">
+    <div class="kpi" style="border-top:4px solid #374151;">
       <div class="klbl">Total Blacklisted</div>
       <div class="kval" id="bl-k-total" style="color:#374151;">—</div>
       <div class="ksub" id="bl-k-total-s">YTD + historic</div>
@@ -9795,7 +9805,7 @@ function renderPerformance(){
       +'<td style="text-align:center;font-size:11px;color:var(--t3);font-weight:600;">'+(i+1)+'</td>'
       +'<td style="font-weight:700;" title="'+esc(x.name)+'">'+(x.name.length>34?x.name.substring(0,34)+'…':x.name)+'</td>'
       +'<td style="font-size:11px;">'+x.cluster+'</td>'
-      +'<td><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:'+bc+';color:#fff;">'+_be+' '+cs.bandLabel+'</span></td>'
+      +'<td><span style="display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:'+bc+'22;color:'+bc+';border:1px solid '+bc+'44;"><span style="width:8px;height:8px;border-radius:50%;background:'+bc+';flex-shrink:0;"></span>'+cs.bandLabel+'</span></td>'
       +'<td><span class="bdg bbl" style="font-size:9px;">'+cs.profile.label+'</span></td>'
       +'<td style="text-align:center;font-weight:600;">'+x.cases.length+'</td>'
       +'<td style="text-align:center;color:'+(cs.fullDemerits>0?'#c0392b':'var(--t3)')+';font-weight:'+(cs.fullDemerits>0?700:400)+';">'+cs.fullDemerits+'</td>'
