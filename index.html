@@ -7,7 +7,6 @@
 <title>ATNM | STAC Ecosystem v6</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
 :root{
   /* Brand */
   --blue:#3b6fd4;--blue-dk:#2952b3;--blue-lt:#e8eef9;
@@ -50,7 +49,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html{height:100%;}
 body{
-  font-family:'Inter',system-ui,sans-serif;
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
   font-size:13px;
   background:var(--bg);
   color:var(--text);
@@ -538,6 +537,9 @@ body::after{
 .wl-wrap select:focus,.wl-wrap input:focus{
   border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,111,212,.1);}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 <!-- Animated background blob -->
@@ -937,6 +939,46 @@ body::after{
 
   <!-- Cards grid -->
   <div id="sc-grid" class="sc-grid"></div>
+
+    <!-- WARNING LETTER -->
+    <div id="view-warning-letter" class="view">
+      <div class="view-title no-print">
+        <div class="view-title-left">
+          <h2>✉️ Warning Letters</h2>
+          <p>Generate, preview and download official STAC warning letters per case</p>
+        </div>
+      </div>
+      <div class="wl-wrap">
+        <div class="card no-print" style="margin-bottom:16px;"><div class="cbd">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="fg" style="flex:1;min-width:200px;">
+              <label class="fl">Select STAC Case</label>
+              <select id="wl-sel" onchange="loadWL(this.value)" class="fi">
+                <option value="">-- Select STAC ID --</option>
+              </select>
+            </div>
+            <div class="fg" style="min-width:170px;">
+              <label class="fl">Letter Type</label>
+              <select id="wl-type" onchange="loadWL(gv('wl-sel'))" class="fi">
+                <option value="1">1st Formal Warning Letter</option>
+                <option value="2">2nd Warning Letter</option>
+                <option value="3">Final Warning / Escalation</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:7px;align-items:flex-end;padding-bottom:1px;">
+              <button class="btn bk bsm" onclick="downloadWLPDF()">⬇ PDF</button>
+              <button class="btn bg bsm" onclick="downloadWordLetter()">📄 Word</button>
+            </div>
+          </div>
+        </div></div>
+        <div id="wl-content">
+          <div class="card" style="padding:40px;text-align:center;color:var(--t3);">
+            <div style="font-size:30px;margin-bottom:8px;">📄</div>
+            <p>Select a STAC case above to generate the warning letter.</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
 <div id="view-performance" class="view">
       <div class="view-title no-print">
