@@ -1032,7 +1032,8 @@ body::after{
         <span class="fl">Cluster</span>
         <select id="pf-cl" onchange="renderPerformance()"><option value="">All Clusters</option></select>
         <span class="fl">Band</span>
-        <select id="pf-band" onchange="renderPerformance()"><option value="">All Bands</option><option value="green">🟢 Green — Compliant</option><option value="yellow">🟡 Yellow — Advisory</option><option value="orange">🟠 Orange — At Risk</option><option value="red">🔴 Red — Non-Compliant</option><option value="black">⚫ Black — Suspension</option></select>
+        <span id="pf-yr-label" style="font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-lt);padding:3px 10px;border-radius:20px;white-space:nowrap;">YTD</span>
+      <select id="pf-band" onchange="renderPerformance()"><option value="">All Bands</option><option value="green">🟢 Green — Compliant</option><option value="yellow">🟡 Yellow — Advisory</option><option value="orange">🟠 Orange — At Risk</option><option value="red">🔴 Red — Non-Compliant</option><option value="black">⚫ Black — Suspension</option></select>
         <span class="fl">Year</span>
         <select id="pf-yr" onchange="renderPerformance()"><option value="">Current Year</option></select>
         <div class="fdiv"></div>
@@ -1576,7 +1577,7 @@ body::after{
       <div class="klbl">Total Actions</div>
       <div class="kval" id="at-k-total">—</div>
     </div>
-    <div class="kpi" style="border-top:3px solid var(--red);">
+    <div id="at-k-overdue" class="kpi" style="border-top:3px solid var(--red);">
       <div class="klbl">Open / Overdue</div>
       <div class="kval" id="at-k-open" style="color:var(--red);">—</div>
     </div>
@@ -2122,6 +2123,7 @@ body::after{
     <button onclick="resetHseFilters()"
       style="background:transparent;border:1.5px solid #d8dff0;border-radius:6px;
       padding:6px 12px;font-size:11px;color:#6b7a9a;cursor:pointer;">&#10005; Reset</button>
+    <select id="sc-sub-sel" onchange="renderHseStats()" style="padding:6px 10px;border:1px solid #dde3f0;border-radius:7px;font-size:12px;color:var(--text);background:#fff;outline:none;" title="Filter by Subcontractor"><option value="">All Subcontractors</option></select>
     <span id="hse-rec-count" style="font-size:11px;color:#9aa3b8;margin-left:4px;"></span>
     <div style="margin-left:auto;display:flex;gap:8px;">
       <button onclick="hseRefresh()"
@@ -4502,6 +4504,20 @@ async function fetchGvizData(sheetId,gid,sheetName,headers){
   }catch(e){
     console.warn('fetchGvizData failed ['+(sheetName||gid)+']:',e.message,'URL:',url);
     console.warn('Fix: Google Sheet → Share → Anyone with link → Viewer');
+    console.warn('[STAC] Attempted URL:', url);
+    const _dsrc=document.getElementById('dsrc');
+    if(_dsrc){
+      _dsrc.className='bdg brd';
+      if(e.message.includes('401')||e.message.includes('403')){
+        _dsrc.textContent='❌ Sheet not public';
+        toast('❌ Sheet access denied — Share sheet as Anyone→Viewer',6000,'err');
+      } else if(e.message.includes('404')){
+        _dsrc.textContent='❌ Sheet not found';
+        toast('❌ Sheet not found — check Sheet ID in Setup',6000,'err');
+      } else {
+        _dsrc.textContent='⚠ '+e.message.substring(0,30);
+      }
+    }
     // JSONP fallback
     return await loadSheetGvizJSONP(sheetId,gid,sheetName,h);
   }
@@ -4705,8 +4721,8 @@ async function loadData(force){
     }
   }catch(e){console.warn('cache read:',e);}}
   showStatus('connecting');
-  const sid=gv('cfg-sid')||CFG.sheetId;
-  const su=gv('cfg-sub')||CFG.subconSheet;
+  const sid=CFG.sheetId||gv('cfg-sid')||'18Tr6xLT9_2yuHbUaJELGeeSJAAanncBipmlvBbMqxMo';
+  const su=CFG.subconSheet||'Sub Contractors';
   let live=false;
   try{
     const [stacRaw,subconRaw,matrixRaw]=await Promise.all([
@@ -4821,7 +4837,7 @@ function showStatus(state){
   const el=document.getElementById('dsrc');if(!el)return;
   if(state==='connecting'){el.textContent='⏳ Connecting...';el.className='bdg bgy';}
   else if(state==='connected'){
-    const su=gv('cfg-scr')||CFG.scriptUrl;
+    const su=getScriptUrl();
     const hasScript=su&&su.startsWith('https://script.google.com');
     el.textContent='🟢 Live'+( hasScript?' | Script ✅ ['+su.slice(-20)+']':' | Script ⚠️ — Paste URL in Setup tab');
     el.className='bdg bgr'; // bgr = green badge (live)
@@ -5858,10 +5874,13 @@ async function doSubmit(e){
 
   // Always use saved URL first, then CFG default, then hardcoded fallback
   // Single source of truth — 'stac_script_url' key (saved by Setup tab)
-  const scriptUrl = localStorage.getItem('stac_script_url')
-    || gv('cfg-scr')
-    || CFG.scriptUrl
-    || '';
+  // Priority: localStorage → CFG (which itself checks localStorage first) → hardcoded fallback
+  const _lsUrl = (localStorage.getItem('stac_script_url')||'').trim();
+  const _cfgUrl = CFG.scriptUrl||'';
+  const _hardcoded = 'https://script.google.com/macros/s/AKfycbx0NsLzlWRyHkgosA6OFKacVhgQaF1Zc6jHqDKT5Rl1kJka8n41cgXxgHzh-Pyam5EN/exec';
+  const scriptUrl = (_lsUrl.startsWith('https://script.google.com')?_lsUrl:null)
+    || (_cfgUrl.startsWith('https://script.google.com')?_cfgUrl:null)
+    || _hardcoded;
   if(!scriptUrl || !scriptUrl.startsWith('https://script.google.com')){
     toast('❌ Script URL not configured. Go to Setup tab → paste Script URL → 💾 Save',5000,'warn');
     var wb=document.getElementById('sc-stac-submit')||document.querySelector('#stac-form button[type=button]')||document.querySelector('#stac-form .btn.bp');
@@ -5872,6 +5891,10 @@ async function doSubmit(e){
     try{
       toast('⏳ Submitting to Apps Script…',6000);
       console.log('[STAC] Submitting to URL:', scriptUrl);
+      console.log('[STAC] Payload:', JSON.stringify(payload,null,2));
+      console.log('[STAC] action:', payload.action, '| stacId:', payload.stacId,
+        '| cluster:', payload.cluster, '| company:', payload.company,
+        '| category:', payload.category);
       addLocal(payload);saveDraft(payload);
       // no-cors: fire and forget — response is always opaque, can't read it
       // Assume success if fetch doesn't throw a network error
@@ -5909,8 +5932,15 @@ async function doSubmit(e){
       if (_pendingFile) {
         uploadFileToStac_(scriptUrl, stacId, _pendingFile);
       }
-      // Force reload from sheet after 8s to allow GS write time
-      setTimeout(()=>loadData(true),5000);
+      // Clear ALL cache keys before reload so fresh data comes from sheet
+      try{
+        localStorage.removeItem(CACHE_KEY_STAC);
+        localStorage.removeItem(CACHE_KEY_TS_STAC);
+        localStorage.removeItem(CACHE_KEY_MASTERS);
+        localStorage.removeItem(CACHE_KEY_TS_MST);
+      }catch(e){}
+      // Reload after 8s to allow GS write time (Apps Script doPost can take 3-6s)
+      setTimeout(()=>loadData(true),8000);
     }catch(err){
       console.error('doSubmit error:',err);
       // Network error — save locally so record appears in UI
@@ -6035,7 +6065,7 @@ function clearDraft(id){try{const d=JSON.parse(localStorage.getItem('stac_drafts
 function getDrafts(){try{return JSON.parse(localStorage.getItem('stac_drafts')||'[]');}catch(e){return[];}}
 function retryDrafts(){
   const d=getDrafts();if(!d.length){toast('No pending drafts',2000);return;}
-  const su=CFG.scriptUrl;if(!su||!su.startsWith('https://script.google.com')){toast('Configure Apps Script URL in Setup',3000,'warn');return;}
+  const su=getScriptUrl();if(!su||!su.startsWith('https://script.google.com')){toast('Configure Apps Script URL in Setup',3000,'warn');return;}
   toast('Retrying '+d.length+' draft(s)…',4000);
   d.forEach(p=>{fetch(su,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).then(()=>{clearDraft(p.stacId);updateDraftBadge();}).catch(()=>{});});
   setTimeout(()=>{loadData(true);updateDraftBadge();},3000);
@@ -6051,7 +6081,7 @@ function updateDraftBadge(){
 function populateWLSel(){
   const sel=document.getElementById('wl-sel');if(!sel)return;
   sel.innerHTML='<option value="">-- Select STAC ID --</option>';
-  [...stacData].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).forEach(d=>{
+  [...stacData].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,200).forEach(d=>{
     const n=getYTDInst(d);
     const issued=d.wlIssued==='Yes'?' [WL Issued]':'';
     const o=document.createElement('option');
@@ -6395,7 +6425,7 @@ async function markWLIssued(){
   renderAll();
 
   // Try sheet update — use no-cors (fire and forget, no response)
-  const su=gv('cfg-scr')||CFG.scriptUrl;
+  const su=getScriptUrl();
   if(su&&su.startsWith('https://script.google.com')){
     try{
       // no-cors: cannot read response but sheet still gets updated
@@ -6790,7 +6820,7 @@ function saveUserToSheet(){
   }
 
   // Save to Apps Script (Users List sheet)
-  fetch(CFG.scriptUrl,{
+  fetch(getScriptUrl(),{
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({action:'saveUser', data:newUser})
@@ -7019,7 +7049,7 @@ function submitAction(){
   var btn = document.querySelector('#m-action .btn.bp');
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
 
-  fetch(CFG.scriptUrl, {
+  fetch(getScriptUrl(), {
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({action:'writeAction', data:newAction})
@@ -7100,7 +7130,7 @@ function reviewAction(newStatus){
   if(newStatus==='Approved') a.closedDate = new Date().toISOString().split('T')[0];
 
   // Push update to Apps Script
-  fetch(CFG.scriptUrl,{
+  fetch(getScriptUrl(),{
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({action:'updateAction', data:a})
@@ -7253,7 +7283,7 @@ function submitEvidenceLink(){
   a.evidenceDate = new Date().toISOString().split('T')[0];
 
   // Post to Apps Script
-  fetch(CFG.scriptUrl,{
+  fetch(getScriptUrl(),{
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
@@ -7337,7 +7367,7 @@ function confirmCloseAction(){
   a.reviewNote = note||'Action verified and closed by '+email;
   a.closedDate = new Date().toISOString().split('T')[0];
 
-  fetch(CFG.scriptUrl,{
+  fetch(getScriptUrl(),{
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({action:'updateAction', data:{
@@ -7395,7 +7425,7 @@ function frontendDeleteSTAC(stacId){
   toast('⏳ Deleting '+stacId+' from sheet…',3000);
 
   // Step 5: Call Apps Script to delete from sheet + SC_ACTIONS
-  fetch(CFG.scriptUrl,{
+  fetch(getScriptUrl(),{
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
@@ -7425,7 +7455,7 @@ function deleteAction(actionId, stacId){
   toast('⏳ Deleting action from sheet…',2000);
 
   // Delete from SC_ACTIONS sheet
-  fetch(CFG.scriptUrl,{
+  fetch(getScriptUrl(),{
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
@@ -7616,7 +7646,17 @@ function nav(v){
   else if(v==='fines')renderFines();
   else if(v==='performance')renderPerformance();
   else if(v==='scorecards')renderScores();
-  else if(v==='warning-letter')populateWLSel();
+  else if(v==='warning-letter'){
+    populateWLSel();
+    // Auto-load first case so screen isn't blank on arrival
+    setTimeout(function(){
+      var sel=document.getElementById('wl-sel');
+      if(sel&&sel.options.length>1&&!sel.value){
+        sel.selectedIndex=1;
+        loadWL(sel.value);
+      }
+    },150);
+  }
   else if(v==='new-stac'){initForm();}
   else if(v==='setup'){
     const el=document.getElementById('scr-disp');if(el)el.textContent=SCRIPT_CODE;
@@ -7711,7 +7751,11 @@ function renderAll(){
   else if(document.querySelector('#view-fines.active'))renderFines();
   else if(document.querySelector('#view-performance.active'))renderPerformance();
   else if(document.querySelector('#view-scorecards.active'))renderScores();
-  else if(document.querySelector('#view-warning-letter.active'))populateWLSel();
+  else if(document.querySelector('#view-warning-letter.active')){
+    populateWLSel();
+    var _wlSelRA=document.getElementById('wl-sel');
+    if(_wlSelRA&&_wlSelRA.value)loadWL(_wlSelRA.value);
+  }
   else if(document.querySelector('#view-hse-stats.active'))renderHseStats();
   else if(document.querySelector('#view-blacklist.active'))renderBlacklist();
   else if(document.querySelector('#view-hse-form.active')){/* form — no re-render needed */}
@@ -9639,7 +9683,17 @@ function exportBlacklistCSV(){
 // PERFORMANCE REPORT — full league table with scores out of ceiling
 // ================================================================
 function renderPerformance(){
-  if(!dataLoaded)return;
+  if(!dataLoaded){setTimeout(renderPerformance,400);return;}
+  // Ensure we have company data — fall back to stacData companies
+  if(!subconData||subconData.length===0){
+    var _seen2=new Set();
+    stacData.forEach(function(d){
+      if(d.company&&d.company.trim()){
+        var k=d.company.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+        if(!_seen2.has(k)){_seen2.add(k);subconData.push({company:d.company.trim(),cluster:d.cluster||''});}
+      }
+    });
+  }
   const cl   = gv('pf-cl');
   const band = gv('pf-band');
   const yr   = gv('pf-yr')||String(CY);
