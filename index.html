@@ -382,7 +382,7 @@ body::after{
 .alert-ok{background:var(--green-lt);border-color:#86efac;color:#166534;}
 
 /* Responsive */
-@media(max-width:1200px){:root{--sb-w:200px;}.k6{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:1200px){:root{--sb-w:200px;}.k6{grid-template-columns:repeat(3,1fr);}.ch4{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:1000px){.k4{grid-template-columns:repeat(2,1fr);}.k5,.k6{grid-template-columns:repeat(2,1fr);}.sc-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:700px){:root{--sb-w:0px;}#sb{display:none;}#main{margin-left:0;}.k4,.k5,.k6{grid-template-columns:1fr 1fr;}.sc-grid{grid-template-columns:1fr;}}
 @media(max-width:480px){.k4,.k5,.k6{grid-template-columns:1fr;}#cnt{padding:12px;}}
@@ -517,6 +517,8 @@ body::after{
 }
 .mhd .xbtn:hover{background:var(--red-lt);color:var(--red);border-color:#fca5a5;}
 
+
+.ch-hint{font-size:10px;color:var(--t3);text-align:center;margin-top:4px;padding-top:4px;border-top:1px solid var(--bdr);}
 </style>
 </head>
 <body>
@@ -662,18 +664,42 @@ body::after{
           <div class="ksub">Suspension (scorecard)</div>
         </div>
       </div>
-      <!-- CHARTS -->
-      <div class="ch2">
-        <div class="card"><div class="chd"><h3>📍 STAC by Cluster</h3><span class="bdg bbl" style="font-size:9px;">Click to drill down</span></div>
-          <div class="cbd" style="position:relative;height:220px;"><canvas id="ch-cl"></canvas></div><div class="ch-hint">💡 Click a segment to see cases</div></div>
-        <div class="card"><div class="chd"><h3>📂 STAC by Category</h3><span class="bdg bgy" style="font-size:9px;">Click to drill down</span></div>
-          <div class="cbd" style="position:relative;height:220px;"><canvas id="ch-cat"></canvas></div><div class="ch-hint">💡 Click a bar to see cases</div></div>
-      </div>
-      <div class="ch2">
-        <div class="card"><div class="chd"><h3>📅 Monthly Trend</h3></div>
-          <div class="cbd" style="position:relative;height:200px;"><canvas id="ch-tr"></canvas></div><div class="ch-hint">💡 Click a bar to see that month</div></div>
-        <div class="card"><div class="chd"><h3>🏆 Top Violators (YTD)</h3></div>
-          <div class="cbd" id="top-viol">Loading...</div></div>
+      <!-- CHARTS — 4-tile grid -->
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:14px;">
+
+        <div class="card" style="min-width:0;">
+          <div class="chd" style="margin-bottom:8px;">
+            <h3 style="font-size:12px;">📍 By Cluster</h3>
+            <span class="bdg bbl" style="font-size:9px;">Click to drill</span>
+          </div>
+          <div style="position:relative;height:180px;"><canvas id="ch-cl"></canvas></div>
+          <div class="ch-hint">💡 Click segment</div>
+        </div>
+
+        <div class="card" style="min-width:0;">
+          <div class="chd" style="margin-bottom:8px;">
+            <h3 style="font-size:12px;">📂 By Category</h3>
+            <span class="bdg bgy" style="font-size:9px;">Click to drill</span>
+          </div>
+          <div style="position:relative;height:180px;"><canvas id="ch-cat"></canvas></div>
+          <div class="ch-hint">💡 Click bar</div>
+        </div>
+
+        <div class="card" style="min-width:0;">
+          <div class="chd" style="margin-bottom:8px;">
+            <h3 style="font-size:12px;">📅 Monthly Trend</h3>
+          </div>
+          <div style="position:relative;height:180px;"><canvas id="ch-tr"></canvas></div>
+          <div class="ch-hint">💡 Click bar to filter</div>
+        </div>
+
+        <div class="card" style="min-width:0;">
+          <div class="chd" style="margin-bottom:8px;">
+            <h3 style="font-size:12px;">🏆 Top Violators</h3>
+          </div>
+          <div id="top-viol" style="overflow-y:auto;max-height:180px;font-size:11px;">Loading…</div>
+        </div>
+
       </div>
       <!-- 3-INSTANCE MONITOR -->
       <div class="card" style="margin-bottom:14px;">
