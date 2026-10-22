@@ -433,7 +433,7 @@ body::after{
 .kpu .kval{color:var(--purple);}
 
 /* ── Print helpers ───────────────────────────────── */
-@media print{.no-print{display:none!important;}}
+@media print{@media print{.no-print{display:none!important;}}}
 
 /* ── Warning Letter wrapper ──────────────────────── */
 .wl-wrap{max-width:800px;margin:0 auto;}
