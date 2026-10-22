@@ -52,7 +52,7 @@ body{
   font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
   font-size:13px;
   background:var(--bg);
-  color:var(--text);
+  color:var(--navy);
   height:100vh;overflow:hidden;display:flex;
 }
 
@@ -289,7 +289,7 @@ body::after{
   width:100%;padding:9px 12px;
   background:#fff;
   border:1px solid var(--card-border);
-  border-radius:8px;color:var(--text);
+  border-radius:8px;color:var(--navy);
   font-size:12px;font-family:'Inter',sans-serif;
   transition:border-color .2s,box-shadow .2s;outline:none;
 }
@@ -297,7 +297,7 @@ body::after{
   border-color:var(--blue);
   box-shadow:0 0 0 3px rgba(59,111,212,.12);
 }
-.fi option,.fg select option{background:#fff;color:var(--text);}
+.fi option,.fg select option{background:#fff;color:var(--navy);}
 .fl{display:block;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
 .fg{margin-bottom:0;}
 .fr{display:grid;gap:12px;margin-bottom:12px;}
@@ -342,7 +342,7 @@ body::after{
 .modal-body{overflow-y:auto;flex:1;}
 
 /* Toast */
-#toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:12px;background:#fff;border:1px solid var(--card-border);color:var(--text);font-size:12px;font-weight:600;box-shadow:0 8px 32px rgba(30,45,74,.15);opacity:0;transform:translateY(8px);transition:all .3s;z-index:9999;max-width:360px;display:flex;align-items:center;gap:8px;}
+#toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:12px;background:#fff;border:1px solid var(--card-border);color:var(--navy);font-size:12px;font-weight:600;box-shadow:0 8px 32px rgba(30,45,74,.15);opacity:0;transform:translateY(8px);transition:all .3s;z-index:9999;max-width:360px;display:flex;align-items:center;gap:8px;}
 #toast.show{opacity:1;transform:translateY(0);}
 #toast.warn{border-color:#fdba74;background:#fffbf5;}
 #toast.err{border-color:#fca5a5;background:#fff8f8;}
@@ -406,7 +406,7 @@ body::after{
 .fbar select,.fbar input{
   padding:6px 10px;border:1px solid var(--card-border);
   border-radius:7px;font-size:12px;background:#fff;
-  color:var(--text);outline:none;cursor:pointer;
+  color:var(--navy);outline:none;cursor:pointer;
   transition:border-color .18s,box-shadow .18s;}
 .fbar select:focus,.fbar input:focus{
   border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,111,212,.1);}
@@ -463,7 +463,7 @@ body::after{
   box-shadow:var(--sh);}
 .sc-filters-row select,.sc-filters-row input{
   padding:6px 10px;border:1px solid var(--card-border);
-  border-radius:7px;font-size:12px;color:var(--text);
+  border-radius:7px;font-size:12px;color:var(--navy);
   background:#fff;outline:none;
   transition:border-color .18s;}
 .sc-filters-row select:focus,.sc-filters-row input:focus{
@@ -533,9 +533,46 @@ body::after{
 .wl-wrap select,.wl-wrap input[type=text]{
   width:100%;padding:8px 10px;
   border:1px solid var(--card-border);border-radius:8px;
-  font-size:12px;color:var(--text);background:#fff;outline:none;}
+  font-size:12px;color:var(--navy);background:#fff;outline:none;}
 .wl-wrap select:focus,.wl-wrap input:focus{
   border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,111,212,.1);}
+
+/* ── Filter divider ──────────────── */
+.fdiv{width:1px;background:var(--card-border);height:24px;align-self:center;margin:0 4px;flex-shrink:0;}
+
+/* ── Top-violators row ───────────── */
+.msr{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--bdr);}
+.msr:first-child{border-top:none;}
+
+/* ── 3-col KPI grid ──────────────── */
+.k3{grid-template-columns:repeat(3,1fr);}
+
+/* ── Badge: orange outline ──────── */
+.bor{background:rgba(224,122,48,.15);color:#c0560a;border:1px solid rgba(224,122,48,.3);}
+
+/* ── Button: red delete ─────────── */
+.br2{background:rgba(192,57,43,.12);color:var(--red);border:1px solid rgba(192,57,43,.25);}
+.br2:hover{background:rgba(192,57,43,.22);color:var(--red);}
+
+/* ── Button: extra small ─────────── */
+.bxs{padding:3px 7px;font-size:10px;border-radius:6px;}
+
+/* ── Demerit matrix cells ────────── */
+.dp1{display:inline-block;padding:2px 8px;border-radius:4px;background:#dcfce7;color:#166534;font-weight:700;font-size:11px;}
+.dp2{display:inline-block;padding:2px 8px;border-radius:4px;background:#fef3c7;color:#92400e;font-weight:700;font-size:11px;}
+.dp3{display:inline-block;padding:2px 8px;border-radius:4px;background:#fee2e2;color:#991b1b;font-weight:700;font-size:11px;}
+.dfin{display:inline-block;padding:2px 8px;border-radius:4px;background:#fee2e2;color:#991b1b;font-weight:700;font-size:10px;}
+.dpf{display:inline-block;padding:2px 8px;border-radius:4px;background:#fee2e2;color:#991b1b;font-weight:700;}
+
+/* ── view-title sub-elements ─────── */
+.view-title-left h2{font-size:17px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+.view-title-left p{font-size:11px;color:var(--t3);}
+
+/* ── Instance dot: empty ─────────── */
+.iem{background:var(--bg2)!important;border:1px solid var(--bdr)!important;color:var(--t3)!important;}
+
+
+.view-title-left{min-width:0;}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -680,7 +717,7 @@ body::after{
         </div>
         <div class="kpi" style="border-top:3px solid #1a1d24;">
           <div class="klbl">⚫ Black Band</div>
-          <div class="kval" id="k-black" style="color:#1a1d24;">—</div>
+          <div class="kval" id="k-black" style="color:#374151;">—</div>
           <div class="ksub">Suspension (scorecard)</div>
         </div>
       </div>
@@ -932,7 +969,7 @@ body::after{
     </select>
     <input id="sc-s" placeholder="🔍  Search subcontractor…" oninput="renderScores()"
       style="flex:1;min-width:180px;padding:7px 12px;border:1px solid var(--card-border);
-             border-radius:7px;font-size:12px;color:var(--text);outline:none;
+             border-radius:7px;font-size:12px;color:var(--navy);outline:none;
              transition:border-color .18s;background:#fff;">
     <button class="btn bk bsm" onclick="clearSCF()">✕ Reset</button>
   </div>
@@ -987,7 +1024,7 @@ body::after{
           <p>All subcontractors ranked by compliance score — exportable for management review</p>
         </div>
         <div class="view-title-actions">
-          <button class="btn bk bsm" onclick="exportPerf()">⬇ Export CSV</button>
+          <button class="btn bk bsm" onclick="exportPerfXL()">⬇ Export CSV</button>
           <button class="btn bk bsm" onclick="exportPerfPDF()">🖨 Export PDF</button>
         </div>
       </div>
@@ -1030,7 +1067,7 @@ body::after{
         </div>
         <div class="kpi" style="border-top:4px solid #1a1d24;">
           <div class="klbl">⚫ Black</div>
-          <div class="kval" id="pf-k-black" style="color:#1a1d24;">—</div>
+          <div class="kval" id="pf-k-black" style="color:#374151;">—</div>
           <div class="ksub">Suspension review</div>
         </div>
         </div>
@@ -1074,7 +1111,7 @@ body::after{
   <div class="kgrid k4" style="margin-bottom:14px;">
     <div class="kpi" style="border-top:4px solid #1a1d24;">
       <div class="klbl">Total Blacklisted</div>
-      <div class="kval" id="bl-k-total" style="color:#1a1d24;">—</div>
+      <div class="kval" id="bl-k-total" style="color:#374151;">—</div>
       <div class="ksub" id="bl-k-total-s">YTD + historic</div>
     </div>
     <div class="kpi" style="border-top:4px solid #c0392b;">
@@ -1637,7 +1674,7 @@ body::after{
     <div class="mbd" style="padding:20px;">
       <div style="background:var(--blt);border:1px solid var(--blue);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;">
         <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:4px;">Action</div>
-        <div id="m-upload-ev-action" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+        <div id="m-upload-ev-action" style="font-size:13px;font-weight:700;color:var(--navy);">—</div>
         <div id="m-upload-ev-stac" style="font-size:11px;color:var(--blue);margin-top:3px;">—</div>
       </div>
       <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-size:11px;color:#1b7a3e;line-height:1.6;">
@@ -1983,7 +2020,7 @@ body::after{
         </div>
         <div style="background:var(--bg);border-radius:8px;padding:12px 16px;margin-bottom:20px;">
           <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Submitted At</div>
-          <div id="successDate" style="font-size:13px;font-weight:600;color:var(--text);">—</div>
+          <div id="successDate" style="font-size:13px;font-weight:600;color:var(--navy);">—</div>
         </div>
         <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b7a3e;margin-bottom:20px;line-height:1.6;">
           ✔ Data saved to Google Sheet<br>
@@ -2019,11 +2056,11 @@ body::after{
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
             <div style="background:var(--bg);border-radius:8px;padding:12px 16px;">
               <div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Company</div>
-              <div id="hseSuccessCompany" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+              <div id="hseSuccessCompany" style="font-size:13px;font-weight:700;color:var(--navy);">—</div>
             </div>
             <div style="background:var(--bg);border-radius:8px;padding:12px 16px;">
               <div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Submitted At</div>
-              <div id="hseSuccessDate" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+              <div id="hseSuccessDate" style="font-size:13px;font-weight:700;color:var(--navy);">—</div>
             </div>
           </div>
           <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b7a3e;margin-bottom:24px;">
@@ -2454,7 +2491,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
         </div>
         <div class="kpi" style="border-top:3px solid #1a1d24;">
           <div class="klbl">⚫ Black Band</div>
-          <div class="kval" id="k-black" style="color:#1a1d24;">—</div>
+          <div class="kval" id="k-black" style="color:#374151;">—</div>
           <div class="ksub">Suspension (scorecard)</div>
         </div>
       </div>
@@ -2720,7 +2757,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
         </div>
         <div class="kpi" style="border-top:4px solid #1a1d24;">
           <div class="klbl">⚫ Black</div>
-          <div class="kval" id="pf-k-black" style="color:#1a1d24;">—</div>
+          <div class="kval" id="pf-k-black" style="color:#374151;">—</div>
           <div class="ksub">Suspension review</div>
         </div>
         </div>
@@ -2764,7 +2801,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
   <div class="kgrid k4" style="margin-bottom:14px;">
     <div class="kpi" style="border-top:4px solid #1a1d24;">
       <div class="klbl">Total Blacklisted</div>
-      <div class="kval" id="bl-k-total" style="color:#1a1d24;">—</div>
+      <div class="kval" id="bl-k-total" style="color:#374151;">—</div>
       <div class="ksub" id="bl-k-total-s">YTD + historic</div>
     </div>
     <div class="kpi" style="border-top:4px solid #c0392b;">
@@ -3211,7 +3248,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
   <div style="display:flex;justify-content:space-between;align-items:center;
               margin-bottom:14px;flex-wrap:wrap;gap:8px;">
     <div>
-      <div style="font-size:17px;font-weight:800;color:var(--text);">✅ Action Tracker</div>
+      <div style="font-size:17px;font-weight:800;color:var(--navy);">✅ Action Tracker</div>
       <div style="font-size:11px;color:var(--t3);margin-top:2px;">
         Corrective actions per STAC case — evidence upload · cluster HSE lead review · HSE manager approval · closeout
       </div>
@@ -3327,7 +3364,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
     <div class="mbd" style="padding:20px;">
       <div style="background:var(--blt);border:1px solid var(--blue);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;">
         <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;margin-bottom:4px;">Action</div>
-        <div id="m-upload-ev-action" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+        <div id="m-upload-ev-action" style="font-size:13px;font-weight:700;color:var(--navy);">—</div>
         <div id="m-upload-ev-stac" style="font-size:11px;color:var(--blue);margin-top:3px;">—</div>
       </div>
       <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-size:11px;color:#1b7a3e;line-height:1.6;">
@@ -3673,7 +3710,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
         </div>
         <div style="background:var(--bg);border-radius:8px;padding:12px 16px;margin-bottom:20px;">
           <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Submitted At</div>
-          <div id="successDate" style="font-size:13px;font-weight:600;color:var(--text);">—</div>
+          <div id="successDate" style="font-size:13px;font-weight:600;color:var(--navy);">—</div>
         </div>
         <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b7a3e;margin-bottom:20px;line-height:1.6;">
           ✔ Data saved to Google Sheet<br>
@@ -3709,11 +3746,11 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
             <div style="background:var(--bg);border-radius:8px;padding:12px 16px;">
               <div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Company</div>
-              <div id="hseSuccessCompany" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+              <div id="hseSuccessCompany" style="font-size:13px;font-weight:700;color:var(--navy);">—</div>
             </div>
             <div style="background:var(--bg);border-radius:8px;padding:12px 16px;">
               <div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Submitted At</div>
-              <div id="hseSuccessDate" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+              <div id="hseSuccessDate" style="font-size:13px;font-weight:700;color:var(--navy);">—</div>
             </div>
           </div>
           <div style="background:#f0faf4;border:1px solid #a8d5b5;border-radius:8px;padding:12px 16px;font-size:12px;color:#1b7a3e;margin-bottom:24px;">
@@ -4363,7 +4400,7 @@ function calcComplianceScore(company){
   var band, bandLabel, bandColor;
 
   if(maxCatInst>=3 && totalInst>5){
-    band='black';  bandLabel='Suspension / Contract Review'; bandColor='#1a1d24';
+    band='black';  bandLabel='Suspension / Contract Review'; bandColor='#374151';
   }else if(maxCatInst>=3){
     band='red';    bandLabel='Non-Compliant — Final WL';     bandColor='#c0392b';
   }else if(maxCatInst===2){
@@ -5382,7 +5419,7 @@ function renderScores(){
     return true;
   });
   const cnt=document.getElementById('sc-cnt');if(cnt)cnt.textContent=filt.length+' subcontractors';
-  const bCol={green:'#1b7a3e',yellow:'#c8960c',amber:'#e07000',orange:'#e07000',red:'#c0392b',black:'#1a1d24'};
+  const bCol={green:'#1b7a3e',yellow:'#c8960c',amber:'#e07000',orange:'#e07000',red:'#c0392b',black:'#374151'};
   let h='';
   // Sort: Black → Red → Orange → Yellow → Green, then by score within each band
   var _bandOrder={black:0,red:1,orange:2,yellow:3,green:4};
@@ -5405,7 +5442,7 @@ function renderScores(){
     var _scorePct = Math.round((x.score/x.annualCeiling)*100);
     var _ringR=26, _ringC=Math.PI*2*_ringR;
     var _ringDash=(_scorePct/100)*_ringC;
-    var _ringColor = x.band==='green'?'#1b7a3e':x.band==='yellow'?'#c8960c':x.band==='orange'?'#e07000':x.band==='red'?'#c0392b':'#1a1d24';
+    var _ringColor = x.band==='green'?'#1b7a3e':x.band==='yellow'?'#c8960c':x.band==='orange'?'#e07000':x.band==='red'?'#c0392b':'#374151';
     h+=`<div class="sc-card" onclick="openSC('${esc(x.co)}')" style="border:none;overflow:hidden;padding:0;cursor:pointer;">
       <!-- BAND HEADER -->
       <div style="background:${_bg};padding:10px 14px 8px;position:relative;">
@@ -5482,7 +5519,7 @@ function openSC(co){
     orange:'#e07000',   // At Risk 2nd WL  ← tangerine
     amber: '#e07000',   // legacy alias
     red:   '#c0392b',   // Non-Compliant Final WL
-    black: '#1a1d24'    // Suspension
+    black: '#374151'    // Suspension
   };
   const bandBg = cs.bandColor || bc[cs.band] || '#e07000';
   const bandIcon = {green:'🟢',yellow:'🟡',orange:'🟠',amber:'🟡',red:'🔴',black:'⚫'}[cs.band]||'🟠';
@@ -5611,7 +5648,7 @@ function updateComplianceDisplay(co){
   if(!co)return;
   const cs=calcComplianceScore(co);
   sv('fa-dm',cs.deductedPts>0?`-${cs.deductedPts} pts (${cs.fullDemerits} Full Demerit case${cs.fullDemerits!==1?'s':''} YTD)`:'0 pts (no Full Demerit cases YTD)');
-  const scoreColor=cs.band==='green'?'var(--green)':cs.band==='amber'?'var(--amber)':cs.band==='red'?'var(--red)':'#1a1d24';
+  const scoreColor=cs.band==='green'?'var(--green)':cs.band==='amber'?'var(--amber)':cs.band==='red'?'var(--red)':'#374151';
   sv('fa-cs',`${cs.actualScore} / ${cs.profile.annualCeiling} pts (${Math.round(cs.pct)}%) — ${cs.bandLabel}`);
   const cmpEl=document.getElementById('fa-cs');if(cmpEl)cmpEl.style.color=scoreColor;
   sv('fa-comp',cs.bandLabel+(cs.band==='black'?' ⚫':cs.band==='red'?' 🔴':cs.band==='amber'?' 🟡':' 🟢'));
@@ -6083,7 +6120,7 @@ function loadWL(stacId){
     +'<div style="text-align:right;">'
     +'<span style="display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:700;'+typeBadge[type]+'">'+typeLabels[type]+'</span>'
     +'<div style="margin-top:7px;font-size:11.5px;line-height:1.6;color:var(--t2);">'
-    +'<strong style="color:var(--text);">STAC Ref: '+d.id+'</strong><br>'
+    +'<strong style="color:var(--navy);">STAC Ref: '+d.id+'</strong><br>'
     +'Letter Date: '+today+'<br>'
     +'Observation Date: '+fd(d.date)
     +'</div></div></div>'
@@ -6152,6 +6189,10 @@ function loadWL(stacId){
 function closeWLModal(){
   const modal=document.getElementById('wl-print-modal');
   if(modal){modal.style.display='none';}
+}
+function openWLModal(){
+  const modal=document.getElementById('wl-print-modal');
+  if(modal){modal.style.display='flex';}
 }
 
 function _getWLPrintHTML(){
@@ -9650,7 +9691,7 @@ function renderPerformance(){
   });
 
   // Apply filters
-  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#374151'};
   var filtered=scored.filter(function(x){
     if(cl&&x.cluster.trim().toLowerCase()!==cl.trim().toLowerCase())return false;
     if(band&&x.cs.band!==band)return false;
@@ -9691,7 +9732,7 @@ function renderPerformance(){
     var _bandOpacity = {green:'rgba(27,122,62,.06)', yellow:'rgba(200,150,12,.08)',
       orange:'rgba(224,112,0,.09)', red:'rgba(192,57,43,.07)', black:'rgba(26,29,36,.08)'}[cs.band]||'transparent';
     var rowBg = i%2===0 ? _bandOpacity : 'transparent';
-    var scoreColor=cs.band==='green'?'#1b7a3e':cs.band==='yellow'?'#b8860b':cs.band==='orange'?'#d45800':cs.band==='red'?'#c0392b':'#1a1d24';
+    var scoreColor=cs.band==='green'?'#1b7a3e':cs.band==='yellow'?'#b8860b':cs.band==='orange'?'#d45800':cs.band==='red'?'#c0392b':'#374151';
     var bar='<div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+bc+';border-radius:4px;"></div></div><span style="font-size:10px;font-weight:700;color:'+bc+';min-width:32px;text-align:right;">'+Math.round(pct)+'%</span></div>';
     var demColor=cs.deductedPts>0?'#c0392b':'var(--t3)';
     // Band emoji
@@ -9758,6 +9799,18 @@ function exportPerfXL(){
   toast('✅ CSV downloaded: '+fname);
 }
 
+function openPW(title, html){
+  // Opens a print-preview window for reports
+  var w = window.open('','_blank','width=900,height=700');
+  if(!w){toast('⚠ Popup blocked — allow popups and try again',3000,'warn');return;}
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+title+'</title>'
+    +'<style>body{font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#1e2329;padding:20px;}'
+    +'@media print{body{padding:0;}}</style></head><body>'+html
+    +'<br><button onclick="window.print()" style="padding:8px 18px;background:#21409a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">🖨 Print</button>'
+    +'</body></html>');
+  w.document.close();
+}
+
 function exportPerfPDF(){
   if(!dataLoaded){toast('Data not loaded',2000,'warn');return;}
   var yr=gv('pf-yr')||String(CY);
@@ -9766,7 +9819,7 @@ function exportPerfPDF(){
   var _norm=function(v){return(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');};
   subconData.forEach(function(x){if(x.company&&x.company.trim().length>1){var k=_norm(x.company);if(!_seen.has(k)){_seen.add(k);allCo.push(x.company.trim());}}});
   stacData.forEach(function(d){if(d.company&&d.company.trim().length>1){var k=_norm(d.company);if(!_seen.has(k)){_seen.add(k);allCo.push(d.company.trim());}}});
-  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#1a1d24'};
+  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#374151'};
   var rows=allCo.map(function(co){
     var coL=co.toLowerCase();
     var cs=calcComplianceScore(co);
@@ -10084,5 +10137,22 @@ function runDiagnostics(){
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- ── WL PRINT MODAL ────────────────────────────────────── -->
+<div id="wl-print-modal" style="display:none;position:fixed;inset:0;z-index:600;
+  background:rgba(30,45,74,.4);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:28px;max-width:400px;
+    width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;">
+    <div style="font-size:32px;margin-bottom:10px;">📄</div>
+    <div style="font-size:15px;font-weight:700;color:#1e2d4a;margin-bottom:6px;">Warning Letter Ready</div>
+    <p style="font-size:12px;color:#8a97b4;margin-bottom:18px;">Choose your download format.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn bp" onclick="downloadWLPDF();closeWLModal()">📄 Download PDF</button>
+      <button class="btn bk" onclick="downloadWordLetter();closeWLModal()">📝 Download Word</button>
+      <button class="btn bk" style="color:var(--t3);" onclick="closeWLModal()">Cancel</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
