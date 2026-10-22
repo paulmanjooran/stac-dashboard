@@ -519,6 +519,24 @@ body::after{
 
 
 .ch-hint{font-size:10px;color:var(--t3);text-align:center;margin-top:4px;padding-top:4px;border-top:1px solid var(--bdr);}
+
+/* ── Drilldown / popup overlay ───────────────────── */
+.mbg{position:fixed;inset:0;background:rgba(30,45,74,.25);
+     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+     display:none;align-items:center;justify-content:center;
+     z-index:500;padding:20px;}
+.mbg[style*="flex"]{display:flex!important;}
+
+/* ── Warning Letter form labels ─────────────────── */
+.wl-wrap label{display:block;font-size:10px;font-weight:600;
+               color:var(--t3);text-transform:uppercase;
+               letter-spacing:.6px;margin-bottom:4px;}
+.wl-wrap select,.wl-wrap input[type=text]{
+  width:100%;padding:8px 10px;
+  border:1px solid var(--card-border);border-radius:8px;
+  font-size:12px;color:var(--text);background:#fff;outline:none;}
+.wl-wrap select:focus,.wl-wrap input:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,111,212,.1);}
 </style>
 </head>
 <body>
@@ -2189,7 +2207,7 @@ body::after{
 
 
 <!-- DRILLDOWN MODAL -->
-<div class="mbg" id="m-drill"><div class="mbox mbox-lg">
+<div class="mbg" id="m-drill" style="display:none;"><div class="mbox mbox-lg">
   <div class="mhd"><h3 id="m-drill-title">Cases</h3><button class="xbtn" onclick="cm('m-drill')">✕</button></div>
   <div class="mbd">
     <div style="margin-bottom:10px;display:flex;justify-content:flex-end;gap:7px;">
@@ -2202,7 +2220,7 @@ body::after{
 </div></div>
 
 <!-- SCORECARD DETAIL MODAL -->
-<div class="mbg" id="m-sc"><div class="mbox mbox-md">
+<div class="mbg" id="m-sc" style="display:none;"><div class="mbox mbox-md">
   <div class="mhd"><h3 id="m-sc-title">Subcontractor Scorecard</h3>
     <div style="display:flex;gap:7px;"><button class="btn bg bsm" onclick="exportSCXL()">⬇ CSV</button><button class="btn bk bsm" onclick="exportSCPDF()">🖨 PDF</button><button class="xbtn" onclick="cm('m-sc')">✕</button></div>
   </div>
@@ -3879,7 +3897,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
 
 
 <!-- DRILLDOWN MODAL -->
-<div class="mbg" id="m-drill"><div class="mbox mbox-lg">
+<div class="mbg" style="display:none;" id="m-drill"><div class="mbox mbox-lg">
   <div class="mhd"><h3 id="m-drill-title">Cases</h3><button class="xbtn" onclick="cm('m-drill')">✕</button></div>
   <div class="mbd">
     <div style="margin-bottom:10px;display:flex;justify-content:flex-end;gap:7px;">
@@ -3892,7 +3910,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
 </div></div>
 
 <!-- SCORECARD DETAIL MODAL -->
-<div class="mbg" id="m-sc"><div class="mbox mbox-md">
+<div class="mbg" id="m-sc" style="display:none;"><div class="mbox mbox-md">
   <div class="mhd"><h3 id="m-sc-title">Subcontractor Scorecard</h3>
     <div style="display:flex;gap:7px;"><button class="btn bg bsm" onclick="exportSCXL()">⬇ CSV</button><button class="btn bk bsm" onclick="exportSCPDF()">🖨 PDF</button><button class="xbtn" onclick="cm('m-sc')">✕</button></div>
   </div>
