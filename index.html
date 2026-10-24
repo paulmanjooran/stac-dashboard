@@ -966,43 +966,85 @@ body::after{
 
     <!-- WARNING LETTER -->
     <div id="view-warning-letter" class="view">
-      <div class="view-title no-print">
-        <div class="view-title-left">
-          <h2>✉️ Warning Letters</h2>
-          <p>Generate, preview and download official STAC warning letters per case</p>
-        </div>
-      </div>
-      <div class="wl-wrap">
-        <div class="card no-print" style="margin-bottom:16px;"><div class="cbd">
-          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-            <div class="fg" style="flex:1;min-width:200px;">
-              <label class="fl">Select STAC Case</label>
-              <select id="wl-sel" onchange="loadWL(this.value)" class="fi">
-                <option value="">-- Select STAC ID --</option>
-              </select>
-            </div>
-            <div class="fg" style="min-width:170px;">
-              <label class="fl">Letter Type</label>
-              <select id="wl-type" onchange="loadWL(gv('wl-sel'))" class="fi">
-                <option value="1">1st Formal Warning Letter</option>
-                <option value="2">2nd Warning Letter</option>
-                <option value="3">Final Warning / Escalation</option>
-              </select>
-            </div>
-            <div style="display:flex;gap:7px;align-items:flex-end;padding-bottom:1px;">
-              <button class="btn bk bsm" onclick="downloadWLPDF()">⬇ PDF</button>
-              <button class="btn bg bsm" onclick="downloadWordLetter()">📄 Word</button>
-            </div>
-          </div>
-        </div></div>
-        <div id="wl-content">
-          <div class="card" style="padding:40px;text-align:center;color:var(--t3);">
-            <div style="font-size:30px;margin-bottom:8px;">📄</div>
-            <p>Select a STAC case above to generate the warning letter.</p>
-          </div>
-        </div>
-      </div>
+
+  <!-- FILTER BAR -->
+  <div class="fbar" style="margin-bottom:16px;">
+    <select id="wl-flt-cluster" onchange="renderWLScreen()" style="min-width:120px;">
+      <option value="">All Clusters</option>
+    </select>
+    <select id="wl-flt-company" onchange="renderWLScreen()" style="min-width:160px;">
+      <option value="">All Subcontractors</option>
+    </select>
+    <select id="wl-flt-type" onchange="renderWLScreen()" style="min-width:150px;">
+      <option value="">All WL Types</option>
+      <option value="1st">1st Warning Letter</option>
+      <option value="2nd">2nd Warning Letter</option>
+      <option value="Final">Final Warning Letter</option>
+    </select>
+    <select id="wl-flt-issued" onchange="renderWLScreen()" style="min-width:130px;">
+      <option value="">All Statuses</option>
+      <option value="Yes">WL Issued</option>
+      <option value="No">Pending Issue</option>
+    </select>
+    <input id="wl-flt-search" type="text" placeholder="Search STAC ID / company..."
+      oninput="renderWLScreen()"
+      style="flex:1;min-width:160px;padding:7px 11px;border:1px solid var(--card-border);border-radius:7px;font-size:12px;outline:none;">
+    <button class="btn bk bsm" onclick="resetWLFilters()">Reset</button>
+    <div class="fdiv"></div>
+    <button class="btn bk bsm" onclick="exportWLCSV()">CSV</button>
+    <span id="wl-cnt" style="font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-lt);padding:3px 10px;border-radius:20px;white-space:nowrap;">—</span>
+  </div>
+
+  <!-- KPI TILES -->
+  <div class="kgrid k4" style="margin-bottom:16px;">
+    <div class="kpi kbl"><div class="klbl">Total Cases</div><div class="kval" id="wl-k-total">—</div><div class="ksub">in filter</div></div>
+    <div class="kpi kgr"><div class="klbl">WL Issued</div><div class="kval" id="wl-k-issued">—</div><div class="ksub">letters sent</div></div>
+    <div class="kpi kam"><div class="klbl">Pending</div><div class="kval" id="wl-k-pending">—</div><div class="ksub">not yet issued</div></div>
+    <div class="kpi kor"><div class="klbl">Total Penalty</div><div class="kval" id="wl-k-penalty" style="font-size:18px;">—</div><div class="ksub">OMR YTD</div></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+    <div class="tw">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th><th>STAC ID</th><th>Date</th><th>Cluster</th>
+            <th>Subcontractor</th><th>Category</th><th>WL Type</th>
+            <th>Inst.</th><th>Penalty (OMR)</th><th>WL Status</th>
+            <th>Drive</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="wl-table-body">
+          <tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3);">Loading...</td></tr>
+        </tbody>
+      </table>
     </div>
+  </div>
+
+  <!-- WL GENERATOR PANEL -->
+  <div id="wl-gen-panel" style="display:none;">
+    <div class="card">
+      <div class="chd" style="margin-bottom:14px;">
+        <h3>Generate Warning Letter</h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="wl-gen-id" style="font-size:12px;font-weight:700;color:var(--blue);background:var(--blue-lt);padding:4px 12px;border-radius:20px;">—</div>
+          <select id="wl-gen-type" class="fi" style="width:auto;min-width:180px;">
+            <option value="1">1st Formal Warning Letter</option>
+            <option value="2">2nd Warning Letter</option>
+            <option value="3">Final Warning / Escalation</option>
+          </select>
+          <button class="btn bp bsm" onclick="generateWLForSelected()">Preview</button>
+          <button class="btn bk bsm" onclick="downloadWLPDFSelected()">PDF</button>
+          <button class="btn bg bsm" onclick="downloadWLWordSelected()">Word</button>
+          <button class="btn bk bsm" onclick="document.getElementById('wl-gen-panel').style.display='none'">Close</button>
+        </div>
+      </div>
+      <div id="wl-gen-preview" style="max-height:520px;overflow-y:auto;border:1px solid var(--card-border);border-radius:10px;"></div>
+    </div>
+  </div>
+
+</div>
 
 <div id="view-performance" class="view">
       <div class="view-title no-print">
@@ -2286,7 +2328,7 @@ body::after{
 
 <!-- DRILLDOWN MODAL -->
 <div class="mbg" id="m-drill" style="display:none;"><div class="mbox mbox-lg">
-  <div class="mhd"><h3 id="m-drill-title">Cases</h3><button class="xbtn" onclick="cm('m-drill')">✕</button></div>
+  <div class="mhd"><h3 id="m-drill-title">Cases</h3><button id="drill-wl-btn" class="btn bo bsm" onclick="" style="display:none;font-size:11px;">✉ Warning Letter</button> <button class="xbtn" onclick="cm('m-drill')">✕</button></div>
   <div class="mbd">
     <div style="margin-bottom:10px;display:flex;justify-content:flex-end;gap:7px;">
       <button class="btn bg bsm" onclick="exportDrillXL()">⬇ CSV</button>
@@ -5023,6 +5065,18 @@ function getYTDInst(d){
 function showDrill(title,data){
   drillData=data;
   document.getElementById('m-drill-title').textContent=title+' ('+data.length+' cases)';
+  // Show WL button when a single case is drilled, or title is a STAC ID
+  var _wlBtn=document.getElementById('drill-wl-btn');
+  if(_wlBtn){
+    var _firstId=data&&data.length>0?data[0].id:null;
+    if(_firstId){
+      _wlBtn.style.display='inline-flex';
+      _wlBtn.setAttribute('onclick',"cm('m-drill');openWL('"+_firstId+"')");
+      _wlBtn.title='Open Warning Letter for '+_firstId;
+    } else {
+      _wlBtn.style.display='none';
+    }
+  }
   let h='';
   data.forEach(d=>{
     const n=getYTDInst(d);
@@ -6075,939 +6129,198 @@ function updateDraftBadge(){
 // ============================================================
 // WARNING LETTER
 // ============================================================
-function populateWLSel(){
-  const sel=document.getElementById('wl-sel');if(!sel)return;
-  sel.innerHTML='<option value="">-- Select STAC ID --</option>';
-  [...stacData].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,200).forEach(d=>{
-    const n=getYTDInst(d);
-    const issued=d.wlIssued==='Yes'?' [WL Issued]':'';
-    const o=document.createElement('option');
-    o.value=d.id;
-    o.textContent=`${d.id} | ${d.company.substring(0,24)} | ${d.cluster} | Inst#${n}${issued}`;
-    sel.appendChild(o);
+function renderWLScreen(){
+  var cl    = (document.getElementById('wl-flt-cluster')||{}).value||'';
+  var co    = (document.getElementById('wl-flt-company')||{}).value||'';
+  var type  = (document.getElementById('wl-flt-type')||{}).value||'';
+  var issued= (document.getElementById('wl-flt-issued')||{}).value||'';
+  var srch  = ((document.getElementById('wl-flt-search')||{}).value||'').trim().toLowerCase();
+  var rows  = stacData.filter(function(d){
+    if(cl    && (d.cluster||'').toLowerCase().indexOf(cl.toLowerCase())<0)return false;
+    if(co    && (d.company||'').toLowerCase().indexOf(co.toLowerCase())<0)return false;
+    if(type  && !(d.wlType||'').toLowerCase().includes(type.toLowerCase()))return false;
+    if(issued==='Yes' && d.wlIssued!=='Yes')return false;
+    if(issued==='No'  && d.wlIssued==='Yes')return false;
+    if(srch  && (d.id+' '+d.company+' '+d.category).toLowerCase().indexOf(srch)<0)return false;
+    return true;
+  }).sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
+  var totalPen=rows.reduce(function(s,d){return s+(d.penalty||0);},0);
+  var iss_ct=rows.filter(function(d){return d.wlIssued==='Yes';}).length;
+  function _sv(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  _sv('wl-k-total',rows.length);
+  _sv('wl-k-issued',iss_ct);
+  _sv('wl-k-pending',rows.length-iss_ct);
+  _sv('wl-k-penalty','OMR '+totalPen.toFixed(3));
+  _sv('wl-cnt',rows.length+' case'+(rows.length!==1?'s':''));
+  var tbody=document.getElementById('wl-table-body');
+  if(!tbody)return;
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--t3);">No cases match the filters.</td></tr>';return;}
+  var h='';
+  rows.forEach(function(d,i){
+    var issBadge=d.wlIssued==='Yes'?'<span class="bdg bgr" style="font-size:9px;">WL Issued</span>':'<span class="bdg bam" style="font-size:9px;">Pending</span>';
+    var penCell=d.penalty>0?'<strong style="color:var(--red);">OMR '+Number(d.penalty).toFixed(3)+'</strong>':'<span style="color:var(--t3);">—</span>';
+    var wt=(d.wlType||'').toLowerCase();
+    var wtBadge=wt.includes('final')?'<span class="bdg brd2">Final WL</span>':wt.includes('2nd')?'<span class="bdg bam">2nd WL</span>':wt.includes('1st')?'<span class="bdg bgy">1st WL</span>':'<span class="bdg bbl">'+(d.wlType||'—')+'</span>';
+    h+='<tr onclick="selectWLCase(\''+esc(d.id)+'\',this)" style="cursor:pointer;">'
+      +'<td style="color:var(--t3);font-size:11px;">'+(i+1)+'</td>'
+      +'<td><span class="sid">'+esc(d.id)+'</span></td>'
+      +'<td style="white-space:nowrap;font-size:11px;">'+fd(d.date)+'</td>'
+      +'<td><span class="bdg bbl" style="font-size:9px;">'+esc(d.cluster)+'</span></td>'
+      +'<td class="tdc" style="max-width:160px;" title="'+esc(d.company)+'">'+esc(d.company)+'</td>'
+      +'<td class="tdc" style="max-width:130px;" title="'+esc(d.category)+'">'+esc(d.category.substring(0,38))+'</td>'
+      +'<td>'+wtBadge+'</td>'
+      +'<td style="text-align:center;font-weight:700;">'+d.instances+'</td>'
+      +'<td>'+penCell+'</td>'
+      +'<td>'+issBadge+'</td>'
+      +'<td>'+(d.driveUrl?'<a href="'+esc(d.driveUrl)+'" target="_blank" class="btn bk bxs" style="text-decoration:none;">📁 Open</a>':'<span style="color:var(--t3);font-size:10px;">—</span>')+'</td>'
+      +'<td style="white-space:nowrap;"><button class="btn bp bxs" onclick="event.stopPropagation();selectWLCase(\''+esc(d.id)+'\',null,true)">✉ WL</button></td>'
+      +'</tr>';
   });
+  tbody.innerHTML=h;
 }
 
-function openWL(id){nav('warning-letter');setTimeout(()=>{populateWLSel();const s=document.getElementById('wl-sel');if(s)s.value=id;loadWL(id);},120);}
-
-function limitWords(text, max){
-  if(!text) return '';
-  var words = text.trim().split(/\s+/);
-  if(words.length <= max) return text.trim();
-  return words.slice(0, max).join(' ') + '…';
-}
-
-function renderWLPreview(){
-  // Alias for loadWL — triggered by dropdown change
-  var sel = document.getElementById('wl-sel');
-  if(sel) loadWL(sel.value);
-}
-
-function loadWL(stacId){
-  var wc=document.getElementById('wl-content');
-  if(!stacId){
-    if(wc) wc.innerHTML='<div class="card" style="padding:40px;text-align:center;color:var(--t3);"><div style="font-size:28px;margin-bottom:8px;">📄</div><p>Select a STAC case above.</p></div>';
-    return;
+var _wlSelectedId=null;
+function selectWLCase(id,rowEl,openPanel){
+  _wlSelectedId=id;
+  document.querySelectorAll('#wl-table-body tr').forEach(function(r){r.style.background='';});
+  if(rowEl)rowEl.style.background='var(--blue-lt)';
+  var gi=document.getElementById('wl-gen-id');if(gi)gi.textContent=id;
+  if(openPanel){
+    var p=document.getElementById('wl-gen-panel');
+    if(p){p.style.display='block';p.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    generateWLForSelected();
   }
-  var d=stacData.find(function(s){return s.id===stacId;});
-  if(!d||!wc) return;
+}
 
-  var type=parseInt(gv('wl-type'))||1;
+function generateWLForSelected(){
+  if(!_wlSelectedId){toast('Select a case row first',2000,'warn');return;}
+  var d=stacData.find(function(s){return s.id===_wlSelectedId;});
+  if(!d){toast('Case not found',2000,'err');return;}
+  var type=parseInt((document.getElementById('wl-gen-type')||{}).value)||1;
+  var p=document.getElementById('wl-gen-preview');
+  if(p)p.innerHTML=buildWLHtml_FE(d,type);
+}
+
+function downloadWLPDFSelected(){
+  if(!_wlSelectedId){toast('Select a case first',2000,'warn');return;}
+  var d=stacData.find(function(s){return s.id===_wlSelectedId;});
+  if(!d)return;
+  var type=parseInt((document.getElementById('wl-gen-type')||{}).value)||1;
+  var p=document.getElementById('wl-gen-preview');
+  if(p)p.innerHTML=buildWLHtml_FE(d,type);
+  setTimeout(function(){
+    if(typeof html2canvas!=='undefined'&&typeof jspdf!=='undefined'){
+      var el=document.getElementById('wl-gen-preview');
+      if(!el)return;
+      el.style.maxHeight='none';
+      html2canvas(el,{scale:2,useCORS:true,logging:false}).then(function(canvas){
+        var pdf=new jspdf.jsPDF('p','mm','a4');
+        var w=pdf.internal.pageSize.getWidth();
+        var h=(canvas.height*w)/canvas.width;
+        pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,w,h);
+        pdf.save((_wlSelectedId||'WL')+'_Warning_Letter.pdf');
+        if(el)el.style.maxHeight='';
+      });
+    }else{window.print();}
+  },300);
+}
+
+function downloadWLWordSelected(){
+  if(!_wlSelectedId){toast('Select a case first',2000,'warn');return;}
+  var d=stacData.find(function(s){return s.id===_wlSelectedId;});
+  if(!d)return;
+  var type=parseInt((document.getElementById('wl-gen-type')||{}).value)||1;
+  var html=buildWLHtml_FE(d,type);
+  var blob=new Blob(['<html xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta charset="UTF-8"></head><body>'+html+'</body></html>'],{type:'application/msword'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(_wlSelectedId||'WL')+'_Warning_Letter.doc';
+  a.click();
+}
+
+function resetWLFilters(){
+  ['wl-flt-cluster','wl-flt-company','wl-flt-type','wl-flt-issued'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var s=document.getElementById('wl-flt-search');if(s)s.value='';
+  renderWLScreen();
+}
+
+function exportWLCSV(){
+  var rows=stacData;
+  var csv='STAC ID,Date,Cluster,Subcontractor,Category,WL Type,Instances,Penalty OMR,WL Issued,Contract No\n';
+  rows.forEach(function(d){csv+='"'+d.id+'","'+fd(d.date)+'","'+d.cluster+'","'+d.company.replace(/"/g,'""')+'","'+d.category.replace(/"/g,'""')+'","'+(d.wlType||'')+'","'+d.instances+'","'+(d.penalty||'')+'","'+(d.wlIssued||'')+'","'+(d.contractNo||'')+'"\n';});
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='STAC_WL_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+function initWLScreen(){
+  var clSel=document.getElementById('wl-flt-cluster');
+  if(clSel&&clSel.options.length<2){
+    var cls=[...new Set(stacData.map(function(d){return d.cluster||'';}).filter(Boolean))].sort();
+    cls.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;clSel.appendChild(o);});
+  }
+  var coSel=document.getElementById('wl-flt-company');
+  if(coSel&&coSel.options.length<2){
+    var cos=[...new Set(stacData.map(function(d){return d.company||'';}).filter(Boolean))].sort();
+    cos.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c.substring(0,40);coSel.appendChild(o);});
+  }
+  renderWLScreen();
+}
+
+function buildWLHtml_FE(d,type){
   var today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-  var typeLabels=['','1st Formal Warning Letter','2nd Warning Letter','Final Warning Letter'];
-  var typeBadge=['',
-    'background:#fef9ec;color:#8b6504;border:1px solid #d68910;',
-    'background:#fef3e8;color:#d46b10;border:1px solid #f58220;',
-    'background:#fdecea;color:#c0392b;border:1px solid #c0392b;'];
-  var ytdN=getYTDInst(d);
-  var desc=limitWords(d.description||'HSE non-compliance details recorded on site.',195);
-
-  // Penalty row
-  var penRow = d.penalty>0
-    ? '<tr style="background:#fff5f5;"><td style="font-weight:600;color:#c0392b;">Financial Penalty</td>'
-      +'<td><strong style="color:#c0392b;">⚠ OMR '+Number(d.penalty).toFixed(3)+'</strong>'
-      +' — per subcontract agreement Clause [X.X].</td></tr>'
-    : '';
-
-  // Type-specific notice
-  var typeNotice='';
-  if(type===2) typeNotice='<div style="background:#fef9ec;border-left:3px solid #d68910;padding:7px 12px;margin:8px 0;font-size:11.5px;border-radius:0 4px 4px 0;">'
-    +'<strong>2nd Warning:</strong> A Mandatory HSE Improvement Plan (MHIP) must be submitted within 48 hours.</div>';
-  if(type===3) typeNotice='<div style="background:#fdecea;border:1.5px solid #c0392b;padding:7px 12px;margin:8px 0;font-size:11.5px;border-radius:4px;">'
-    +'<strong style="color:#c0392b;">⚠ FINAL WARNING — ESCALATION NOTICE:</strong> '
-    +'Continued non-compliance will result in: (1) Commercial Hold, (2) Subcontractor Review Board, (3) Work Suspension.</div>';
-
-  wc.innerHTML='<div class="wl-letter" id="wl-print-area">'
-
-    // ── LETTERHEAD ──
-    +'<div class="wl-letterhead">'
-    +'<div style="display:flex;align-items:center;gap:12px;">'
-    +('<img src="'+ATNM_LOGO+'" style="height:56px;width:auto;object-fit:contain;" alt="ATNM">')
-    +'</div>'
-    +'<div style="text-align:right;">'
-    +'<span style="display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:700;'+typeBadge[type]+'">'+typeLabels[type]+'</span>'
-    +'<div style="margin-top:7px;font-size:11.5px;line-height:1.6;color:var(--t2);">'
-    +'<strong style="color:var(--navy);">STAC Ref: '+d.id+'</strong><br>'
-    +'Letter Date: '+today+'<br>'
-    +'Observation Date: '+fd(d.date)
-    +'</div></div></div>'
-
-    // ── ADDRESSEE ──
-    +'<p style="margin:10px 0 4px 0;font-size:12px;">'
-    +'<strong>To:</strong> '+d.company+'<br>'
-    +'<strong>Attn:</strong> '+(d.owner||'The Subcontract Manager')+'<br>'
-    +'<strong>Cc:</strong> ATNM HSE Manager | ATNM Contract Manager | ATNM Commercial Manager'
-    +'</p>'
-
-    // ── SUBJECT ──
-    +'<div class="wl-subject">SUBJECT: HSE STAC NON-COMPLIANCE — '+typeLabels[type].toUpperCase()+'</div>'
-
-    // ── OPENING ──
-    +'<p style="font-size:12px;margin:8px 0 6px 0;">Dear Sir/Madam,</p>'
-    +'<p style="font-size:12px;margin:0 0 8px 0;">We formally notify you of the following HSE non-compliance recorded on site under the ATNM STAC programme.</p>'
-
-    // ── DETAILS TABLE ──
-    +'<table class="wl-table">'
-    +'<tr><td>STAC Reference</td><td><strong>'+d.id+'</strong></td></tr>'
-    +'<tr><td>Date of Observation</td><td>'+fd(d.date)+'</td></tr>'
-    +'<tr><td>Cluster / Location</td><td>'+d.cluster+'</td></tr>'
-    +'<tr><td>HSE Violation Category</td><td>'+d.category+'</td></tr>'
-    +'<tr><td>YTD Instance #</td><td><strong>#'+ytdN+'</strong> (YTD '+CY+' — same company + same category)</td></tr>'
+  var tLabels=['','1st Formal Warning Letter','2nd Warning Letter','Final Warning Letter / Escalation'];
+  var n=getYTDInst(d);
+  var penRow=d.penalty>0?'<tr style="background:#fff5f5;"><td style="font-weight:600;color:#c0392b;padding:5px 10px;border:.5px solid #ccc;">Financial Penalty</td><td style="padding:5px 10px;border:.5px solid #ccc;"><strong style="color:#c0392b;">OMR '+Number(d.penalty).toFixed(3)+'</strong></td></tr>':'';
+  var tNote='';
+  if(type===2)tNote='<div style="background:#fef9ec;border-left:3px solid #d68910;padding:7px 12px;margin:8px 0;font-size:11pt;"><strong>2nd Warning:</strong> A Mandatory HSE Improvement Plan (MHIP) must be submitted within 48 hours.</div>';
+  if(type>=3)tNote='<div style="background:#fdecea;border:1.5px solid #c0392b;padding:7px 12px;margin:8px 0;font-size:11pt;"><strong style="color:#c0392b;">FINAL WARNING:</strong> Continued non-compliance will result in Commercial Hold and Work Suspension.</div>';
+  return '<div style="font-family:Calibri,Arial,sans-serif;font-size:12pt;color:#1e2329;padding:24px;background:#fff;">'
+    +'<div style="display:flex;justify-content:space-between;padding-bottom:10px;margin-bottom:14px;border-bottom:2px solid #21409a;">'
+    +'<div><div style="font-weight:900;font-size:16pt;color:#21409a;">AL TASNIM ENTERPRISES LLC</div>'
+    +'<div style="font-size:9pt;color:#555;">PDO Onshore Drilling Contract | C3100000177</div></div>'
+    +'<div style="text-align:right;font-size:9pt;color:#555;">Ref: '+esc(d.id)+'<br>Date: '+today+'<br>Contract: '+esc(d.contractNo||'—')+'</div></div>'
+    +'<div style="font-weight:700;font-size:13pt;color:#21409a;margin-bottom:6px;">'+tLabels[type]+'</div>'
+    +'<div style="background:#e8edf8;border-left:4px solid #21409a;padding:5px 12px;font-weight:700;font-size:11pt;margin-bottom:10px;">Re: HSE Non-Compliance — '+esc(d.category)+'</div>'
+    +tNote
+    +'<p style="margin:8px 0;line-height:1.6;">Dear <strong>'+esc(d.company)+'</strong>,</p>'
+    +'<p style="margin:8px 0;line-height:1.6;">This is your <strong>'+tLabels[type]+'</strong> for HSE non-compliance at <strong>'+esc(d.cluster)+'</strong> on <strong>'+fd(d.date)+'</strong>.</p>'
+    +'<p style="margin:8px 0;line-height:1.6;"><strong>Observation:</strong> '+esc(d.description||'HSE non-compliance recorded on site.')+'</p>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:10.5pt;margin:10px 0;">'
+    +'<tr style="background:#21409a;color:#fff;"><td colspan="2" style="padding:6px 10px;font-weight:700;">NON-COMPLIANCE DETAILS</td></tr>'
+    +'<tr><td style="background:#f0f2f5;font-weight:600;width:36%;padding:5px 10px;border:.5px solid #ccc;">STAC Case ID</td><td style="padding:5px 10px;border:.5px solid #ccc;">'+esc(d.id)+'</td></tr>'
+    +'<tr><td style="background:#f0f2f5;font-weight:600;padding:5px 10px;border:.5px solid #ccc;">Cluster</td><td style="padding:5px 10px;border:.5px solid #ccc;">'+esc(d.cluster)+'</td></tr>'
+    +'<tr><td style="background:#f0f2f5;font-weight:600;padding:5px 10px;border:.5px solid #ccc;">Category</td><td style="padding:5px 10px;border:.5px solid #ccc;">'+esc(d.category)+'</td></tr>'
+    +'<tr><td style="background:#f0f2f5;font-weight:600;padding:5px 10px;border:.5px solid #ccc;">YTD Instance</td><td style="padding:5px 10px;border:.5px solid #ccc;">Instance '+n+' of '+new Date().getFullYear()+'</td></tr>'
     +penRow
     +'</table>'
-
-    // ── NON-COMPLIANCE DESCRIPTION ──
-    +'<p style="margin:8px 0 3px 0;font-size:12px;"><strong>Non-Compliance Description:</strong></p>'
-    +'<p style="font-size:12px;margin:0 0 8px 0;text-align:justify;line-height:1.55;">'+desc+'</p>'
-
-    +typeNotice
-
-    // ── CORRECTIVE ACTIONS ──
-    +'<div class="wl-actions"><strong>Required Corrective Actions:</strong>'
-    +'<ol style="margin:5px 0 3px 16px;padding:0;line-height:1.5;">'
-    +'<li>Stop non-compliant activity / rectify unsafe condition <strong>immediately</strong>.</li>'
-    +'<li>Root Cause Analysis (RCA) within <strong>48 hours</strong>.</li>'
-    +'<li>Submit CAPA to ATNM HSE by <strong>'+(d.closeoutDate||'within 7 days')+'</strong>.</li>'
-    +'<li>Re-induct / retrain all personnel involved.</li>'
-    +'<li>Implement controls to prevent recurrence.</li>'
-    +'<li>Log and track all actions in <strong>Safety Qube</strong> via Subcontract Coordinator.</li>'
-    +'</ol></div>'
-
-    // ── CLOSING ──
-    +'<p style="font-size:12px;margin:8px 0 4px 0;">Failure to comply by the deadline will result in escalation per STAC three-instance protocol.</p>'
-    +'<p style="font-size:12px;margin:0 0 10px 0;">Acknowledge receipt within <strong>24 hours</strong>.</p>'
-
-    // ── SIGNATURES ──
-    +'<hr style="border:none;border-top:1px solid var(--bdr);margin:10px 0;">'
-    +'<p style="font-size:12px;font-weight:600;margin:0 0 16px 0;">For Al Tasnim Enterprises LLC:</p>'
-    +'<div class="wl-sig">'
-    +'<div><div class="wl-sig-line">HSE Manager<br>Name: ______________________<br>Date: ______________________</div></div>'
-    +'<div><div class="wl-sig-line">Contract Manager<br>Name: ______________________<br>Date: ______________________</div></div>'
+    +'<p style="margin:8px 0;line-height:1.6;">Corrective action is required. A written response must be submitted within <strong>48 hours</strong>.</p>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;">'
+    +'<div style="font-size:10pt;line-height:2.2;">Issued By (HSE):<br>Name: ______________________<br>Date: ______________________<br>Signature: __________________</div>'
+    +'<div style="font-size:10pt;line-height:2.2;">Acknowledged By:<br>Name: ______________________<br>Date: ______________________<br>Signature: __________________</div>'
     +'</div>'
-
-    // ── FOOTER ──
-    +'<hr style="border:none;border-top:1px solid var(--bdr);margin:12px 0 6px 0;">'
-    +'<p style="font-size:9px;color:#999;margin:0;">ATNM STAC Digital Ecosystem | STAC Ref: '+d.id+' | Official HSE Record</p>'
-    +'</div>';
+    +'<hr style="border:none;border-top:1px solid #ccc;margin:14px 0 6px;">'
+    +'<p style="font-size:9pt;color:#999;">ATNM STAC | Ref: '+esc(d.id)+' | Official HSE Record</p></div>';
 }
 
-
-
-function closeWLModal(){
-  const modal=document.getElementById('wl-print-modal');
-  if(modal){modal.style.display='none';}
-}
-function openWLModal(){
-  const modal=document.getElementById('wl-print-modal');
-  if(modal){modal.style.display='flex';}
+function openWL(id){
+  nav('warning-letter');
+  setTimeout(function(){
+    initWLScreen();
+    selectWLCase(id,null,true);
+  },350);
 }
 
-function _getWLPrintHTML(){
-  var el=document.getElementById('wl-print-area');
-  if(!el) return null;
-  var html=el.innerHTML
-    .replace(/var\(--blue\)/g,'#21409a').replace(/var\(--orange\)/g,'#f58220')
-    .replace(/var\(--red\)/g,'#c0392b').replace(/var\(--text\)/g,'#1e2329')
-    .replace(/var\(--t2\)/g,'#4d555b').replace(/var\(--t3\)/g,'#888')
-    .replace(/var\(--bg\)/g,'#f0f2f5').replace(/var\(--blt\)/g,'#e8edf8')
-    .replace(/var\(--bdr\)/g,'#dde1e6').replace(/var\(--rbg\)/g,'#fdecea')
-    .replace(/var\(--abg\)/g,'#fef9ec').replace(/var\(--gbg\)/g,'#eaf4ee')
-    .replace(/var\(--r\)/g,'4px').replace(/var\(--sh\)/g,'none').replace(/var\(--card\)/g,'#fff')
-    .replace(/var\(--amber\)/g,'#d68910');
-
-  var CSS=[
-    '@page{size:A4 portrait;margin:14mm 16mm 14mm 16mm;}',
-    '*{box-sizing:border-box;margin:0;padding:0;}',
-    'html,body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1e2329;line-height:1.45;background:#fff;}',
-    '.wl-letter{width:100%;background:#fff;border:none!important;box-shadow:none!important;padding:0;}',
-    '.wl-letterhead{display:flex;justify-content:space-between;align-items:flex-start;',
-      'padding-bottom:8pt;margin-bottom:10pt;border-bottom:2pt solid #21409a;}',
-    '.wl-letterhead img{height:50pt;width:auto;}',
-    'p{text-align:justify;margin:4pt 0;font-size:10.5pt;line-height:1.45;}',
-    'strong{font-weight:700;}',
-    '.wl-subject{background:#e8edf8;padding:5pt 10pt;margin:7pt 0;font-weight:700;',
-      'font-size:10.5pt;border-left:3.5pt solid #21409a;}',
-    '.wl-table{width:100%;border-collapse:collapse;margin:6pt 0;font-size:9.5pt;}',
-    '.wl-table td{padding:4pt 7pt;border:0.5pt solid #ccc;vertical-align:top;}',
-    '.wl-table td:first-child{background:#f0f2f5;font-weight:600;width:36%;color:#4d555b;}',
-    '.wl-table tr:nth-child(even) td{background:#f8f9fc;}',
-    '.wl-table tr:nth-child(even) td:first-child{background:#ebebf0;}',
-    '.wl-penalty-box,.wl-final-warn{background:#fdecea;border:1pt solid #c0392b;',
-      'padding:5pt 9pt;margin:5pt 0;font-size:9.5pt;}',
-    '.wl-actions{background:#e8edf8;border-left:3.5pt solid #21409a;',
-      'padding:5pt 9pt;margin:5pt 0;font-size:9.5pt;}',
-    'ol{margin:3pt 0 2pt 15pt;padding:0;}',
-    'li{margin-bottom:2pt;font-size:9.5pt;line-height:1.4;}',
-    '.wl-sig{display:grid;grid-template-columns:1fr 1fr;gap:30pt;margin-top:10pt;}',
-    '.wl-sig-line{font-size:9pt;color:#4d555b;line-height:1.7;}',
-    'hr{border:none;border-top:0.5pt solid #dde1e6;margin:6pt 0;}',
-    '@media print{html,body{background:#fff;}',
-      '.wl-letter{border:none!important;box-shadow:none!important;}}'
-  ].join('');
-
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ATNM Warning Letter</title>'
-    +'<style>'+CSS+'<\/style></head><body>'
-    +'<div class="wl-letter">'+html+'</div>'
-    +'<\/body><\/html>';
-}
+// Legacy stubs — keep so old onclick refs don't error
+function populateWLSel(){initWLScreen();}
+function loadWL(id){if(id)selectWLCase(id,null,true);}
+function closeWLModal(){var m=document.getElementById('wl-print-modal');if(m)m.style.display='none';}
+function openWLModal(){var m=document.getElementById('wl-print-modal');if(m)m.style.display='flex';}
+function downloadWLPDF(){downloadWLPDFSelected();}
+function downloadWordLetter(){downloadWLWordSelected();}
 
 
-function downloadWLWord(){
-  // Generate Word-compatible HTML document of the Warning Letter
-  var sel = document.getElementById('wl-sel');
-  if(!sel||!sel.value){toast('Select a STAC case first',2000,'warn');return;}
-  var d = stacData.find(function(x){return x.id===sel.value;});
-  if(!d){toast('Case not found',2000,'warn');return;}
-  var wlHtml = document.getElementById('wl-preview-body');
-  if(!wlHtml){toast('Load a WL first',2000,'warn');return;}
-  var blob = new Blob([
-    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">' +
-    '<head><meta charset="UTF-8"><title>WL ' + d.id + '</title></head><body>' +
-    wlHtml.innerHTML + '</body></html>'
-  ], {type:'application/msword'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'WL-' + d.id + '.doc';
-  a.click();
-  toast('✅ Word document downloaded',3000);
-}
-
-function downloadWLPDF(){
-  var el=document.getElementById('wl-print-area');
-  if(!el){toast('Select a STAC case first',2000,'warn');return;}
-  var stacId=gv('wl-sel')||'ATNM-WL';
-  toast('Generating PDF…',3000);
-  // Scale=2 for crisp A4 output
-  html2canvas(el,{
-    scale:2,
-    useCORS:true,
-    backgroundColor:'#ffffff',
-    width:el.scrollWidth,
-    height:el.scrollHeight
-  }).then(function(canvas){
-    var imgData=canvas.toDataURL('image/jpeg',0.97);
-    var jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
-    if(!jsPDFCtor){toast('PDF library not loaded yet, retry in 2s',3000,'warn');return;}
-    var pdf=new jsPDFCtor({
-      orientation:'portrait',
-      unit:'mm',
-      format:'a4'
-    });
-    var pageW=pdf.internal.pageSize.getWidth();
-    var pageH=pdf.internal.pageSize.getHeight();
-    var margin=12;
-    var imgW=pageW-(margin*2);
-    var imgH=(canvas.height*imgW)/canvas.width;
-    // If content is taller than A4, scale down to fit
-    if(imgH>pageH-(margin*2)){
-      imgH=pageH-(margin*2);
-      imgW=(canvas.width*imgH)/canvas.height;
-    }
-    var x=(pageW-imgW)/2;
-    pdf.addImage(imgData,'JPEG',x,margin,imgW,imgH);
-    pdf.save(stacId+'.pdf');
-    toast('✅ PDF downloaded: '+stacId+'.pdf',3000);
-  }).catch(function(e){
-    toast('❌ PDF error: '+e.message,4000,'warn');
-  });
-}
-
-
-
-// WL PDF — all routes to downloadWLPDF
-function wlExportPDF(){downloadWLPDF();}
-function printWLDirect(){downloadWLPDF();}
-function wlDoPrint(){downloadWLPDF();}
-
-
-function downloadWordLetter(){
-  var el=document.getElementById('wl-print-area');
-  if(!el){toast('Select a STAC case first',2000,'warn');return;}
-  var stacId=gv('wl-sel')||'ATNM-WL';
-
-  var body=el.innerHTML
-    .replace(/var\(--blue\)/g,'#21409a').replace(/var\(--orange\)/g,'#f58220')
-    .replace(/var\(--red\)/g,'#c0392b').replace(/var\(--text\)/g,'#1e2329')
-    .replace(/var\(--t2\)/g,'#4d555b').replace(/var\(--t3\)/g,'#888')
-    .replace(/var\(--bg\)/g,'#f0f2f5').replace(/var\(--blt\)/g,'#e8edf8')
-    .replace(/var\(--bdr\)/g,'#dde1e6').replace(/var\(--rbg\)/g,'#fdecea')
-    .replace(/var\(--abg\)/g,'#fef9ec').replace(/var\(--gbg\)/g,'#eaf4ee')
-    .replace(/var\(--r\)/g,'4px').replace(/var\(--sh\)/g,'none')
-    .replace(/var\(--card\)/g,'#fff').replace(/var\(--amber\)/g,'#d68910')
-    .replace(/style="margin:5px 0 3px 16px;padding:0;line-height:1\.5;"/g,
-             'style="margin:3pt 0 2pt 15pt;padding:0;line-height:1.35;"');
-
-  var doc=
-    '<html xmlns:o="urn:schemas-microsoft-com:office:office"'+
-    ' xmlns:w="urn:schemas-microsoft-com:office:word"'+
-    ' xmlns="http://www.w3.org/TR/REC-html40">'+
-    '<head><meta charset="UTF-8"><title>'+stacId+'</title>'+
-    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'+
-    '<w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
-    '<style>'+
-    '@page Section1{size:21.0cm 29.7cm;margin:1.5cm 1.6cm 1.5cm 1.6cm;'+
-    'mso-header-margin:.4cm;mso-footer-margin:.4cm;}'+
-    'div.Section1{page:Section1;}'+
-    'body,p,td,li{font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#1e2329;'+
-    'line-height:1.35;mso-line-height-rule:exactly;}'+
-    'p{margin:2.5pt 0;text-align:justify;mso-justify-low-priority:0;}'+
-    'strong{font-weight:bold;}'+
-    '.wl-letter{width:100%;}'+
-    '.wl-letterhead{width:100%;border-collapse:collapse;border-bottom:2pt solid #21409a;'+
-    'padding-bottom:6pt;margin-bottom:8pt;display:flex;justify-content:space-between;}'+
-    'img{height:48pt;width:auto;}'+
-    '.wl-subject{background:#e8edf8;padding:4pt 8pt;margin:5pt 0;font-weight:bold;'+
-    'border-left:3pt solid #21409a;display:block;font-size:10pt;}'+
-    '.wl-table{width:100%;border-collapse:collapse;margin:4pt 0;font-size:9pt;}'+
-    '.wl-table td{padding:3pt 6pt;border:.5pt solid #bbb;vertical-align:top;}'+
-    '.wl-table td:first-child{background:#f0f2f5;font-weight:bold;width:35%;color:#4d555b;}'+
-    'ol{margin:3pt 0 2pt 14pt;padding:0;}'+
-    'li{margin-bottom:2pt;text-align:justify;font-size:9pt;line-height:1.35;'+
-    'mso-line-height-rule:exactly;}'+
-    '.wl-actions{background:#e8edf8;border-left:3pt solid #21409a;'+
-    'padding:4pt 8pt;margin:4pt 0;font-size:9pt;}'+
-    '.wl-penalty-box,.wl-final-warn{background:#fdecea;border:1pt solid #c0392b;'+
-    'padding:4pt 8pt;margin:4pt 0;font-size:9pt;}'+
-    '.wl-sig{width:100%;border-collapse:collapse;margin-top:8pt;}'+
-    '.wl-sig td{border:none;width:50%;vertical-align:bottom;padding-right:16pt;}'+
-    '.wl-sig-line{font-size:8.5pt;color:#555;line-height:1.6;}'+
-    'hr{border:none;border-top:.5pt solid #ccc;margin:5pt 0;}'+
-    '<\/style></head>'+
-    '<body><div class="Section1"><div class="wl-letter">'+body+
-    '</div></div></body></html>';
-
-  var blob=new Blob(['\uFEFF'+doc],{type:'application/msword'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;
-  a.download=stacId+'.doc';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(url);},2000);
-  toast('Downloaded: '+stacId+'.doc',3000);
-}
-
-
-async function markWLIssued(){
-  const id=gv('wl-sel');
-  if(!id){toast('⚠️ Select a STAC case first',2000,'warn');return;}
-  const d=stacData.find(s=>s.id===id);
-  if(!d){toast('⚠️ STAC record not found',2000,'warn');return;}
-
-  // Mark locally immediately
-  d.wlIssued='Yes';
-  toast('✅ '+id+' — Warning Letter marked as ISSUED',4000);
-  populateWLSel();
-  renderAll();
-
-  // Try sheet update — use no-cors (fire and forget, no response)
-  const su=getScriptUrl();
-  if(su&&su.startsWith('https://script.google.com')){
-    try{
-      // no-cors: cannot read response but sheet still gets updated
-      fetch(su,{
-        method:'POST',
-        mode:'no-cors',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'markIssued',stacId:id})
-      });
-      // Show instructions in case no-cors silently fails
-      setTimeout(()=>{
-        toast('📋 Sheet updated (no-cors mode). Verify col AF = "Yes" in sheet for: '+id,5000,'warn');
-      },4500);
-    }catch(err){
-      console.warn('markWLIssued sheet sync error (non-fatal):',err);
-    }
-  }
-}
-
-// ============================================================
-// EXPORTS
-// ============================================================
-function getRows(data){
-  const h=['STAC ID','Date','Cluster','Subcontractor','Category','YTD Instance','WL Type','Penalty (OMR)','WL Issued','Contract No.','Description'];
-  const r=data.map(d=>[d.id,d.date,d.cluster,d.company,d.category,getYTDInst(d),d.wlType,d.penalty,d.wlIssued||'No',d.contractNo,d.description]);
-  return{h,r};
-}
-function doCSV(data,name){
-  // Generate CSV from STAC data rows
-  var gr=getRows(data);
-  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
-  var csv=gr.h.map(q).join(',')+String.fromCharCode(13,10);
-  gr.r.forEach(function(row){csv+=row.map(q).join(',')+String.fromCharCode(13,10);});
-  var fname='ATNM-STAC-'+name+'-'+new Date().toISOString().split('T')[0]+'.csv';
-  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download=fname;a.style.display='none';
-  document.body.appendChild(a);a.click();
-  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
-  toast('✅ CSV downloaded: '+fname);
-}
-function doXL(data,name){doCSV(data,name);}
-function doPDF(data,title){
-  // Screenshot the current active view — respects all filters
-  var activeView=document.querySelector('.view.active')||document.getElementById('cnt');
-  if(!activeView){toast('Nothing to capture',2000,'warn');return;}
-  if(typeof html2canvas!=='function'){
-    toast('PDF library loading — try again in 2s',2500,'warn');return;
-  }
-  toast('Generating PDF screenshot…',3000);
-  var fname='ATNM-'+title.replace(/[^a-zA-Z0-9]/g,'-')+'-'+new Date().toISOString().split('T')[0]+'.pdf';
-  html2canvas(activeView,{
-    scale:1.5,
-    useCORS:true,
-    backgroundColor:'#f0f2f5',
-    scrollY:-window.scrollY,
-    windowWidth:activeView.scrollWidth,
-    width:activeView.scrollWidth,
-    height:activeView.scrollHeight
-  }).then(function(canvas){
-    var imgData=canvas.toDataURL('image/jpeg',0.92);
-    var jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
-    if(!jsPDFCtor){toast('❌ jsPDF not loaded — refresh page',3000,'warn');return;}
-    // Fit to A4 landscape if wide, portrait if narrow
-    var ratio=canvas.width/canvas.height;
-    var orient=ratio>1.2?'landscape':'portrait';
-    var pdf=new jsPDFCtor({orientation:orient,unit:'mm',format:'a4'});
-    var pw=pdf.internal.pageSize.getWidth();
-    var ph=pdf.internal.pageSize.getHeight();
-    var margin=8;
-    var imgW=pw-(margin*2);
-    var imgH=imgW/ratio;
-    // If taller than page, scale down
-    if(imgH>ph-(margin*2)){imgH=ph-(margin*2);imgW=imgH*ratio;}
-    var x=(pw-imgW)/2;
-    pdf.addImage(imgData,'JPEG',x,margin,imgW,imgH);
-    // Add footer
-    pdf.setFontSize(7);pdf.setTextColor(150);
-    pdf.text('ATNM STAC | '+title+' | '+new Date().toLocaleDateString(),margin,ph-3);
-    pdf.save(fname);
-    toast('✅ PDF downloaded: '+fname);
-  }).catch(function(e){toast('❌ PDF error: '+e.message,4000,'warn');});
-}
-
-function exportFilteredExcel(){doXL(filteredData.length?filteredData:stacData,'Dashboard');}
-function exportFilteredPDF(){doPDF(filteredData.length?filteredData:stacData,'STAC Dashboard');}
-function exportTrackerXL(){doXL(getTrData(),'Tracker');}
-function exportTrackerPDF(){doPDF(getTrData(),'STAC Case Tracker');}
-function exportFinesXL(){
-  const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  doCSV(ytd,'Fines-Penalties');
-}
-
-function exportFinesPDF(){doPDF(stacData.filter(d=>d.date&&d.date.startsWith(String(CY))),'Fines & Penalties '+CY);}
-function exportScoresXL(){
-  var XL=window.XLSX;if(!XL||!XL.utils){toast('❌ Excel engine not ready',3000,'warn');return;}
-  const ytd=stacData.filter(d=>d.date&&d.date.startsWith(String(CY)));
-  // Primary source: subconData (canonical Sub Contractors list) 
-  // + any companies from stacData not already in subconData
-  const _coSeen=new Set();
-  const _normalise=s=>s.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-  const allCo=[];
-  // Add all subconData companies first (ensures clean names appear)
-  subconData.forEach(x=>{
-    if(!x.company||x.company.trim().length<2)return;
-    const k=_normalise(x.company);
-    if(!_coSeen.has(k)){_coSeen.add(k);allCo.push(x.company.trim());}
-  });
-  // Supplement with stacData companies not in subconData
-  stacData.forEach(d=>{
-    if(!d.company||d.company.trim().length<2)return;
-    const k=_normalise(d.company);
-    if(!_coSeen.has(k)){_coSeen.add(k);allCo.push(d.company.trim());}
-  });
-  const hdr=['Company','Cluster','Risk Level','Annual Ceiling','YTD Cases','YTD Penalty','YTD Demerit','YTD Score','Band'];
-  const hdrNew=['Subcontractor','Cluster','Risk Level','Ceiling','YTD Cases','YTD Penalty (OMR)','Demerit Pts','Score','% Compliance','Band'];
-  const rows=allCo.map(co=>{
-    const coL=co.trim().toLowerCase();
-    const cs=calcComplianceScore(co);
-    const sub=subconData.find(s=>s.company&&s.company.trim().toLowerCase()===coL);
-    const cases=ytd.filter(d=>d.company.trim().toLowerCase()===coL);
-    const pen=cases.reduce((s,d)=>s+(d.penalty||0),0);
-    // All SCs shown — no violations = green 100% compliance
-    return[co,sub?normCluster(sub.cluster):'—',cs.profile.label,cs.profile.annualCeiling,
-           cases.length,pen,cs.deductedPts*-1,Math.max(0,cs.actualScore),
-           (cs.pct||100)+'%',cs.bandLabel];
-  }); // No filter — ALL subcontractors shown regardless of violations
-  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
-  var csv=[hdrNew,...rows].map(function(row){return row.map(q).join(',');}).join('\r\n');
-  var fname='ATNM-STAC-Scorecards-'+CY+'.csv';
-  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');a.href=url;a.download=fname;a.style.display='none';
-  document.body.appendChild(a);a.click();
-  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
-  toast('✅ CSV downloaded: '+fname);
-}
-function exportScoresPDF(){
-  doPDF([],'Subcon-Scorecards');
-}
-
-function exportSCXL(){
-  if(!activeSCData){toast('No scorecard selected',2000,'warn');return;}
-  var ytd=stacData.filter(function(d){
-    return d.date&&d.date.startsWith(String(CY))&&d.company===activeSCData;
-  });
-  if(!ytd.length){toast('No YTD cases for this company',2000,'warn');return;}
-  doCSV(ytd,'Scorecard-'+activeSCData.replace(/[^a-zA-Z0-9]/g,'-').substring(0,25));
-}
-function exportSCPDF(){
-  if(!activeSCData){toast('No scorecard selected',2000,'warn');return;}
-  var el=document.getElementById('m-sc-body');
-  if(!el){toast('Popup not open',2000,'warn');return;}
-  if(typeof html2canvas!=='function'){toast('PDF library loading, retry in 2s',2500,'warn');return;}
-  var fname='Scorecard-'+activeSCData.replace(/[^a-zA-Z0-9]/g,'-').substring(0,30)+'-'+new Date().toISOString().split('T')[0]+'.pdf';
-  toast('Generating PDF…',3000);
-  html2canvas(el,{
-    scale:2,
-    useCORS:true,
-    backgroundColor:'#ffffff',
-    width:el.scrollWidth,
-    height:el.scrollHeight
-  }).then(function(canvas){
-    var imgData=canvas.toDataURL('image/jpeg',0.95);
-    var jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
-    if(!jsPDFCtor){toast('❌ jsPDF not loaded',3000,'warn');return;}
-    var pdf=new jsPDFCtor({orientation:'portrait',unit:'mm',format:'a4'});
-    var pw=pdf.internal.pageSize.getWidth();
-    var ph=pdf.internal.pageSize.getHeight();
-    var margin=12;
-    var imgW=pw-(margin*2);
-    var imgH=(canvas.height*imgW)/canvas.width;
-    if(imgH>ph-(margin*2)){imgH=ph-(margin*2);imgW=(canvas.width*imgH)/canvas.height;}
-    pdf.addImage(imgData,'JPEG',(pw-imgW)/2,margin,imgW,imgH);
-    pdf.setFontSize(7);pdf.setTextColor(150);
-    pdf.text('ATNM STAC | '+activeSCData+' | '+new Date().toLocaleDateString(),margin,ph-4);
-    pdf.save(fname);
-    toast('✅ PDF downloaded: '+fname,3000);
-  }).catch(function(e){toast('❌ PDF error: '+e.message,4000,'warn');});
-}
-
-
-// ════════════════════════════════════════════════════════════
-// ACTION TRACKER MODULE
-// ════════════════════════════════════════════════════════════
-
-// In-memory action store (loaded from Apps Script / localStorage)
-var actionData=[];
-var AT_CACHE_KEY = 'stac_actions_v1';
-var activeActionId = null;
-
-// Standard corrective actions per WL instance
-var STD_ACTIONS = {
-  1: [
-    {type:'Stop Activity',     desc:'Stop non-compliant activity / rectify unsafe condition immediately.',  days:1},
-    {type:'RCA',               desc:'Root Cause Analysis (RCA) to be submitted within 48 hours.',          days:2},
-    {type:'CAPA',              desc:'Submit CAPA to ATNM HSE within 7 days.',                              days:7},
-    {type:'Re-induction',      desc:'Re-induct / retrain all personnel involved.',                          days:7},
-    {type:'Controls',          desc:'Implement controls to prevent recurrence.',                            days:7},
-    {type:'Safety Qube',       desc:'Log and track all actions in Safety Qube via Subcontract Coordinator.',days:7}
-  ],
-  2: [
-    {type:'Stop Activity',     desc:'Stop non-compliant activity immediately — 2nd occurrence.',            days:1},
-    {type:'RCA',               desc:'Enhanced Root Cause Analysis within 48 hours — identify systemic failures.',days:2},
-    {type:'CAPA',              desc:'Submit revised CAPA with management sign-off within 5 days.',          days:5},
-    {type:'MHIP',              desc:'Mandatory HSE Improvement Plan (MHIP) to be submitted within 48 hours.',days:2},
-    {type:'Re-induction',      desc:'Full re-induction of all site personnel — not just involved workers.', days:5},
-    {type:'Safety Qube',       desc:'Log in Safety Qube and provide weekly status update.',                 days:7}
-  ],
-  3: [
-    {type:'Stop Activity',     desc:'IMMEDIATE STOP — all non-compliant activities must cease.',            days:1},
-    {type:'RCA',               desc:'Formal RCA with senior management sign-off within 24 hours.',          days:1},
-    {type:'CAPA',              desc:'Comprehensive CAPA with Board-level commitment within 48 hours.',      days:2},
-    {type:'Escalation',        desc:'Escalate to Contract Manager and Commercial Manager — potential hold.', days:1},
-    {type:'Re-induction',      desc:'Full workforce re-induction before resuming work.',                    days:3},
-    {type:'Safety Qube',       desc:'Daily status update in Safety Qube until closure.',                    days:1}
-  ]
-};
-
-function genActionId(){
-  return 'ACT-'+String(CY)+'-'+String(Date.now()).slice(-5);
-}
-
-// ── Load actions (from localStorage cache or Apps Script) ───
-function loadActionData(){
-  try {
-    var cached = localStorage.getItem(AT_CACHE_KEY);
-    if(cached){
-      actionData = JSON.parse(cached);
-      renderActions();
-    }
-  } catch(e){}
-  // Always fetch fresh from Apps Script
-  fetchActionsFromSheet();
-}
-
-function fetchActionsFromSheet(){
-  // Fetch from SC_ACTIONS tab via gviz
-  // Use CFG.sheetId — gviz reads from sheet directly, no Apps Script needed
-  fetchGvizData(CFG.sheetId, null, 'SC_ACTIONS', 1)
-    .then(function(rows){
-      if(rows && rows.length){
-        actionData = rows.map(function(r){
-          return {
-            id:         r[0]||'',
-            stacId:     r[1]||'',
-            dateRaised: r[2]||'',
-            cluster:    r[3]||'',
-            company:    r[4]||'',
-            focalEmail: r[5]||'',
-            leadEmail:  r[6]||'',
-            mgrEmail:   r[7]||'',
-            actionType: r[8]||'',
-            actionDesc: r[9]||'',
-            deadline:   r[10]||'',
-            status:     r[11]||'Open',
-            evidenceUrl:r[12]||'',
-            driveFolder:r[13]||'',
-            reviewedBy: r[14]||'',
-            reviewNote: r[15]||'',
-            closedDate: r[16]||''
-          };
-        });
-        try{localStorage.setItem(AT_CACHE_KEY, JSON.stringify(actionData));}catch(e){}
-        renderActions();
-      }
-    })
-    .catch(function(){
-      // Sheet not accessible — use cached data only
-      renderActions();
-    });
-}
-
-// ── Populate STAC selector in Add Action modal ───────────────
-function populateActionStacSel(){
-  var sel = document.getElementById('at-stac-sel');
-  if(!sel) return;
-  var ytd = stacData.filter(function(d){return d.date&&d.date.startsWith(String(CY));});
-  ytd.sort(function(a,b){return b.date.localeCompare(a.date);});
-  sel.innerHTML = '<option value="">— Select STAC Case —</option>';
-  ytd.forEach(function(d){
-    var opt = document.createElement('option');
-    opt.value = d.id;
-    opt.textContent = d.id + ' | ' + d.company.substring(0,25) + ' | ' + d.category.substring(0,20);
-    sel.appendChild(opt);
-  });
-}
-
-// ── Populate company filter ───────────────────────────────────
-function populateAtCompanyFilter(){
-  var sel = document.getElementById('at-flt-co');
-  if(!sel) return;
-  var cos = [...new Set(actionData.map(function(a){return a.company;}).filter(Boolean))].sort();
-  sel.innerHTML = '<option value="">All Companies</option>';
-  cos.forEach(function(co){
-    var opt = document.createElement('option');
-    opt.value = co; opt.textContent = co;
-    sel.appendChild(opt);
-  });
-}
-
-// ── Render action table ──────────────────────────────────────
-// ── Admin User Management ────────────────────────────────────
-var adminUsers = [];
-
-function loadAdminUsers(){
-  try{
-    var stored = localStorage.getItem('stac_admin_users');
-    if(stored) adminUsers = JSON.parse(stored);
-  }catch(e){}
-  // Also update approvers list from users with Approver/HSE roles
-  var approverEmails = adminUsers
-    .filter(function(u){ return u.role==='Approver'||u.role==='Admin'||u.role==='HSE Lead'||u.role==='Cluster HSE Lead'||u.role==='HSE Manager'; })
-    .map(function(u){ return u.email; });
-  // Merge with manually-entered approvers
-  approverEmails.forEach(function(e){ if(AT_APPROVERS.indexOf(e)===-1) AT_APPROVERS.push(e); });
-  renderAdminUsersTable();
-}
-
-function renderAdminUsersTable(){
-  var tbody = document.getElementById('admin-users-tbody');
-  if(!tbody) return;
-  // Build combined list: hardcoded ADMIN_EMAILS + registered users
-  var allUsers = [];
-  ADMIN_EMAILS.forEach(function(e){
-    allUsers.push({email:e, name:'Paul Manjooran', role:'Admin', cluster:'All', hardcoded:true});
-  });
-  adminUsers.forEach(function(u){
-    if(ADMIN_EMAILS.map(function(e){return e.toLowerCase();}).indexOf(u.email.toLowerCase())===-1){
-      allUsers.push(u);
-    }
-  });
-  if(!allUsers.length){
-    tbody.innerHTML='<tr><td colspan="5" style="padding:14px;text-align:center;color:var(--t3);font-size:11px;">No users registered yet</td></tr>';
-    return;
-  }
-  var ROLE_BADGE = {
-    'Admin':'background:#21409a;color:#fff;',
-    'Approver':'background:#1b7a3e;color:#fff;',
-    'HSE Lead':'background:#d68910;color:#fff;',
-    'Cluster HSE Lead':'background:#e07000;color:#fff;',
-    'HSE Manager':'background:#c0392b;color:#fff;',
-    'Viewer':'background:#888;color:#fff;'
-  };
-  var h='';
-  allUsers.forEach(function(u){
-    var badge = ROLE_BADGE[u.role]||'background:#888;color:#fff;';
-    h+='<tr style="border-top:1px solid var(--bdr);">';
-    h+='<td style="padding:7px 10px;font-size:11px;font-family:monospace;">'+u.email+'</td>';
-    h+='<td style="padding:7px 10px;font-size:11px;">'+( u.name||'—')+'</td>';
-    h+='<td style="padding:7px 10px;"><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;'+badge+'">'+u.role+'</span></td>';
-    h+='<td style="padding:7px 10px;font-size:11px;">'+(u.cluster||'All')+'</td>';
-    h+='<td style="padding:7px 10px;text-align:center;">';
-    if(!u.hardcoded){
-      h+='<button data-email="'+u.email+'" onclick="removeUser(this.dataset.email)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;" title="Remove user">✕</button>';
-    } else {
-      h+='<span style="font-size:10px;color:var(--t3);">Built-in</span>';
-    }
-    h+='</td></tr>';
-  });
-  tbody.innerHTML = h;
-}
-
-function saveUserToSheet(){
-  var email = (document.getElementById('new-user-email')||{}).value||'';
-  var name  = (document.getElementById('new-user-name')||{}).value||'';
-  var role  = (document.getElementById('new-user-role')||{}).value||'';
-  var cluster=(document.getElementById('new-user-cluster')||{}).value||'All';
-  var st = document.getElementById('new-user-status');
-
-  if(!email.trim()||!email.includes('@')){
-    if(st){st.textContent='❌ Valid email required';st.style.color='var(--red)';}
-    return;
-  }
-  if(!role){ if(st){st.textContent='❌ Select a role';st.style.color='var(--red)';}return; }
-
-  var newUser = {email:email.trim().toLowerCase(), name:name.trim(), role:role, cluster:cluster, added:new Date().toISOString().split('T')[0]};
-
-  // Update or add
-  var idx = adminUsers.findIndex(function(u){return u.email.toLowerCase()===newUser.email;});
-  if(idx !== -1) adminUsers[idx] = newUser;
-  else adminUsers.push(newUser);
-
-  // Save to localStorage
-  try{localStorage.setItem('stac_admin_users', JSON.stringify(adminUsers));}catch(e){}
-
-  // Update approvers if role warrants it
-  if(['Admin','Approver','HSE Lead','Cluster HSE Lead','HSE Manager'].indexOf(role)!==-1){
-    if(AT_APPROVERS.indexOf(newUser.email)===-1) AT_APPROVERS.push(newUser.email);
-    try{localStorage.setItem('stac_at_approvers', JSON.stringify(AT_APPROVERS));}catch(e){}
-  }
-
-  // Save to Apps Script (Users List sheet)
-  fetch(getScriptUrl(),{
-    method:'POST', mode:'no-cors',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'saveUser', data:newUser})
-  }).then(function(){}).catch(function(){});
-
-  renderAdminUsersTable();
-  if(st){st.textContent='✅ User saved';st.style.color='var(--green)';}
-  // Clear form
-  ['new-user-email','new-user-name'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  toast('✅ '+email+' registered as '+role,3000);
-}
-
-function removeUser(email){
-  if(!confirm('Remove '+email+' from user list?')) return;
-  adminUsers = adminUsers.filter(function(u){return u.email.toLowerCase()!==email.toLowerCase();});
-  AT_APPROVERS = AT_APPROVERS.filter(function(e){return e.toLowerCase()!==email.toLowerCase();});
-  try{
-    localStorage.setItem('stac_admin_users', JSON.stringify(adminUsers));
-    localStorage.setItem('stac_at_approvers', JSON.stringify(AT_APPROVERS));
-  }catch(e){}
-  renderAdminUsersTable();
-  toast('User removed: '+email,3000);
-}
-
-function renderActions(){
-  var tbody = document.getElementById('at-body');
-  if(!tbody) return;
-
-  var fStatus  = (document.getElementById('at-flt-status')||{value:''}).value;
-  var fCluster = (document.getElementById('at-flt-cluster')||{value:''}).value;
-  var fCo      = (document.getElementById('at-flt-co')||{value:''}).value;
-  var fOverdue = (document.getElementById('at-flt-overdue')||{value:''}).value;
-  var today    = new Date(); today.setHours(0,0,0,0);
-
-  var filtered = actionData.filter(function(a){
-    if(fStatus  && a.status !== fStatus)  return false;
-    if(fCluster && a.cluster!== fCluster) return false;
-    if(fCo      && a.company !== fCo)     return false;
-    if(fOverdue === 'yes'){
-      var dl = a.deadline ? new Date(a.deadline) : null;
-      if(!dl || dl >= today || a.status === 'Closed') return false;
-    }
-    return true;
-  });
-
-  // Update KPIs
-  var open    = actionData.filter(function(a){return a.status==='Open'||a.status==='Rejected';}).length;
-  var overdue = actionData.filter(function(a){
-    var dl=a.deadline?new Date(a.deadline):null;
-    return dl&&dl<today&&a.status!=='Closed'&&a.status!=='Approved';
-  }).length;
-  var review  = actionData.filter(function(a){return a.status==='Evidence Uploaded'||a.status==='Under Review';}).length;
-  var closed  = actionData.filter(function(a){return a.status==='Closed'||a.status==='Approved';}).length;
-
-  var k=document.getElementById('at-k-total');  if(k)k.textContent=actionData.length;
-  k=document.getElementById('at-k-open');       if(k){k.textContent=open+(overdue?' (+'+overdue+' OD)':'');k.style.color=overdue?'var(--red)':'var(--orange)';}
-  k=document.getElementById('at-k-review');     if(k)k.textContent=review;
-  k=document.getElementById('at-k-closed');     if(k)k.textContent=closed;
-
-  var rc = document.getElementById('at-rec-count');
-  if(rc) rc.textContent = filtered.length + ' record'+(filtered.length!==1?'s':'');
-
-  populateAtCompanyFilter();
-
-  if(!filtered.length){
-    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3);">No actions found. Click ＋ New Action to raise corrective actions for a STAC case.</td></tr>';
-    return;
-  }
-
-  var STATUS_STYLE = {
-    'Open':                  'background:#fff3cd;color:#856404;',
-    'Evidence Uploaded':     'background:#cce5ff;color:#004085;',
-    'Pending Verification':  'background:#f58220;color:#fff;font-weight:700;',
-    'Under Review':          'background:#e2d9f3;color:#5a1b9a;',
-    'Approved':              'background:#d4edda;color:#155724;',
-    'Rejected':              'background:#f8d7da;color:#721c24;',
-    'Closed':                'background:#1b7a3e;color:#fff;font-weight:700;',
-    'Overdue':               'background:#f8d7da;color:#721c24;font-weight:700;'
-  };
-
-  var html = '';
-  filtered.forEach(function(a){
-    var dl   = a.deadline ? new Date(a.deadline) : null;
-    var isOD = dl && dl < today && a.status!=='Closed' && a.status!=='Approved';
-    var dispStatus = isOD && a.status==='Open' ? 'Overdue' : a.status;
-    var sStyle = STATUS_STYLE[dispStatus] || '';
-    var dlStr  = dl ? dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    var dlColor = isOD ? 'color:var(--red);font-weight:700;' : '';
-
-    html += '<tr>';
-    html += '<td class="sid" data-id="'+esc(a.stacId)+'" onclick="openStacCase(this.dataset.id)" style="cursor:pointer;color:var(--blue);font-family:monospace;font-size:11px;">'+esc(a.stacId)+'</td>';
-    html += '<td style="font-size:11px;">'+fd(a.dateRaised)+'</td>';
-    html += '<td><span class="cls-badge">'+esc(a.cluster)+'</span></td>';
-    html += '<td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(a.company)+'">'+esc(a.company)+'</td>';
-    html += '<td style="font-size:11px;'+dlColor+'">'+dlStr+(isOD?' ⚠':'')+'</td>';
-    html += '<td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(a.actionType)+': '+esc(a.actionDesc)+'"><strong>'+esc(a.actionType)+'</strong><br><span style="color:var(--t3);">'+esc(a.actionDesc).substring(0,60)+(a.actionDesc.length>60?'…':'')+'</span></td>';
-    html += '<td><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;'+sStyle+'">'+dispStatus+'</span></td>';
-    // Evidence column
-    html += '<td style="text-align:center;white-space:nowrap;">';
-    if(a.driveFolder){
-      html += '<a href="'+a.driveFolder+'" target="_blank" title="Open Drive folder" style="text-decoration:none;font-size:16px;margin-right:3px;">📁</a>';
-    }
-    if(a.evidenceUrl){
-      html += '<a href="'+a.evidenceUrl+'" target="_blank" title="View submitted evidence" style="text-decoration:none;font-size:16px;">📎</a>';
-    } else if(a.status!=='Closed'&&a.status!=='Approved'){
-      html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="openUploadEvidenceModal(this.dataset.id)" style="font-size:10px;padding:3px 8px;background:#e8edf8;color:var(--blue);border:1px solid var(--blue);">📎 Upload</button>';
-    }
-    html += '</td>';
-    // Actions column
-    html += '<td style="white-space:nowrap;">';
-    // Close Action — approvers only (checked client-side)
-    if(a.status==='Pending Verification'||a.status==='Evidence Uploaded'||a.status==='Under Review'){
-      html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="attemptCloseAction(this.dataset.id)" style="font-size:10px;padding:3px 7px;background:#1b7a3e;color:#fff;border:none;margin-right:3px;">✓ Close</button>';
-    }
-    if(a.status!=='Closed'&&a.status!=='Approved'){
-      html += '<button class="btn bsm" data-id="'+esc(a.id)+'" onclick="openEditAction(this.dataset.id)" style="font-size:10px;padding:3px 7px;background:var(--bg);border:1px solid var(--bdr);">Edit</button>';
-    }
-    // Delete button — admin only
-    if(isAdmin){
-      html += ' <button class="btn bsm" data-id="'+esc(a.id)+'" data-stac="'+esc(a.stacId)+'" onclick="deleteAction(this.dataset.id,this.dataset.stac)" style="font-size:10px;padding:3px 7px;background:#fdecea;color:#c0392b;border:1px solid #e57373;" title="Delete action (Admin only)">🗑</button>';
-    }
-    html += '</td>';
-    html += '</tr>';
-  });
-  tbody.innerHTML = html;
-}
-
-function atResetFilters(){
-  ['at-flt-status','at-flt-cluster','at-flt-co','at-flt-overdue'].forEach(function(id){
-    var el=document.getElementById(id); if(el)el.value='';
-  });
-  renderActions();
-}
-
-// ── Open Add Action modal ────────────────────────────────────
-function openAddActionModal(stacId){
-  populateActionStacSel();
-  if(stacId){
-    setTimeout(function(){
-      var sel=document.getElementById('at-stac-sel');
-      if(sel) sel.value=stacId;
-      // Auto-fill deadline based on standard framework (7 days)
-      var d=new Date(); d.setDate(d.getDate()+7);
-      var dl=document.getElementById('at-deadline');
-      if(dl) dl.value=d.toISOString().split('T')[0];
-    },50);
-  }
-  document.getElementById('m-action-title').textContent='New Corrective Action';
-  activeActionId=null;
-  openModal('m-action');
-}
-
-// ── Auto-generate standard actions for a STAC case ──────────
-function autoGenerateActions(stacId, inst){
-  var d = stacData.find(function(s){return s.id===stacId;});
-  if(!d){toast('STAC case not found',2000,'warn');return;}
-  inst = parseInt(inst)||parseInt(d.instances)||1;
-  var templates = STD_ACTIONS[Math.min(inst,3)]||STD_ACTIONS[1];
-  var sub = subconData.find(function(s){return s.company===d.company;});
-  var focal = sub ? (sub.focal||'') : '';
-  var generated = [];
-  var base = new Date(d.date||new Date());
-
-  templates.forEach(function(t){
-    var dl = new Date(base);
-    dl.setDate(dl.getDate()+t.days);
-    generated.push({
-      id:          genActionId()+'_'+Math.random().toString(36).slice(2,5),
-      stacId:      stacId,
-      dateRaised:  new Date().toISOString().split('T')[0],
-      cluster:     d.cluster||'',
-      company:     d.company||'',
-      focalEmail:  focal,
-      leadEmail:   '',
-      mgrEmail:    d.hseMgrEmail||'abubakar.rahi@altasnim.com',
-      actionType:  t.type,
-      actionDesc:  t.desc,
-      deadline:    dl.toISOString().split('T')[0],
-      status:      'Open',
-      evidenceUrl: '',
-      driveFolder: '',
-      reviewedBy:  '',
-      reviewNote:  '',
-      closedDate:  ''
-    });
-  });
-  return generated;
-}
-
-// ── Submit new action ────────────────────────────────────────
 function submitAction(){
   var stacId   = gv('at-stac-sel');
   var aType    = gv('at-type');
@@ -7644,15 +6957,7 @@ function nav(v){
   else if(v==='performance')renderPerformance();
   else if(v==='scorecards')renderScores();
   else if(v==='warning-letter'){
-    populateWLSel();
-    // Auto-load first case so screen isn't blank on arrival
-    setTimeout(function(){
-      var sel=document.getElementById('wl-sel');
-      if(sel&&sel.options.length>1&&!sel.value){
-        sel.selectedIndex=1;
-        loadWL(sel.value);
-      }
-    },150);
+    initWLScreen();
   }
   else if(v==='new-stac'){initForm();}
   else if(v==='setup'){
@@ -9742,7 +9047,7 @@ function renderPerformance(){
   });
 
   // Apply filters
-  var bCol={green:'#1b7a3e',amber:'#d68910',red:'#c0392b',black:'#374151'};
+  var bCol={green:'#1b7a3e',yellow:'#d68910',amber:'#d68910',orange:'#e07a30',red:'#c0392b',black:'#374151'};
   var filtered=scored.filter(function(x){
     if(cl&&x.cluster.trim().toLowerCase()!==cl.trim().toLowerCase())return false;
     if(band&&x.cs.band!==band)return false;
