@@ -668,7 +668,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
   <div class="sb-foot">
-    BUILD 11NOV-V &nbsp;|&nbsp; GID 342483107<br>
+    BUILD 11NOV-W &nbsp;|&nbsp; GID 342483107<br>
     Next ID: <span id="sb-nid">—</span> &nbsp;|&nbsp; Ref: <span id="sb-ref">—</span>
   </div>
 </nav>
@@ -866,7 +866,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
             <div class="fr fr2">
               <div class="fg"><label>Cluster / Location <span class="req">*</span></label><select id="fa-cl" required onchange="onCluster()"><option value="">-- Select --</option>
               </select></div>
-              <div class="fg"><label>Instance Date <span class="req">*</span></label><input type="date" id="fa-dt" required></div>
+              <div class="fg"><label>Instance Date <span class="req">*</span></label><input type="date" id="fa-dt" required onchange="onCategory()"></div>
             </div>
             <div class="fr fr2">
               <div class="fg"><label>Subcontractor Company <span class="req">*</span></label><select id="fa-co" required onchange="onCompany()"><option value="">-- Select Company --</option></select></div>
@@ -884,10 +884,10 @@ body.gate-on #cnt > .view.active{display:none!important;}
                 </select>
                 <div id="cat-rule-hint" class="ins-hint" style="display:none;"></div>
               </div>
-              <div class="fg"><label>Description <span class="req">*</span></label><textarea id="fa-desc" rows="4" required placeholder="Describe the non-compliance. Reference PDO SP/PR. Include location, personnel, observations..."></textarea></div>
+              <div class="fg"><label>Description <span class="req">*</span></label><textarea id="fa-desc" rows="4" required oninput="syncPenaltyLock()" placeholder="Describe the non-compliance. Reference PDO SP/PR. Include location, personnel, observations..."></textarea></div>
             </div>
             <div class="fr fr4">
-              <div class="fg"><label>Penalty (OMR)<span class="atag">Auto</span></label><select id="fa-pen"><option value="0">OMR 0 — Advisory</option><option value="25">OMR 25 — 1st | Quarter</option><option value="50">OMR 50 — 2nd | Half</option><option value="75">OMR 75 — 1st | Plant</option><option value="100">OMR 100 — 3rd | Training</option><option value="150">OMR 150 — 2nd | Plant</option><option value="300">OMR 300 — 3rd | Plant</option><option value="500">OMR 500 — Final | Full</option></select></div>
+              <div class="fg"><label>Penalty (OMR)<span class="atag">Auto</span></label><select id="fa-pen" disabled style="opacity:.9;"><option value="0">OMR 0 — Advisory</option><option value="25">OMR 25 — 1st | Quarter</option><option value="50">OMR 50 — 2nd | Half</option><option value="75">OMR 75 — 1st | Plant</option><option value="100">OMR 100 — 3rd | Training</option><option value="150">OMR 150 — 2nd | Plant</option><option value="300">OMR 300 — 3rd | Plant</option><option value="500">OMR 500 — Final | Full</option></select><div id="fa-pen-hint" style="font-size:10px;color:var(--t3);margin-top:3px;line-height:1.35;">🔒 Locked to the scoring matrix. For a PDO-imposed fine, quote its Safety Qube reference in the description (SQ ID: VIO######) to unlock the amount.</div></div>
               <div class="fg"><label>Closeout Target <span class="req">*</span></label><input type="date" id="fa-cl-dt" required></div>
               <div class="fg"><label>Initiator's Name <span class="req">*</span></label><input type="text" id="fa-init" required placeholder="Full Name"></div>
               <div class="fg"><label>Initiator's Email <span class="req">*</span></label><input type="email" id="fa-init-email" required placeholder="name@altasnim.com"></div>
@@ -2695,6 +2695,13 @@ const SM=[
    l3:'3rd & Final Warning Letter | Full Penalty | Full Demerit'}
 ];
 
+// Spellings that appear in the live sheet's Vendor HSE Scoring Matrix tab, typos included. They are matched EXACTLY before any keyword search,
+// so a misspelt category can never silently fall back to "1st Warning Letter".
+SM[1].alts=['HSE Trainings, Workmen Trade specific Trainings(e.g. OPAL Induction H2S, Trade Specific Approvals)'];
+SM[2].alts=['Unauhtorised Person on site','Unauthorised Person on site'];
+SM[2].keys.push('unauht','person on site');
+SM[5].alts=['Overall Employee Welfare (Approved Accomadation, PPE, Timely Salary, Timely Leave cycle )'];
+SM[6].alts=['Road Safety Non Complaince and RST Fines'];
 // ============================================================
 // RISK LEVEL & CEILING — from Risk Level & Ceiling sheet
 // Drives compliance scoring and ceiling per subcontractor
@@ -2949,7 +2956,7 @@ function renderProbationPanel(){
 var RI_DEPLOY_HINT = 'Check Apps Script: paste the latest .gs, then Deploy → Manage deployments → ✏️ → New version; it must run as "Me" and allow "Anyone".';
 function riPayload(rec){ var o={}; Object.keys(rec).forEach(function(k){ if(k.charAt(0)!=='_') o[k]=rec[k]; }); return o; }
 
-var RI_EXPECTED_GS = '2026-11-11-V';          // the Apps Script version this dashboard is built for
+var RI_EXPECTED_GS = '2026-11-11-W';          // the Apps Script version this dashboard is built for
 
 // Turn "no readable reply" into a specific cause
 function riClassifyReply(status, text){ return apiClassifyReply(status, text); }
@@ -3191,10 +3198,14 @@ function inferCatFromDesc(desc,wlType){
   return 'Involvement Unsafe Act / Working in Unsafe Condition leading to incidents & Fines';
 }
 
+function wlNorm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 function lookupRule(cat){
   if(!cat)return null;
+  const n=wlNorm(cat);
+  const exact=SM.find(r=>wlNorm(r.cat)===n||(r.alts||[]).some(a=>wlNorm(a)===n));     // the exact category name (typos in the sheet included)
+  if(exact) return exact;
   const cl=cat.toLowerCase();
-  return SM.find(r=>r.keys.some(k=>cl.includes(k)))||null;
+  return SM.find(r=>r.keys.some(k=>cl.includes(k)))||null;                          // then keywords
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -4879,8 +4890,10 @@ function onCategory(){
   } else if(cat && !co){
     // Show penalty rule hint even before company is selected
     sv('fa-wlt', rule ? rule.l1 : '');
+    _wlCalc={inst:1,wlt:rule?rule.l1:'',pen:rule?rule.p1:25,rule:rule};
     const sel=document.getElementById('fa-pen');
     if(sel&&rule){const opt=Array.from(sel.options).find(o=>parseInt(o.value)===rule.p1);if(opt)sel.value=opt.value;}
+    syncPenaltyLock();
   }
 }
 
@@ -4966,13 +4979,27 @@ function updateComplianceDisplay(co){
   const compEl=document.getElementById('fa-comp');if(compEl)compEl.style.color=scoreColor;
 }
 
+var _wlCalc={inst:1,wlt:'',pen:25,rule:null};     // what the matrix says for the case on the form (the server re-checks it on save)
+function hasPdoFine(desc){ return /SQ\s*ID\s*[:\-]?\s*VIO\s*\d+/i.test(String(desc||'')); }
+// The penalty follows the matrix. Only a fine quoted with its PDO Safety Qube reference may differ, and only then can the amount be changed.
+function syncPenaltyLock(){
+  const sel=document.getElementById('fa-pen'); if(!sel) return;
+  const pdo=hasPdoFine(gv('fa-desc'));
+  sel.disabled=!pdo;
+  if(!pdo){ const opt=Array.from(sel.options).find(o=>parseInt(o.value)===_wlCalc.pen); if(opt) sel.value=opt.value; }
+  const h=document.getElementById('fa-pen-hint');
+  if(h) h.innerHTML=pdo?'🔓 PDO fine (SQ ID found): enter the amount PDO charged. Letter type and instance still follow the matrix.':'🔒 Locked to the scoring matrix. For a PDO-imposed fine, quote its Safety Qube reference in the description (SQ ID: VIO######) to unlock the amount.';
+}
 function calcYTDInst(co,cat,rule){
-  const coLow=co.trim().toLowerCase();const catLow=cat.trim().toLowerCase();
+  const coN=wlNorm(co);const catLow=cat.trim().toLowerCase();
   const _from=riScoringFrom(co);
+  const _dt=gv('fa-dt');                                  // cases up to the instance date being entered are the earlier ones
   const existing=stacData.filter(d=>{
     if(!d.date||!d.date.startsWith(String(CY)))return false;
     if(_from && d.date<_from)return false;
-    return d.company.trim().toLowerCase()===coLow&&d.category.trim().toLowerCase()===catLow;
+    if(_dt && d.date>_dt)return false;
+    if(wlNorm(d.company)!==coN)return false;
+    return rule ? lookupRule(d.category)===rule : d.category.trim().toLowerCase()===catLow;      // same CATEGORY, however its name is spelt
   }).length;
   const thisInst=existing+1;
   let wlt='1st Warning Letter | Quarter Of Full Penalty | No Demerit';
@@ -4985,8 +5012,10 @@ function calcYTDInst(co,cat,rule){
   }
   sv('fa-inst',("YTD Instance #"+(thisInst)+" ("+(existing)+" prior "+(CY)+" case"+(existing!==1?'s':'')+" for this company+category"+(_from?" — counting from reinstatement "+fd(_from):"")+")"));
   sv('fa-wlt',wlt);
+  _wlCalc={inst:thisInst,wlt:wlt,pen:pen,rule:rule};
   const sel=document.getElementById('fa-pen');
   if(sel){const opt=Array.from(sel.options).find(o=>parseInt(o.value)===pen);if(opt)sel.value=opt.value;}
+  syncPenaltyLock();
   const rec=document.getElementById('fa-rec');
   if(rec){if(rule&&rule.final)rec.value='Issue Final Warning / Escalate';else if(thisInst>=3)rec.value='Issue Final Warning / Escalate';else if(thisInst===2)rec.value='Issue 2nd Warning Letter';else rec.value='Issue 1st Warning Letter';}
   updateComplianceDisplay(co);
@@ -5018,7 +5047,7 @@ function initForm(){
 function resetForm(){
   document.getElementById('stac-form').reset();
   initForm();
-  ['fa-own','fa-fe','fa-ce','fa-inst','fa-wlt','fa-rl','fa-ac','fa-dm','fa-cs','fa-comp'].forEach(id=>sv(id,''));
+  (function(){ ['fa-own','fa-fe','fa-ce','fa-inst','fa-wlt','fa-rl','fa-ac','fa-dm','fa-cs','fa-comp'].forEach(id=>sv(id,'')); _wlCalc={inst:1,wlt:'',pen:25,rule:null}; syncPenaltyLock(); })();
   const h=document.getElementById('cat-rule-hint');if(h)h.style.display='none';
   // Repopulate company dropdown (cleared by reset above)
   populateDDs();
@@ -5110,7 +5139,8 @@ async function doSubmit(e){
   const now = new Date();
   const localDate = d=>(""+(d.getFullYear())+"-"+(String(d.getMonth()+1).padStart(2,'0'))+"-"+(String(d.getDate()).padStart(2,'0')));
   const instNum = parseInt((gv('fa-inst')||'1').match(/\d+/)?.[0]||'1');
-  const pen = parseInt(gv('fa-pen'))||0;
+  const _penSel=document.getElementById('fa-pen');
+  const pen = (_penSel&&!_penSel.disabled) ? (parseInt(gv('fa-pen'))||0) : (_wlCalc.pen||parseInt(gv('fa-pen'))||0);     // locked: the matrix amount, never a box someone edited
   const isDem = (gv('fa-wlt')||'').toLowerCase().includes('full demerit');
 
   // Payload maps exactly to Apps Script writeSTAC() columns A-AH
@@ -5213,6 +5243,8 @@ async function doSubmit(e){
           toast('✅ '+realId+' saved to the sheet'+((j&&j.duplicate)?' (it had already been saved — not duplicated)':''),6000);
         }
         if(j&&j.emailWarning) setTimeout(function(){ toast('⚠️ '+j.emailWarning,14000,'warn'); },1800);
+        if(j&&j.adjusted&&j.adjusted.length) setTimeout(function(){ toast('ℹ️ Apps Script set the final values from the scoring matrix: '+j.adjusted.join('; ')+' → letter: '+(j.wlType||'').split('|')[0].trim(),12000); },600);
+        if(j&&j.penaltyNote) setTimeout(function(){ toast('ℹ️ '+j.penaltyNote,8000); },900);
         if(j&&j.letterUrl) setTimeout(function(){ toast('📄 Warning letter copy saved to Drive: NEW STAC Warning Letters / '+realId,7000); },1200);
         if(j&&j.letterWarning) setTimeout(function(){ toast('⚠️ '+j.letterWarning,14000,'warn'); },2400);
         if(_pendingFile) uploadFileToStac_(scriptUrl, realId, _pendingFile);
