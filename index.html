@@ -668,7 +668,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
   <div class="sb-foot">
-    BUILD 11NOV-W &nbsp;|&nbsp; GID 342483107<br>
+    BUILD 11NOV-X &nbsp;|&nbsp; GID 342483107<br>
     Next ID: <span id="sb-nid">—</span> &nbsp;|&nbsp; Ref: <span id="sb-ref">—</span>
   </div>
 </nav>
@@ -2956,7 +2956,7 @@ function renderProbationPanel(){
 var RI_DEPLOY_HINT = 'Check Apps Script: paste the latest .gs, then Deploy → Manage deployments → ✏️ → New version; it must run as "Me" and allow "Anyone".';
 function riPayload(rec){ var o={}; Object.keys(rec).forEach(function(k){ if(k.charAt(0)!=='_') o[k]=rec[k]; }); return o; }
 
-var RI_EXPECTED_GS = '2026-11-11-W';          // the Apps Script version this dashboard is built for
+var RI_EXPECTED_GS = '2026-11-11-X';          // the Apps Script version this dashboard is built for
 
 // Turn "no readable reply" into a specific cause
 function riClassifyReply(status, text){ return apiClassifyReply(status, text); }
