@@ -668,7 +668,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
   <div class="sb-foot">
-    BUILD 09NOV-U &nbsp;|&nbsp; GID 342483107<br>
+    BUILD 11NOV-V &nbsp;|&nbsp; GID 342483107<br>
     Next ID: <span id="sb-nid">—</span> &nbsp;|&nbsp; Ref: <span id="sb-ref">—</span>
   </div>
 </nav>
@@ -1286,7 +1286,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
   <div class="card" style="margin-bottom:14px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div>
-        <div style="font-size:18px;font-weight:800;color:var(--navy);">🛡️ Subcon De-escalation <span class="bdg bam" style="font-size:10px;">PREVIEW</span></div>
+        <div style="font-size:18px;font-weight:800;color:var(--navy);">🛡️ Subcon De-escalation</div>
         <div style="font-size:12px;color:var(--t3);margin-top:2px;">Red-band subcontractors: the way back from escalation. Same gates as reinstatement. The band stays Red and the escalation flag is cleared.</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn bk bsm" onclick="nav('setup')">Preview settings</button></div>
@@ -1307,11 +1307,11 @@ body.gate-on #cnt > .view.active{display:none!important;}
     </div>
     <div class="card" style="margin-bottom:14px;">
       <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px;">🛡️ Red-band subcontractors</div>
-      <div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>Cluster</th><th>Band</th><th>Escalated categories</th><th>Depth</th><th>Left before Black</th><th>Status</th><th>Action</th></tr></thead><tbody id="de-body"></tbody></table></div>
+      <div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>Cluster</th><th>Band</th><th>Escalated categories</th><th>Depth</th><th>Left before Black</th><th>Status</th><th>Evidence</th><th>Action</th></tr></thead><tbody id="de-body"></tbody></table></div>
     </div>
     <div class="card">
-      <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px;">Sandbox applications</div>
-      <div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>Status</th><th>Effective</th><th>Applied by</th><th>Decided by</th></tr></thead><tbody id="de-hist"></tbody></table></div>
+      <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px;">Applications</div>
+      <div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>Status</th><th>Effective</th><th>Applied by</th><th>Decided by</th><th>Evidence</th></tr></thead><tbody id="de-hist"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -1410,15 +1410,18 @@ body.gate-on #cnt > .view.active{display:none!important;}
     <div class="modal-hdr"><span id="de-title">🛡 De-escalation application</span><button class="modal-cls" onclick="cm('m-deesc')">✕</button></div>
     <div class="modal-body" style="padding:18px 20px;max-height:80vh;overflow-y:auto;">
       <input type="hidden" id="de-company">
-      <div style="background:#fff3cd;border:1px solid #e8c766;color:#6b4e00;border-radius:8px;padding:8px 12px;font-size:11px;margin-bottom:12px;">Preview sandbox: this application is kept in your browser only. Nothing is saved to the sheet.</div>
+      <div style="background:#e8f1ff;border:1px solid #b9d0f5;color:#1f3f7a;border-radius:8px;padding:8px 12px;font-size:11px;margin-bottom:12px;">This application is saved to the sheet, and gets its <b>own new folder</b> in “STAC - Escalation Closeout Evidences”. The files you attach are uploaded into it.</div>
       <div class="fg" style="margin-bottom:12px;"><label class="fl">Gate 1 — Corrective actions</label><div id="de-gate1" style="font-size:12px;"></div></div>
-      <div class="fg" style="margin-bottom:12px;"><label class="fl">Gate 2 — Endorsed de-escalation report (Drive link) *</label>
-        <input id="de-report" class="fi" placeholder="https://drive.google.com/…" oninput="updateDeescGates()"><div id="de-gate2" style="margin-top:4px;font-size:11px;"></div></div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Gate 2 — Evidence files (endorsed report, root-cause analysis, training records…) *</label>
+        <input type="file" id="de-files" multiple onchange="onDeescFilesChosen()">
+        <div id="de-files-list" style="font-size:11px;margin:4px 0;"></div>
+        <input id="de-report" class="fi" placeholder="…or paste the Drive link of the endorsed report (https://…)" oninput="updateDeescGates()"><div id="de-gate2" style="margin-top:4px;font-size:11px;"></div></div>
       <div class="fg" style="margin-bottom:12px;"><label class="fl">Gate 3 — Endorsements</label>
         <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;"><input type="checkbox" id="de-confirm" onchange="updateDeescGates()"> The report covers root cause, corrective plan and retraining, and carries the endorsements of the HSE General Manager, Contract Holder and Construction Manager.</label>
         <div id="de-gate3" style="margin-top:4px;font-size:11px;"></div></div>
       <div class="fg" style="margin-bottom:12px;"><label class="fl">Effective date</label><input type="date" id="de-date" class="fi"></div>
       <div class="fg" style="margin-bottom:14px;"><label class="fl">Note (optional)</label><textarea id="de-note" class="fi" rows="2"></textarea></div>
+      <div id="de-progress" style="font-size:12px;color:var(--navy);margin-bottom:10px;"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;"><button class="btn bk" onclick="cm('m-deesc')">Cancel</button><button id="de-submit-btn" class="btn bp" onclick="submitDeescalation()" disabled>Submit application</button></div>
     </div>
   </div>
@@ -1573,14 +1576,14 @@ body.gate-on #cnt > .view.active{display:none!important;}
 
         <!-- Scoring preview -->
         <div id="scoring-preview-card" class="card" style="margin-bottom:14px;border-left:4px solid #e8c766;">
-          <div style="font-size:13px;font-weight:800;color:var(--navy);">🧪 Scoring preview — rolling 12 months &amp; de-escalation</div>
-          <div style="font-size:11px;color:var(--t3);margin:4px 0 10px;">Try the new scoring rule on your real data before it goes live. The live rule (calendar year) stays the default, and nothing here is saved to the sheet.</div>
+          <div style="font-size:13px;font-weight:800;color:var(--navy);">🧪 Scoring preview — rolling 12 months</div>
+          <div style="font-size:11px;color:var(--t3);margin:4px 0 10px;">Try the new scoring rule on your real data before it goes live. The live rule (calendar year) stays the default. The preview never changes your live scores and never writes to the sheet.</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end;">
             <div class="fg"><label class="fl">Scoring rule</label><select id="sp-mode" class="fi" onchange="scSetMode(this.value)"><option value="calendar">Live — calendar year</option><option value="rolling">Preview — rolling 12 months</option></select></div>
             <div class="fg"><label class="fl">What-if "as of" date</label><input type="date" id="sp-asof" class="fi" onchange="scSetAsOf(this.value)"></div>
             <label style="display:flex;gap:8px;align-items:center;font-size:12px;"><input type="checkbox" id="sp-runway" onchange="scSetRunway(this.checked)"> Runway: Black needs 3 new instances after a de-escalation</label>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button class="btn bp bsm" onclick="scLoadDemo()">Load demo scenario</button><button class="btn bk bsm" onclick="scResetPreview()">Remove demo &amp; clear sandbox</button><button class="btn bk bsm" onclick="nav('deescalation')">Open De-escalation</button><button class="btn bk bsm" onclick="renderDataCheck()">🔎 Check my data</button></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button class="btn bp bsm" onclick="scLoadDemo()">Load demo scenario</button><button class="btn bk bsm" onclick="scResetPreview()">Remove demo scenario</button><button class="btn bk bsm" onclick="nav('deescalation')">Open De-escalation</button><button class="btn bk bsm" onclick="renderDataCheck()">🔎 Check my data</button></div>
           <div id="sp-status" style="font-size:11px;color:var(--t3);margin-top:8px;"></div>
           <div id="sp-datacheck" style="margin-top:10px;"></div>
         </div>
@@ -2568,9 +2571,10 @@ function apiClassifyReply(status, text){
 }
 
 // One round trip. body = the complete JSON sent. cb({state:'ok'|'rejected'|'unknown', json, error, detail})
-function apiSend(body, cb){
+function apiSend(body, cb, ms){
   var done=false; function fin(r){ if(done) return; done=true; clearTimeout(t); cb(r); }
-  var t=setTimeout(function(){ fin({state:'unknown',detail:'no reply within 25 seconds'}); }, 25000);
+  var wait=ms||25000;
+  var t=setTimeout(function(){ fin({state:'unknown',detail:'no reply within '+Math.round(wait/1000)+' seconds'}); }, wait);
   fetch(getScriptUrl(), {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)})
     .then(function(r){ return r.text().then(function(txt){ return {status:r.status, txt:txt}; }); })
     .then(function(x){
@@ -2945,7 +2949,7 @@ function renderProbationPanel(){
 var RI_DEPLOY_HINT = 'Check Apps Script: paste the latest .gs, then Deploy → Manage deployments → ✏️ → New version; it must run as "Me" and allow "Anyone".';
 function riPayload(rec){ var o={}; Object.keys(rec).forEach(function(k){ if(k.charAt(0)!=='_') o[k]=rec[k]; }); return o; }
 
-var RI_EXPECTED_GS = '2026-11-09-U';          // the Apps Script version this dashboard is built for
+var RI_EXPECTED_GS = '2026-11-11-V';          // the Apps Script version this dashboard is built for
 
 // Turn "no readable reply" into a specific cause
 function riClassifyReply(status, text){ return apiClassifyReply(status, text); }
@@ -3194,26 +3198,30 @@ function lookupRule(cat){
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
-// SCORING WINDOW (rolling 12 months) + DE-ESCALATION  —  PREVIEW MODE
-// Nothing in this module writes to the Google Sheet. The live rule (calendar year) stays the default.
-// Switch on from the PREVIEW banner or Setup; move the "as of" date to watch cases age out.
+// ESCALATION CLOSE-OUT ("de-escalation") + the optional ROLLING 12-MONTH scoring preview
+//
+//  • Escalation close-out works under the LIVE scoring rule (calendar year) and under the preview rule.
+//    Records live in the sheet tab SC_DEESCALATION; each application gets its OWN Drive folder in
+//    "STAC - Escalation Closeout Evidences" and its evidence files are uploaded into it.
+//  • The rolling 12-month scoring is still only a PREVIEW (switch on from the banner / Setup). It never changes the live rule.
 // ════════════════════════════════════════════════════════════════════════════════
 var SCORING = { mode:'calendar', asOf:'', floor:'2026-01-01', runway:true };
-var SCORING_KEY = 'stac_scoring_preview_v1', DEESC_KEY = 'stac_deesc_sandbox_v1', DEMO_KEY = 'stac_demo_scenario_v1';
-var deData = [];                       // de-escalation records — browser-only sandbox during the preview
+var SCORING_KEY = 'stac_scoring_preview_v1', DEMO_KEY = 'stac_demo_scenario_v1';
+var deData = [];                       // escalation close-out records (from the sheet)
+var deLoaded = false;
+var _dePending = null;                 // an application whose files are already uploaded but whose record is not yet confirmed
+var DE_MAX_FILE_MB = 15;
 var BAND_STYLE = {green:['Green','#1b7a3e'], yellow:['Yellow','#c8960c'], orange:['Orange','#e07000'], red:['Red','#c0392b'], black:['Black','#1a1d24']};
 
 function scLoad(){
   try{
     var s=JSON.parse(localStorage.getItem(SCORING_KEY)||'null');
     if(s){ SCORING.mode=(s.mode==='rolling')?'rolling':'calendar'; SCORING.asOf=s.asOf||''; SCORING.runway=(s.runway!==false); }
-    var d=JSON.parse(localStorage.getItem(DEESC_KEY)||'[]'); deData=Array.isArray(d)?d:[];
   }catch(e){}
 }
 function scSave(){
   try{ localStorage.setItem(SCORING_KEY,JSON.stringify({mode:SCORING.mode,asOf:SCORING.asOf,runway:SCORING.runway})); }catch(e){}
 }
-function deSave(){ try{ localStorage.setItem(DEESC_KEY,JSON.stringify(deData)); }catch(e){} }
 
 // ───────── dates ─────────
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -3229,7 +3237,7 @@ function addDaysISO(iso,n){ var t=new Date(String(iso).slice(0,10)+'T00:00:00Z')
 function daysBetweenISO(a,b){ return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000); }
 function caseExpiry(d){ return addMonthsISO(d.date,12); }                   // the first day the case no longer counts
 
-// ───────── the window ─────────
+// ───────── the window (rolling preview) ─────────
 function caseInWindow(d,asOf){
   if(!d||!d.date) return false;
   return d.date>addMonthsISO(asOf,-12) && d.date<=asOf && d.date>=SCORING.floor;
@@ -3256,7 +3264,22 @@ function scoreScopeCases(){                          // the cases a score screen
 }
 function byDateId(a,b){ return (a.date||'').localeCompare(b.date||'')||String(a.id).localeCompare(String(b.id)); }
 
-// ───────── de-escalation records (sandbox) ─────────
+// The cases that count for ESCALATION, under whichever rule is live: the current year (live rule) or the 12-month window (preview)
+function deScopeCases(company,asOf){
+  if(isRolling()) return windowCasesFor(company,asOf);
+  var k=(company||'').trim().toLowerCase(), from=riScoringFrom(company);
+  return stacData.filter(function(d){
+    return d.company && d.company.trim().toLowerCase()===k && d.date && d.date.startsWith(String(CY)) && (!from||d.date>=from);
+  });
+}
+function scopeCompanies(asOf){
+  if(isRolling()) return windowCompanies(asOf);
+  var seen={}, out=[];
+  stacData.forEach(function(d){ if(d.company&&d.date&&d.date.startsWith(String(CY))){ var k=d.company.trim().toLowerCase(); if(!seen[k]){seen[k]=1; out.push(d.company.trim());} } });
+  return out;
+}
+
+// ───────── escalation close-out records ─────────
 function deStamp(r){ return parseInt(String(r.id||'').replace(/\D/g,''))||0; }
 function deRecordsFor(co){
   var k=(co||'').trim().toLowerCase();
@@ -3266,10 +3289,22 @@ function getActiveDeescalation(co){
   var l=deRecordsFor(co).filter(function(r){return r.status==='De-escalated';}); return l.length?l[0]:null;
 }
 function deFromDate(co){ var r=getActiveDeescalation(co); return r?(r.effectiveDate||''):''; }
+function deNormStatus(s){
+  var x=String(s||'').trim().toLowerCase();
+  if(x==='de-escalated'||x==='deescalated'||x==='accepted') return 'De-escalated';
+  if(x==='returned') return 'Returned';
+  return 'Pending Acceptance';
+}
+function isDemoCo(co){ return /^DEMO /.test(String(co||'')); }
+function deUpsertLocal(rec, noWindow){
+  if(noWindow) delete rec._localAt; else rec._localAt=Date.now();
+  var i=deData.findIndex(function(r){return r.id===rec.id;});
+  if(i>=0) deData[i]=rec; else deData.push(rec);
+}
 
-// A category is ESCALATED when it has 3+ cases in the window and a 3rd-or-later case is dated after the last de-escalation
+// A category is ESCALATED when it has 3+ cases in scope and a 3rd-or-later case is dated after the last de-escalation
 function escalatedCategories(company,asOf){
-  var cases=windowCasesFor(company,asOf).slice().sort(byDateId), by={}, out=[], deFrom=deFromDate(company);
+  var cases=deScopeCases(company,asOf).slice().sort(byDateId), by={}, out=[], deFrom=deFromDate(company);
   cases.forEach(function(d){ var k=d.category.trim(); (by[k]=by[k]||[]).push(d); });
   Object.keys(by).forEach(function(cat){
     var l=by[cat]; if(l.length<3) return;
@@ -3278,32 +3313,39 @@ function escalatedCategories(company,asOf){
   });
   return out;
 }
-function rollingEscalationMap(){                    // 'company|||category' -> count, only for categories that need escalation
+function rollingEscalationMap(){                    // preview: 'company|||category' -> count, only for categories that need escalation
   var m={};
   windowCompanies(scoringAsOf()).forEach(function(co){
     escalatedCategories(co,scoringAsOf()).forEach(function(x){ if(x.flagged) m[co+'|||'+x.category]=x.count; });
   });
   return m;
 }
-
-// ───────── the score: live rule by default, rolling window in preview ─────────
-function calcComplianceScore(company){
-  var r=calcComplianceScoreCore(company);
-  return isRolling()?decorateRolling(r,company):r;
+// Live rule: keep the dashboard's own count (it respects the filters) and only drop what has been de-escalated
+function applyDeescToEscalationMap(m){
+  Object.keys(m).forEach(function(k){
+    var p=k.split('|||'); if(!deFromDate(p[0])) return;
+    var ok=escalatedCategories(p[0],scoringAsOf()).some(function(x){return x.flagged&&x.category===p[1];});
+    if(!ok) delete m[k];
+  });
+  return m;
 }
-function decorateRolling(r,company){
-  var asOf=scoringAsOf(), deFrom=deFromDate(company);
-  var esc=escalatedCategories(company,asOf).filter(function(x){return x.flagged;});
-  r.window={start:addMonthsISO(asOf,-12),asOf:asOf,floor:SCORING.floor};
-  r.escalatedCats=esc;
-  r.deescalatedFrom=deFrom;
-  r.newSinceDeesc=deFrom?windowCasesFor(company,asOf).filter(function(d){return d.date>deFrom;}).length:0;
-  r.runwayHeld=false;
+
+// ───────── the score: the original engine, plus escalation close-out information ─────────
+function calcComplianceScore(company){
+  return decorateScore(calcComplianceScoreCore(company),company);
+}
+function decorateScore(r,company){
+  var rolling=isRolling(), asOf=scoringAsOf(), deFrom=deFromDate(company);
+  r.escalatedCats=[]; r.deescalatedFrom=deFrom; r.newSinceDeesc=0; r.runwayHeld=false; r.deescalated=false; r.reEscalated=false;
+  if(rolling) r.window={start:addMonthsISO(asOf,-12),asOf:asOf,floor:SCORING.floor};
+  if(!(deFrom || rolling || r.maxCatInst>=3)) return r;                       // nothing to work out for this company
+  r.escalatedCats=escalatedCategories(company,asOf).filter(function(x){return x.flagged;});
+  r.newSinceDeesc=deFrom?deScopeCases(company,asOf).filter(function(d){return d.date>deFrom;}).length:0;
   if(SCORING.runway && deFrom && r.band==='black' && !r.resuspended && r.newSinceDeesc<RI_RESUSPEND_AT){
     r.band='red'; r.bandLabel='Non-Compliant — Final WL'; r.bandColor='#c0392b'; r.runwayHeld=true;      // Black needs 3 new instances after a de-escalation
   }
-  r.deescalated=!!(deFrom && r.band==='red' && esc.length===0);
-  r.reEscalated=!!(deFrom && r.band==='red' && esc.length>0);
+  r.deescalated=!!(deFrom && r.band==='red' && r.escalatedCats.length===0);
+  r.reEscalated=!!(deFrom && r.band==='red' && r.escalatedCats.length>0);
   if(r.band==='red'){
     r.leftBeforeBlack=Math.max(1, 6-r.totalInst, (SCORING.runway&&deFrom)?(RI_RESUSPEND_AT-r.newSinceDeesc):0);
   }
@@ -3314,7 +3356,7 @@ function scoreAsOf(co,asOf){
   try{ return calcComplianceScore(co); } finally { SCORING.asOf=keep; }
 }
 
-// ───────── expiring soon ─────────
+// ───────── expiring soon (rolling preview) ─────────
 function expiringSoon(days){
   var asOf=scoringAsOf(), horizon=addDaysISO(asOf,days||30), rows=[];
   windowAllCases(asOf).forEach(function(d){
@@ -3327,9 +3369,8 @@ function expiringSoon(days){
 }
 function bandChip(b){ var s=BAND_STYLE[b]||['?','#888']; return '<span style="display:inline-block;padding:1px 8px;border-radius:9px;font-size:10px;font-weight:700;color:#fff;background:'+s[1]+';">'+s[0]+'</span>'; }
 
-// ───────── de-escalation markers (red-and-black stripes) ─────────
+// ───────── markers (red-and-black stripes) ─────────
 function deescInfo(co){
-  if(!isRolling()) return null;
   var r=calcComplianceScore(co); if(!r.deescalated) return null;
   return {from:r.deescalatedFrom,left:r.leftBeforeBlack,newSince:r.newSinceDeesc};
 }
@@ -3338,7 +3379,7 @@ function deescPill(di){
 }
 function deescTape(h){ return '<div class="deesc-tape" style="height:'+h+'px;"></div>'; }
 
-// ───────── preview controls ─────────
+// ───────── preview controls (rolling 12-month scoring) ─────────
 function scRefresh(){
   renderScoringBanner(); renderScoringSetup();
   if(dataLoaded){ try{ filteredData=getFiltered(); }catch(e){} renderAll(); }
@@ -3346,7 +3387,7 @@ function scRefresh(){
 }
 function scSetMode(m){
   SCORING.mode=(m==='rolling')?'rolling':'calendar'; scSave(); scRefresh();
-  toast(isRolling()?'🧪 Preview on — rolling 12-month scoring. Nothing is saved to the sheet.':'Back to live scoring (calendar year).',4000);
+  toast(isRolling()?'🧪 Preview on — rolling 12-month scoring. Nothing is saved to the sheet by the preview.':'Back to live scoring (calendar year).',4000);
 }
 function scSetAsOf(v){ SCORING.asOf=(v&&/^\d{4}-\d{2}-\d{2}$/.test(v))?v:''; scSave(); scRefresh(); }
 function scQuickDate(x){
@@ -3363,7 +3404,7 @@ function renderScoringBanner(){
   var asOf=scoringAsOf();
   el.style.display='flex';
   el.innerHTML='<span>🧪 <b>PREVIEW</b> — rolling 12-month scoring, as of <b>'+esc(fd(asOf))+'</b>'+(SCORING.asOf?' (what-if date)':' (today)')
-    +'. Nothing here is saved to the sheet; new cases are still numbered by the live calendar-year rule.</span>'
+    +'. This preview does not change your live scores or the sheet; new cases are still numbered by the live calendar-year rule.</span>'
     +'<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
     +'<input type="date" class="fi" value="'+esc(asOf)+'" onchange="scSetAsOf(this.value)" style="width:150px;padding:3px 6px;font-size:11px;">'
     +'<button type="button" class="btn bk bsm" onclick="scQuickDate(\'today\')">Today</button>'
@@ -3378,7 +3419,7 @@ function renderScoringSetup(){
   var r=document.getElementById('sp-runway'); if(r) r.checked=!!SCORING.runway;
   var s=document.getElementById('sp-status'); if(s){
     var demo=false; try{ demo=localStorage.getItem(DEMO_KEY)==='1'; }catch(e){}
-    s.textContent=(isRolling()?'Preview ON — rolling 12 months as of '+fd(scoringAsOf()):'Live scoring (calendar year)')+' · window floor '+fd(SCORING.floor)+' · demo scenario '+(demo?'loaded':'off')+' · sandbox records '+deData.length;
+    s.textContent=(isRolling()?'Preview ON — rolling 12 months as of '+fd(scoringAsOf()):'Live scoring (calendar year)')+' · window floor '+fd(SCORING.floor)+' · demo scenario '+(demo?'loaded':'off')+' · escalation records '+deData.filter(function(r){return !r._demo;}).length;
   }
 }
 
@@ -3399,7 +3440,48 @@ function renderExpiringPanel(){
   var b=document.getElementById('exp-list'); if(b) b.innerHTML=h||'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:14px;">Nothing leaves the window in the next 30 days.</td></tr>';
 }
 
-// ───────── De-escalation screen ─────────
+// ───────── loading the records from the sheet ─────────
+function loadDeescalationData(){
+  fetchGvizData(CFG.sheetId, null, 'SC_DEESCALATION', 1).then(function(raw){
+    var fresh=[];
+    if(raw && raw.table){
+      var cols=(raw.table.cols||[]).map(function(c){return String(c.label||'').trim().toLowerCase();});
+      // The tab may not exist yet, and Google then answers with ANOTHER tab: only trust a table that has our own header.
+      if(cols.indexOf('de-escalation id')>=0){
+        fresh=(raw.table.rows||[]).filter(function(r){return r&&r.c;}).map(function(r){
+          function gc(col){ var i=cols.indexOf(col); if(i<0) return ''; var cell=r.c[i]; if(!cell) return ''; return cell.f!=null?String(cell.f):(cell.v!=null?String(cell.v):''); }
+          return { id:gc('de-escalation id'), company:gc('company'), cluster:gc('cluster'), escalatedCategories:gc('escalated categories'),
+            reportLink:gc('report link'), evidenceFolder:gc('evidence folder'), effectiveDate:gc('effective date'), note:gc('note'),
+            submittedBy:gc('submitted by'), submittedDate:gc('submitted date'), acceptedBy:gc('accepted by'), acceptedDate:gc('accepted date'),
+            status:deNormStatus(gc('status')) };
+        }).filter(function(r){return r.id&&r.company;});
+      }
+    }
+    // keep edits saved in the last 2 minutes (the sheet read may not show them yet); after that the sheet wins
+    deData.filter(function(r){return r._localAt && Date.now()-r._localAt<120000 && !r._demo;}).forEach(function(k){
+      var i=fresh.findIndex(function(r){return r.id===k.id;}); if(i>=0) fresh[i]=k; else fresh.push(k);
+    });
+    deData.filter(function(r){return r._demo;}).forEach(function(k){ fresh.push(k); });
+    deData=fresh; deLoaded=true; deRefresh();
+  }).catch(function(){ deLoaded=true; renderDeescalation(); });
+}
+function deRefresh(){ if(dataLoaded){ try{ renderAll(); }catch(e){} } renderExpiringPanel(); renderDeescalation(); }
+function deVerifyInSheet(id, wantStatus, cb, tries){
+  tries=tries||0;
+  function retry(){ if(tries<API_RETRIES-1) setTimeout(function(){ deVerifyInSheet(id,wantStatus,cb,tries+1); },API_RETRY_MS); else cb(false); }
+  fetchGvizData(CFG.sheetId, null, 'SC_DEESCALATION', 1).then(function(raw){
+    var hit=false;
+    if(raw && raw.table){
+      var labels=(raw.table.cols||[]).map(function(c){return String(c.label||'').trim().toLowerCase();});
+      var iId=labels.indexOf('de-escalation id'), iSt=labels.indexOf('status');
+      function cell(r,i){ var x=r.c&&r.c[i]; return x?String(x.f!=null?x.f:(x.v!=null?x.v:'')).trim():''; }
+      if(iId>=0) (raw.table.rows||[]).forEach(function(r){ if(r&&r.c&&cell(r,iId)===String(id).trim()&&(!wantStatus||deNormStatus(cell(r,iSt))===wantStatus)) hit=true; });
+    }
+    if(hit) cb(true); else retry();
+  }).catch(retry);
+}
+
+// ───────── the screen ─────────
 function deescState(co,r){
   var recs=deRecordsFor(co), latest=recs[0];
   if(latest&&latest.status==='Pending Acceptance') return 'pending';
@@ -3411,14 +3493,20 @@ function deescState(co,r){
 }
 function deescCompanies(){
   var seen={}, out=[];
-  windowCompanies(scoringAsOf()).concat(deData.map(function(r){return r.company;})).forEach(function(c){
+  scopeCompanies(scoringAsOf()).concat(deData.map(function(r){return r.company;})).forEach(function(c){
     var k=(c||'').trim().toLowerCase(); if(k&&!seen[k]){seen[k]=1; out.push(c.trim());} });
   return out;
+}
+function deLinks(rec){
+  if(!rec) return '<span style="font-size:10px;color:var(--t3);">—</span>';
+  var h='';
+  if(rec.evidenceFolder) h+='<a href="'+esc(rec.evidenceFolder)+'" target="_blank" rel="noopener" style="font-size:11px;">📁 Folder</a>';
+  if(rec.reportLink) h+=(h?' · ':'')+'<a href="'+esc(rec.reportLink)+'" target="_blank" rel="noopener" style="font-size:11px;">📄 Report</a>';
+  return h||'<span style="font-size:10px;color:var(--t3);">—</span>';
 }
 function renderDeescalation(){
   var body=document.getElementById('de-body'); if(!body) return;
   var note=document.getElementById('de-notice'), main=document.getElementById('de-main');
-  if(!isRolling()){ if(note) note.style.display='block'; if(main) main.style.display='none'; return; }
   if(note) note.style.display='none'; if(main) main.style.display='block';
   var rows=[], k={esc:0,deesc:0,pend:0,re:0};
   deescCompanies().forEach(function(co){
@@ -3433,31 +3521,33 @@ function renderDeescalation(){
     var r=x.r, st=x.st, l=label[st]||['—','#888'];
     var cats=(r.escalatedCats&&r.escalatedCats.length?r.escalatedCats:escalatedCategories(x.co,scoringAsOf())).map(function(c){return c.category.length>34?c.category.substring(0,34)+'…':c.category;}).join('; ');
     var left=(r.band==='red'&&r.leftBeforeBlack)?r.leftBeforeBlack:'—';
+    var latest=deRecordsFor(x.co)[0];
     var act='';
     if(st==='escalated') act='<button type="button" class="btn bp bsm" data-co="'+esc(x.co)+'" onclick="openDeescApply(this.dataset.co)">Apply</button>';
     else if(st==='reescalated') act='<span style="font-size:10px;color:var(--t3);" title="One de-escalation per Red episode: not allowed again until the company leaves Red">Locked this episode</span>';
     else if(st==='pending'){
-      var rec=deRecordsFor(x.co)[0];
       act=canAcceptReinstatement()
-        ?'<button type="button" class="btn bp bsm" data-id="'+esc(rec.id)+'" onclick="acceptDeescalation(this.dataset.id)">Accept</button> <button type="button" class="btn bk bsm" data-id="'+esc(rec.id)+'" onclick="returnDeescalation(this.dataset.id)">Return</button>'
+        ?'<button type="button" class="btn bp bsm" data-id="'+esc(latest.id)+'" onclick="acceptDeescalation(this.dataset.id)">Accept</button> <button type="button" class="btn bk bsm" data-id="'+esc(latest.id)+'" onclick="returnDeescalation(this.dataset.id)">Return</button>'
         :'<span style="font-size:10px;color:var(--t3);">Awaiting approver</span>';
     } else if(st==='deescalated') act='<span style="font-size:10px;color:var(--t3);">since '+esc(fd(r.deescalatedFrom))+'</span>';
     h+='<tr><td style="font-weight:700;">'+esc(x.co)+'</td><td><span class="cls-badge">'+esc(x.sub.cluster||'—')+'</span></td>'
       +'<td>'+bandChip('red')+'</td><td style="font-size:11px;">'+esc(cats||'—')+'</td><td style="text-align:center;">'+r.totalInst+'</td>'
       +'<td style="text-align:center;font-weight:800;">'+left+'</td>'
-      +'<td><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+l[1]+';">'+l[0]+'</span></td><td style="white-space:nowrap;">'+act+'</td></tr>';
+      +'<td><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+l[1]+';">'+l[0]+'</span></td>'
+      +'<td style="white-space:nowrap;">'+deLinks(latest)+'</td><td style="white-space:nowrap;">'+act+'</td></tr>';
   });
-  body.innerHTML=h||'<tr><td colspan="8" style="text-align:center;color:var(--t3);padding:18px;">No Red subcontractors at this date. Load the demo scenario in Setup to see the process.</td></tr>';
+  body.innerHTML=h||'<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:18px;">'+(deLoaded?'No Red subcontractors under the current rule.':'Loading escalation records…')+'</td></tr>';
   function set(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
   set('de-k-esc',k.esc); set('de-k-deesc',k.deesc); set('de-k-pend',k.pend); set('de-k-re',k.re);
   var hist=document.getElementById('de-hist'), hh='';
   deData.slice().sort(function(a,b){return deStamp(b)-deStamp(a);}).forEach(function(r){
-    hh+='<tr><td style="font-weight:700;">'+esc(r.company)+'</td><td>'+esc(r.status)+'</td><td>'+esc(fd(r.effectiveDate))+'</td><td style="font-size:11px;">'+esc(r.submittedBy||'—')+'</td><td style="font-size:11px;">'+esc(r.acceptedBy?(r.acceptedBy+' · '+fd(r.acceptedDate)):'—')+'</td></tr>';
+    hh+='<tr><td style="font-weight:700;">'+esc(r.company)+(r._demo?' <span style="font-size:9px;color:#a16207;">(demo)</span>':'')+'</td><td>'+esc(r.status)+'</td><td>'+esc(fd(r.effectiveDate))+'</td><td style="font-size:11px;">'+esc(r.submittedBy||'—')
+      +'</td><td style="font-size:11px;">'+esc(r.acceptedBy?(r.acceptedBy+' · '+fd(r.acceptedDate)):'—')+'</td><td>'+deLinks(r)+'</td></tr>';
   });
-  if(hist) hist.innerHTML=hh||'<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:12px;">No sandbox applications yet.</td></tr>';
+  if(hist) hist.innerHTML=hh||'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:12px;">No applications yet.</td></tr>';
 }
 
-// ───────── apply / accept / return (sandbox) ─────────
+// ───────── apply: gates, files into the application's own Drive folder, then the record ─────────
 function deescGate1(co){
   var k=(co||'').trim().toLowerCase();
   var open=actionData.filter(function(a){return (a.company||'').trim().toLowerCase()===k && a.status!=='Closed' && a.status!=='Approved';}).length;
@@ -3466,83 +3556,139 @@ function deescGate1(co){
 function openDeescApply(co){
   if(!_actionsLoaded) loadActionData();
   var c=document.getElementById('de-company'); if(c) c.value=co;
-  var t=document.getElementById('de-title'); if(t) t.textContent='🛡 De-escalation application — '+co;
+  var t=document.getElementById('de-title'); if(t) t.textContent='🛡 Escalation close-out application — '+co;
   var d=document.getElementById('de-date'); if(d) d.value=scoringAsOf();
   var rp=document.getElementById('de-report'); if(rp) rp.value='';
+  var fl=document.getElementById('de-files'); if(fl) fl.value='';
+  var fn=document.getElementById('de-files-list'); if(fn) fn.innerHTML='';
   var cf=document.getElementById('de-confirm'); if(cf) cf.checked=false;
   var n=document.getElementById('de-note'); if(n) n.value='';
+  var pr=document.getElementById('de-progress'); if(pr) pr.textContent='';
+  if(_dePending && _dePending.company!==co) _dePending=null;              // a half-finished application of ANOTHER company is not reused
+  if(_dePending){ if(pr) pr.innerHTML='A previous attempt for this company already uploaded '+_dePending.uploaded.length+' file(s) to its Drive folder. Submit again and they will not be uploaded twice.'; }
   updateDeescGates(); openModal('m-deesc');
+}
+function deChosenFiles(){ var el=document.getElementById('de-files'); return el&&el.files?[].slice.call(el.files):[]; }
+function onDeescFilesChosen(){
+  var l=document.getElementById('de-files-list'), files=deChosenFiles(), h='';
+  files.forEach(function(f){ var mb=f.size/1048576; h+='<div style="'+(mb>DE_MAX_FILE_MB?'color:#c0392b;font-weight:700;':'')+'">📎 '+esc(f.name)+' · '+mb.toFixed(1)+' MB'+(mb>DE_MAX_FILE_MB?' — too large (max '+DE_MAX_FILE_MB+' MB)':'')+'</div>'; });
+  if(l) l.innerHTML=h; updateDeescGates();
 }
 function updateDeescGates(){
   var co=(document.getElementById('de-company')||{}).value||''; var g1=deescGate1(co);
   var s1=document.getElementById('de-gate1');
   if(s1) s1.innerHTML=g1.ready?'<span style="color:#1b7a3e;font-weight:700;">✓ All corrective actions are closed</span>'
     :'<span style="color:#c0392b;font-weight:700;">✗ '+g1.open+' corrective action(s) still open — close them in the Action Tracker first</span>';
+  var files=deChosenFiles(), tooBig=files.some(function(f){return f.size/1048576>DE_MAX_FILE_MB;});
   var link=((document.getElementById('de-report')||{}).value||'').trim();
-  var ok2=/^https?:\/\//i.test(link);
-  var s2=document.getElementById('de-gate2'); if(s2) s2.innerHTML=ok2?'<span style="color:#1b7a3e;font-weight:700;">✓ Report link provided</span>':'<span style="color:#c0392b;font-weight:700;">✗ Paste the Drive link of the endorsed report (https://…)</span>';
+  var have=files.length>0 || /^https?:\/\//i.test(link) || (_dePending&&_dePending.uploaded.length>0);
+  var s2=document.getElementById('de-gate2');
+  if(s2) s2.innerHTML=tooBig?'<span style="color:#c0392b;font-weight:700;">✗ A file is too large (max '+DE_MAX_FILE_MB+' MB each)</span>'
+    :(have?'<span style="color:#1b7a3e;font-weight:700;">✓ Evidence provided</span>':'<span style="color:#c0392b;font-weight:700;">✗ Attach the evidence files (or paste the Drive link of the endorsed report)</span>');
   var ok3=!!(document.getElementById('de-confirm')||{}).checked;
   var s3=document.getElementById('de-gate3'); if(s3) s3.innerHTML=ok3?'<span style="color:#1b7a3e;font-weight:700;">✓ Endorsements confirmed</span>':'<span style="color:#c0392b;font-weight:700;">✗ Tick to confirm the endorsements are on the report</span>';
-  var b=document.getElementById('de-submit-btn'); if(b) b.disabled=!(g1.ready&&ok2&&ok3);
+  var b=document.getElementById('de-submit-btn'); if(b&&!b._busy) b.disabled=!(g1.ready&&have&&!tooBig&&ok3);
+}
+function deReadB64(file, cb, fail){
+  var rd=new FileReader();
+  rd.onload=function(e){ cb(String(e.target.result).split(',')[1]||''); };
+  rd.onerror=function(){ fail('could not read the file'); };
+  rd.readAsDataURL(file);
+}
+function deUploadOne(rec, file, cb, fail){
+  deReadB64(file, function(b64){
+    var ext=(file.name.split('.').pop()||'pdf').toLowerCase();
+    apiSend({action:'uploadDeescalationFile',recordId:rec.id,company:rec.company,fileName:file.name,fileExt:ext,mimeType:file.type||'application/octet-stream',base64:b64}, function(res){
+      if(res.state==='ok') return cb(res.json||{});
+      if(res.state==='rejected') return fail('Apps Script refused it ('+res.error+')');
+      fail('Apps Script did not confirm it'+(res.detail?' ('+res.detail+')':'')+' — check the folder before uploading it again');
+    }, 120000);
+  }, fail);
+}
+function deBusy(on,msg){
+  var b=document.getElementById('de-submit-btn'); if(b){ b._busy=!!on; b.disabled=!!on; b.textContent=on?'Working…':'Submit application'; }
+  var pr=document.getElementById('de-progress'); if(pr&&msg!==undefined) pr.innerHTML=msg;
 }
 function submitDeescalation(){
   var co=(document.getElementById('de-company')||{}).value||'';
-  var g1=deescGate1(co), link=((document.getElementById('de-report')||{}).value||'').trim();
-  if(!g1.ready||!/^https?:\/\//i.test(link)||!(document.getElementById('de-confirm')||{}).checked){ toast('All three gates must be passed first',3000,'warn'); return; }
-  var rec={id:'DE-'+Date.now(),company:co,status:'Pending Acceptance',effectiveDate:((document.getElementById('de-date')||{}).value||scoringAsOf()),
-    reportLink:link,note:((document.getElementById('de-note')||{}).value||'').trim(),submittedBy:(adminEmail||'preview user'),submittedDate:todayISO()};
-  deData.push(rec); deSave(); cm('m-deesc'); scRefresh();
-  toast('🛡 Application recorded in the preview sandbox — awaiting the approver',5000);
+  var g1=deescGate1(co), link=((document.getElementById('de-report')||{}).value||'').trim(), files=deChosenFiles();
+  var have=files.length>0 || /^https?:\/\//i.test(link) || (_dePending&&_dePending.uploaded.length>0);
+  if(!g1.ready||!have||!(document.getElementById('de-confirm')||{}).checked){ toast('All three gates must be passed first',3000,'warn'); return; }
+  var sub=subconData.find(function(s){return (s.company||'').trim().toLowerCase()===co.trim().toLowerCase();})||{};
+  var cats=escalatedCategories(co,scoringAsOf()).filter(function(x){return x.flagged;}).map(function(x){return x.category;}).join('; ');
+  var pend=_dePending&&_dePending.company===co?_dePending:(_dePending={id:'DE-'+Date.now(),company:co,uploaded:[]});
+  var rec={ id:pend.id, company:co, cluster:sub.cluster||'', escalatedCategories:cats, reportLink:link, evidenceFolder:'',
+    effectiveDate:((document.getElementById('de-date')||{}).value||scoringAsOf()), note:((document.getElementById('de-note')||{}).value||'').trim(),
+    submittedBy:(adminEmail||''), submittedDate:todayISO(), acceptedBy:'', acceptedDate:'', status:'Pending Acceptance' };
+
+  // A demo company never touches the sheet or Drive
+  if(isDemoCo(co)){ rec._demo=true; deUpsertLocal(rec); _dePending=null; cm('m-deesc'); deRefresh(); toast('Demo application recorded in memory only — nothing was saved to the sheet or Drive.',5000); return; }
+
+  deBusy(true,'Uploading evidence to its Drive folder…');
+  var todo=files.filter(function(f){ return !pend.uploaded.some(function(u){return u.name===f.name;}); });
+  function finish(){
+    var first=pend.uploaded[0];
+    if(first&&!rec.reportLink) rec.reportLink=first.url;
+    if(pend.folderUrl) rec.evidenceFolder=pend.folderUrl;
+    deBusy(true,'Saving the application to the sheet…');
+    apiSave({
+      body:{action:'writeDeescalation', data:rec},
+      onOk:function(j){
+        if(j&&j.folderUrl&&!rec.evidenceFolder) rec.evidenceFolder=j.folderUrl;
+        deUpsertLocal(rec); _dePending=null; deBusy(false,''); cm('m-deesc'); deRefresh();
+        toast('🛡 Application saved to the sheet — evidence in its own Drive folder ('+rec.id+')'+(j&&j.folderWarning?' · '+j.folderWarning:'')+'. Awaiting the approver.',9000);
+      },
+      onFail:function(why){
+        deBusy(false,'');
+        toast('❌ Application NOT saved — '+why+' '+(pend.uploaded.length?'Your '+pend.uploaded.length+' file(s) are already in Drive, so press Submit again: they will not be uploaded twice.':'Press Submit again.')+' '+RI_DEPLOY_HINT,14000,'warn');
+      },
+      verify:function(cb){ deVerifyInSheet(rec.id,'',function(found){ cb(found,{}); }); }
+    });
+  }
+  function nextFile(i){
+    if(i>=todo.length) return finish();
+    var f=todo[i];
+    deBusy(true,'Uploading '+(i+1)+' of '+todo.length+': '+esc(f.name)+'…');
+    deUploadOne(rec, f, function(j){
+      pend.uploaded.push({name:f.name,url:j.url||'',fileId:j.fileId||''}); if(j.folderUrl) pend.folderUrl=j.folderUrl;
+      nextFile(i+1);
+    }, function(why){
+      deBusy(false,'');
+      toast('❌ "'+f.name+'" was NOT uploaded — '+why+'. The application was not saved. '+(pend.uploaded.length?pend.uploaded.length+' earlier file(s) are already in Drive and will not be uploaded again. ':'')+RI_DEPLOY_HINT,14000,'warn');
+    });
+  }
+  nextFile(0);
 }
+
+// ───────── accept / return (approver only; confirmed in the sheet; rolled back if it fails) ─────────
 function deescSetStatus(id,status,verb){
   var rec=deData.find(function(r){return r.id===id;}); if(!rec) return;
-  stacConfirm({title:verb+' de-escalation',text:verb+' the de-escalation of '+rec.company+'?\n\nThis only changes the preview sandbox. Nothing is saved to the sheet.',ok:verb},function(){
-    rec.status=status; rec.acceptedBy=(adminEmail||'preview user'); rec.acceptedDate=todayISO(); deSave(); scRefresh();
-    toast(status==='De-escalated'?'✅ '+rec.company+' de-escalated (preview): flag cleared, band stays Red':'↩ Returned to the applicant (preview)',5000);
+  stacConfirm({title:verb+' escalation close-out',body:'<div>'+esc(verb)+' the application of <b>'+esc(rec.company)+'</b>?'
+    +(rec.evidenceFolder?'<div style="margin-top:8px;">📁 <a href="'+esc(rec.evidenceFolder)+'" target="_blank" rel="noopener">Open the evidence folder</a> — review it before deciding.</div>':'')
+    +'<div style="margin-top:8px;font-size:12px;color:#8b6504;">'+(status==='De-escalated'?'The escalation flag is cleared; the band stays Red. This cannot be undone.':'It goes back to the applicant.')+'</div></div>',ok:verb},function(){
+    var prev={status:rec.status,acceptedBy:rec.acceptedBy||'',acceptedDate:rec.acceptedDate||''};
+    rec.status=status; rec.acceptedBy=(adminEmail||'').trim().toLowerCase(); rec.acceptedDate=todayISO();
+    deUpsertLocal(rec); deRefresh();
+    if(isDemoCo(rec.company)){ toast('Demo decision recorded in memory only.',4000); return; }
+    toast('⏳ Saving to the sheet…',4000);
+    apiSave({
+      body:{action:'writeDeescalation', data:rec},
+      onOk:function(){ deRefresh(); toast(status==='De-escalated'?'✅ '+rec.company+' de-escalated and saved to the sheet — flag cleared, band stays Red':'↩ Returned to the applicant and saved to the sheet',7000); },
+      onFail:function(why){
+        rec.status=prev.status; rec.acceptedBy=prev.acceptedBy; rec.acceptedDate=prev.acceptedDate; deUpsertLocal(rec,true); deRefresh();
+        toast('❌ NOT recorded — '+why+' The sheet was not changed and the application is back to "Pending Acceptance", so you can try again. '+RI_DEPLOY_HINT,14000,'warn');
+      },
+      verify:function(cb){ deVerifyInSheet(rec.id,status,function(found){ cb(found,{}); }); }
+    });
   });
 }
 function acceptDeescalation(id){
-  if(!canAcceptReinstatement()){ toast('Only the approver can accept a de-escalation',3500,'warn'); return; }
+  if(!canAcceptReinstatement()){ toast(adminEmail?'Only the designated approver can accept a de-escalation':'Identify yourself first: Setup → Admin Identity',3500,'warn'); return; }
   deescSetStatus(id,'De-escalated','Accept');
 }
 function returnDeescalation(id){
-  if(!canAcceptReinstatement()){ toast('Only the approver can return a de-escalation',3500,'warn'); return; }
+  if(!canAcceptReinstatement()){ toast(adminEmail?'Only the designated approver can return a de-escalation':'Identify yourself first: Setup → Admin Identity',3500,'warn'); return; }
   deescSetStatus(id,'Returned','Return');
-}
-
-// ───────── demo scenario (fictitious companies, in memory only) ─────────
-function demoCase(co,cl,date,sno,n){
-  var m=SM[sno-1];
-  return {id:'DEMO-'+co.replace(/[^A-Za-z0-9]/g,'').slice(0,8)+'-'+date,date:date,cluster:cl,company:co,owner:'(demo)',category:m.cat,
-    wlType:(n===1?'1st':n===2?'2nd':'Final')+' Warning Letter',penalty:(n===1?m.p1:n===2?m.p2:m.p3),status:'Open',instances:n,wlIssued:'Yes',contractNo:'DEMO',description:'Demo case — preview only',_demo:true};
-}
-var DEMO_COMPANIES=['DEMO A - Red escalated','DEMO B - Red de-escalated','DEMO C - One from Black','DEMO D - Ages out soon'];
-function scApplyDemo(){
-  stacData=stacData.filter(function(d){return !d._demo;});
-  subconData=subconData.filter(function(s){return !s._demo;});
-  deData=deData.filter(function(r){return !r._demo;});
-  var on=false; try{ on=localStorage.getItem(DEMO_KEY)==='1'; }catch(e){}
-  if(!on) return;
-  var A=DEMO_COMPANIES[0], B=DEMO_COMPANIES[1], C=DEMO_COMPANIES[2], D=DEMO_COMPANIES[3];
-  var cases=[
-    demoCase(A,'Nimr','2026-03-12',7,1),demoCase(A,'Nimr','2026-06-04',7,2),demoCase(A,'Nimr','2026-09-20',7,3),
-    demoCase(B,'Marmul WD','2026-02-10',7,1),demoCase(B,'Marmul WD','2026-04-15',7,2),demoCase(B,'Marmul WD','2026-07-01',7,3),demoCase(B,'Marmul WD','2026-10-05',3,1),
-    demoCase(C,'Amal','2026-01-20',7,1),demoCase(C,'Amal','2026-03-02',7,2),demoCase(C,'Amal','2026-05-11',7,3),demoCase(C,'Amal','2026-06-09',10,1),demoCase(C,'Amal','2026-08-22',10,2),
-    demoCase(D,'Greater Birba','2026-01-08',4,1),demoCase(D,'Greater Birba','2026-01-20',4,2),demoCase(D,'Greater Birba','2026-02-03',4,3)];
-  cases.forEach(function(c){ stacData.push(c); });
-  [[A,'Nimr'],[B,'Marmul WD'],[C,'Amal'],[D,'Greater Birba']].forEach(function(x){
-    subconData.push({company:x[0],cluster:x[1],riskLevel:'Medium-High',annualCeiling:92,owner:'',ownerEmail:'',focal:'',focalEmail:'',coord:'',coordEmail:'',qs:'',contractType:'',discipline:'',contractNo:'DEMO',_demo:true}); });
-  deData.push({id:'DE-DEMO-B',company:B,status:'De-escalated',effectiveDate:'2026-09-15',reportLink:'https://example.test/demo-report',submittedBy:'demo',submittedDate:'2026-09-10',acceptedBy:'demo',acceptedDate:'2026-09-15',_demo:true});
-}
-function scLoadDemo(){
-  try{ localStorage.setItem(DEMO_KEY,'1'); }catch(e){}
-  scApplyDemo(); scSetMode('rolling');
-  toast('Demo scenario loaded: 4 fictitious companies, in memory only. Try the date buttons in the banner.',6000);
-}
-function scResetPreview(){
-  try{ localStorage.removeItem(DEMO_KEY); }catch(e){}
-  deData=[]; deSave(); SCORING.asOf=''; scSave(); scApplyDemo(); scRefresh();
-  toast('Demo scenario removed and the sandbox cleared.',4000);
 }
 
 // ───────── data check: where the live score and the rolling score disagree, and why ─────────
@@ -3590,6 +3736,41 @@ function renderDataCheck(){
     h+='</tbody></table></div>';
   }
   el.innerHTML=h;
+}
+
+// ───────── demo scenario (fictitious companies, in memory only — never sent to the sheet or Drive) ─────────
+function demoCase(co,cl,date,sno,n){
+  var m=SM[sno-1];
+  return {id:'DEMO-'+co.replace(/[^A-Za-z0-9]/g,'').slice(0,8)+'-'+date,date:date,cluster:cl,company:co,owner:'(demo)',category:m.cat,
+    wlType:(n===1?'1st':n===2?'2nd':'Final')+' Warning Letter',penalty:(n===1?m.p1:n===2?m.p2:m.p3),status:'Open',instances:n,wlIssued:'Yes',contractNo:'DEMO',description:'Demo case — preview only',_demo:true};
+}
+var DEMO_COMPANIES=['DEMO A - Red escalated','DEMO B - Red de-escalated','DEMO C - One from Black','DEMO D - Ages out soon'];
+function scApplyDemo(){
+  stacData=stacData.filter(function(d){return !d._demo;});
+  subconData=subconData.filter(function(s){return !s._demo;});
+  deData=deData.filter(function(r){return !r._demo;});
+  var on=false; try{ on=localStorage.getItem(DEMO_KEY)==='1'; }catch(e){}
+  if(!on) return;
+  var A=DEMO_COMPANIES[0], B=DEMO_COMPANIES[1], C=DEMO_COMPANIES[2], D=DEMO_COMPANIES[3];
+  var cases=[
+    demoCase(A,'Nimr','2026-03-12',7,1),demoCase(A,'Nimr','2026-06-04',7,2),demoCase(A,'Nimr','2026-09-20',7,3),
+    demoCase(B,'Marmul WD','2026-02-10',7,1),demoCase(B,'Marmul WD','2026-04-15',7,2),demoCase(B,'Marmul WD','2026-07-01',7,3),demoCase(B,'Marmul WD','2026-10-05',3,1),
+    demoCase(C,'Amal','2026-01-20',7,1),demoCase(C,'Amal','2026-03-02',7,2),demoCase(C,'Amal','2026-05-11',7,3),demoCase(C,'Amal','2026-06-09',10,1),demoCase(C,'Amal','2026-08-22',10,2),
+    demoCase(D,'Greater Birba','2026-01-08',4,1),demoCase(D,'Greater Birba','2026-01-20',4,2),demoCase(D,'Greater Birba','2026-02-03',4,3)];
+  cases.forEach(function(c){ stacData.push(c); });
+  [[A,'Nimr'],[B,'Marmul WD'],[C,'Amal'],[D,'Greater Birba']].forEach(function(x){
+    subconData.push({company:x[0],cluster:x[1],riskLevel:'Medium-High',annualCeiling:92,owner:'',ownerEmail:'',focal:'',focalEmail:'',coord:'',coordEmail:'',qs:'',contractType:'',discipline:'',contractNo:'DEMO',_demo:true}); });
+  deData.push({id:'DE-DEMO-B',company:B,cluster:'Marmul WD',escalatedCategories:'',reportLink:'https://example.test/demo-report',evidenceFolder:'',effectiveDate:'2026-09-15',note:'',submittedBy:'demo',submittedDate:'2026-09-10',acceptedBy:'demo',acceptedDate:'2026-09-15',status:'De-escalated',_demo:true});
+}
+function scLoadDemo(){
+  try{ localStorage.setItem(DEMO_KEY,'1'); }catch(e){}
+  scApplyDemo(); scSetMode('rolling');
+  toast('Demo scenario loaded: 4 fictitious companies, in memory only. Try the date buttons in the banner.',6000);
+}
+function scResetPreview(){
+  try{ localStorage.removeItem(DEMO_KEY); }catch(e){}
+  SCORING.asOf=''; scSave(); scApplyDemo(); scRefresh();
+  toast('Demo scenario removed. Your real escalation records were not touched.',4000);
 }
 
 scLoad();
@@ -4323,7 +4504,7 @@ function renderDash(){
   var wlIssued=ytd.length;
   var catMap={};
   ytd.filter(riCounts).forEach(function(d){var k=d.company+'|||'+d.category;catMap[k]=(catMap[k]||0)+1;});
-  if(isRolling()) catMap=rollingEscalationMap();     // preview: escalation follows the window and de-escalation
+  catMap = isRolling() ? rollingEscalationMap() : applyDeescToEscalationMap(catMap);     // a de-escalated category is no longer 'escalated' (live rule keeps the dashboard's own count)
   var esc3=Object.values(catMap).filter(function(v){return v>=3;}).length;
   var coEsc=[...new Set(Object.entries(catMap).filter(function(e){return e[1]>=3;}).map(function(e){return e[0].split('|||')[0];}))].length;
   // Count companies in Black band (uses same calcComplianceScore as scorecards)
@@ -6766,6 +6947,7 @@ function nav(v){
   }
   else if(v==='deescalation'){
     renderDeescalation();
+    loadDeescalationData();
     if(!_actionsLoaded) loadActionData();
   }
   else if(v==='hse-stats'){
@@ -6892,8 +7074,9 @@ function testScriptUrl(){
             if(!has && !j.statusDropdown.allowInvalid){ lines.push('   → "Reinstated" is missing and other values are rejected: Accept will fail. Add "Reinstated" to the list (or set the rule to "Show warning").'); bad=true; }
           }
           if(j.folders){
-            [['notices','7. Default Notices folder ......','attachments'],['letters','8. Warning Letters folder .....','letter copies']].forEach(function(x){
-              var f=j.folders[x[0]]||{};
+            [['notices','7. Default Notices folder ......','attachments'],['letters','8. Warning Letters folder .....','letter copies'],['escalation','9. Escalation evidence folder .','escalation evidence'],['reinstatement','10. Reinstatement folder .....','reinstatement reports']].forEach(function(x){
+              var f=j.folders[x[0]];
+              if(!f){ lines.push(x[1]+' not reported (an older script is live)'); return; }
               lines.push(x[1]+' '+(f.ok?'OK  · "'+f.name+'"':'PROBLEM  · '+(f.error||'cannot be opened')));
               if(!f.ok){ lines.push('   → Apps Script cannot open this folder, so '+x[2]+' will NOT be saved. Check the folder ID in Script properties and that the script owner can add files to it.'); bad=true; }
             });
@@ -7098,6 +7281,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     try{await Promise.race([loadMasters(),new Promise(function(r){setTimeout(r,5000);})]);}catch(e){console.warn('loadMasters:',e);}
     await loadData(true); // always fetch live on launch
     try{loadBlacklistData();}catch(e){console.warn('loadBlacklistData:',e);}
+  try{loadDeescalationData();}catch(e){console.warn('loadDeescalationData:',e);}
     try{loadActionData();}catch(e){console.warn('loadActionData:',e);}
     updateDraftBadge();
     startHealthCheck();
@@ -8403,7 +8587,7 @@ function riClearFile(){
   updateReinstatementGates();
 }
 
-function uploadEndorsementToDrive(file, company, onSuccess, onError){
+function uploadEndorsementToDrive(file, company, onSuccess, onError, recordId){
   // Upload PDF to Apps Script which saves to Drive folder
   var url = getScriptUrl();
   if(!url){ onError('No script URL configured'); return; }
@@ -8426,7 +8610,7 @@ function uploadEndorsementToDrive(file, company, onSuccess, onError){
     var b64=e.target.result.split(',')[1];
     var folderLink='https://drive.google.com/drive/folders/1lOz-FCJtwcKaf-1EBQQLHxdfm7SX6hdY';
     var payload=JSON.stringify({action:'uploadEndorsementPDF',company:company,fileName:file.name,
-      mimeType:'application/pdf',base64:b64,folderId:'1lOz-FCJtwcKaf-1EBQQLHxdfm7SX6hdY'});
+      mimeType:'application/pdf',base64:b64,recordId:recordId||''});
     function done(link,note){ clearInterval(ticker); if(bar) bar.style.width='100%'; if(stat) stat.textContent=note||'Uploaded ✅'; onSuccess(link); }
     fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload})
       .then(function(r){return r.json();})
@@ -8491,6 +8675,7 @@ function submitReinstatement(){
   var notes = document.getElementById('ri-ownership-notes').value;
   var riDate= document.getElementById('ri-date').value;
   var subBy = document.getElementById('ri-submitted-by').value;
+  var _riRecId = (riPendingId(co) || ('RI-' + Date.now()));       // fixed BEFORE the upload so the file goes into this application's own new folder
   var existingLink = (document.getElementById('ri-endorsement-link')||{}).value||'';
   var _fname = _riSelectedFile ? _riSelectedFile.name : '';
   if(!_riSelectedFile) _riShareNote='';
@@ -8518,7 +8703,7 @@ function submitReinstatement(){
   var _bb = getBlackBandedSubcons().find(function(x){return x.company===co;})||{};
 
   var record = {
-    id:               (riPendingId(co) || ('RI-' + Date.now())),
+    id:               _riRecId,
     company:          co,
     cluster:          _bb.cluster||'',
     blacklistedDate:  _bb.blacklistedDate||'',
@@ -8579,7 +8764,8 @@ function submitReinstatement(){
         var _m=(typeof err==='string')?err:((err&&err.message)||'');
         toast('❌ File upload failed'+(_m?': '+_m:'')+' — check the Drive folder before retrying, the file may already be there', 8000, 'warn');
         if(btn){btn.disabled=false;btn.textContent='Submit Reinstatement Application';}
-      }
+      },
+      _riRecId
     );
   } else {
     // Already uploaded previously — use existing link
