@@ -668,7 +668,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
   <div class="sb-foot">
-    BUILD 11NOV-X &nbsp;|&nbsp; GID 342483107<br>
+    BUILD 11NOV-Y &nbsp;|&nbsp; GID 342483107<br>
     Next ID: <span id="sb-nid">—</span> &nbsp;|&nbsp; Ref: <span id="sb-ref">—</span>
   </div>
 </nav>
@@ -5413,6 +5413,26 @@ function renderWLPreview(){
   if(sel) loadWL(sel.value);
 }
 
+// The penalty printed on a letter follows the violation-instance matrix (category + the case's TRUE instance), so it is right for every past
+// and every new case, whatever the sheet's Penalty cell says. Only a fine PDO imposed (quoted with its Safety Qube ID) keeps its own amount.
+function wlTrueInstance(d,rule){
+  var coN=wlNorm(d.company), yr=String(d.date||'').substring(0,4), from=riScoringFrom(d.company)||'', n=1;
+  stacData.forEach(function(x){
+    if(x===d||!x.date||wlNorm(x.company)!==coN||String(x.date).substring(0,4)!==yr) return;
+    if(lookupRule(x.category||'')!==rule) return;                                   // the same category, however its name is spelt
+    if(from&&d.date>=from&&x.date<from) return;                                      // after a reinstatement the count restarts
+    if(x.date<d.date||(x.date===d.date&&String(x.id)<String(d.id))) n++;
+  });
+  return n;
+}
+function wlLetterPenalty(d){
+  var stored=Number(d.penalty)||0, rule=lookupRule(d.category||'');
+  if(!rule) return stored;                                                           // not a matrix category: show what is recorded
+  if(stored>0&&hasPdoFine(d.description)) return stored;                             // a PDO-imposed fine keeps the amount PDO charged
+  var i=rule.final?1:Math.min(wlTrueInstance(d,rule),3);
+  return [rule.p1,rule.p2,rule.p3][i-1];
+}
+
 function loadWL(stacId){
   var wc=document.getElementById('wl-content');
   if(!stacId){
@@ -5433,9 +5453,10 @@ function loadWL(stacId){
   var desc=limitWords(d.description||'HSE non-compliance details recorded on site.',195);
 
   // Penalty row
-  var penRow = d.penalty>0
+  var _penAmt = wlLetterPenalty(d);
+  var penRow = _penAmt>0
     ? '<tr style="background:#fff5f5;"><td style="font-weight:600;color:#c0392b;">Financial Penalty</td>'
-      +'<td><strong style="color:#c0392b;">⚠ OMR '+Number(d.penalty).toFixed(3)+'</strong>'
+      +'<td><strong style="color:#c0392b;">⚠ OMR '+Number(_penAmt).toFixed(3)+'</strong>'
       +' — per subcontract agreement Clause [X.X].</td></tr>'
     : '';
 
