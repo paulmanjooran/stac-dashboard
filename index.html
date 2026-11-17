@@ -668,7 +668,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
     <div class="sbi" id="tools-nav-setup" onclick="adminGate('setup')"><span class="ic">⚙️</span>Setup</div>
   </div>
   <div class="sb-foot">
-    BUILD 11NOV-Y &nbsp;|&nbsp; GID 342483107<br>
+    BUILD 16NOV-A &nbsp;|&nbsp; GID 342483107<br>
     Next ID: <span id="sb-nid">—</span> &nbsp;|&nbsp; Ref: <span id="sb-ref">—</span>
   </div>
 </nav>
@@ -787,7 +787,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
         <div class="prob-tape" style="height:10px;"></div>
       </div>
 
-      <!-- EXPIRING SOON (rolling-window preview) -->
+      <!-- EXPIRING SOON (live rolling window) -->
       <div id="exp-panel" class="card" style="display:none;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
           <h3 style="font-size:13px;margin:0;color:var(--navy);">⏳ Expiring soon — cases leaving the 12-month window in the next 30 days</h3>
@@ -1289,14 +1289,25 @@ body.gate-on #cnt > .view.active{display:none!important;}
         <div style="font-size:18px;font-weight:800;color:var(--navy);">🛡️ Subcon De-escalation</div>
         <div style="font-size:12px;color:var(--t3);margin-top:2px;">Red-band subcontractors: the way back from escalation. Same gates as reinstatement. The band stays Red and the escalation flag is cleared.</div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn bk bsm" onclick="nav('setup')">Preview settings</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn bk bsm" onclick="nav('setup')">Scoring settings</button></div>
     </div>
   </div>
+  <div id="tb-card" class="card" style="margin-bottom:14px;border-left:4px solid #1a1d24;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+      <div>
+        <div style="font-size:14px;font-weight:800;color:var(--navy);">🚫 Tender bar register</div>
+        <div id="tb-count" style="font-size:11px;color:var(--t3);margin-top:2px;"></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;">An escalated (Red) or Black subcontractor cannot take part in future tenders. An accepted escalation close-out lifts the bar for a Red company; a Black company stays barred until it is reinstated.</div>
+      </div>
+      <button class="btn bp bsm" onclick="tbExportCSV()">⬇ Download list (CSV)</button>
+    </div>
+    <div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>Cluster</th><th>Band</th><th>Escalated categories</th><th>Management decision</th><th>Latest case</th></tr></thead><tbody id="tb-body"><tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3);">Loading…</td></tr></tbody></table></div>
+  </div>
   <div id="de-notice" class="card" style="display:none;margin-bottom:14px;border-left:4px solid #e8c766;">
-    <div style="font-size:13px;color:var(--navy);font-weight:700;">Rolling 12-month scoring is off</div>
-    <div style="font-size:12px;color:var(--t3);margin:4px 0 10px;">De-escalation works on the rolling-window preview. Turn it on to see Red subcontractors and try the process. Nothing is saved to the sheet.</div>
-    <button class="btn bp bsm" onclick="scSetMode('rolling')">Turn on the preview</button>
-    <button class="btn bk bsm" onclick="scLoadDemo()">Turn on with the demo scenario</button>
+    <div style="font-size:13px;color:var(--navy);font-weight:700;">You are in the comparison view (the old calendar-year rule)</div>
+    <div style="font-size:12px;color:var(--t3);margin:4px 0 10px;">The escalations below follow that old rule, not the live one (rolling 12 months). Go back to the live rule before you process a close-out. Nothing in the comparison view is saved to the sheet.</div>
+    <button class="btn bp bsm" onclick="scSetMode('rolling')">Back to the live rule</button>
+    <button class="btn bk bsm" onclick="scLoadDemo()">Load the demo scenario</button>
   </div>
   <div id="de-main" style="display:none;">
     <div class="kgrid k4" style="margin-bottom:14px;">
@@ -1340,7 +1351,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
     <div class="kpi" style="border-top:4px solid #c0392b;">
       <div class="klbl">Currently Suspended</div>
       <div class="kval" id="bl-k-active" style="color:#c0392b;">—</div>
-      <div class="ksub">Work suspended — pending reinstatement</div>
+      <div class="ksub">Suspended, terminated or decision pending</div>
     </div>
     <div class="kpi" style="border-top:4px solid #d68910;">
       <div class="klbl">Under Reinstatement</div>
@@ -1369,12 +1380,13 @@ body.gate-on #cnt > .view.active{display:none!important;}
             <th>All Actions</th>
             <th>Endorsements</th>
             <th>Status</th>
+            <th>Management Decision</th>
             <th>Probation Ends</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="bl-body">
-          <tr><td colspan="10" style="text-align:center;padding:30px;color:var(--t3);">Loading…</td></tr>
+          <tr><td colspan="11" style="text-align:center;padding:30px;color:var(--t3);">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1417,12 +1429,29 @@ body.gate-on #cnt > .view.active{display:none!important;}
         <div id="de-files-list" style="font-size:11px;margin:4px 0;"></div>
         <input id="de-report" class="fi" placeholder="…or paste the Drive link of the endorsed report (https://…)" oninput="updateDeescGates()"><div id="de-gate2" style="margin-top:4px;font-size:11px;"></div></div>
       <div class="fg" style="margin-bottom:12px;"><label class="fl">Gate 3 — Endorsements</label>
-        <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;"><input type="checkbox" id="de-confirm" onchange="updateDeescGates()"> The report covers root cause, corrective plan and retraining, and carries the endorsements of the HSE General Manager, Contract Holder and Construction Manager.</label>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;"><input type="checkbox" id="de-confirm" onchange="updateDeescGates()"> The report covers root cause, corrective plan and retraining, and carries the endorsements of the Contract Manager, the Construction Manager and the HSE General Manager.</label>
         <div id="de-gate3" style="margin-top:4px;font-size:11px;"></div></div>
       <div class="fg" style="margin-bottom:12px;"><label class="fl">Effective date</label><input type="date" id="de-date" class="fi"></div>
       <div class="fg" style="margin-bottom:14px;"><label class="fl">Note (optional)</label><textarea id="de-note" class="fi" rows="2"></textarea></div>
       <div id="de-progress" style="font-size:12px;color:var(--navy);margin-bottom:10px;"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;"><button class="btn bk" onclick="cm('m-deesc')">Cancel</button><button id="de-submit-btn" class="btn bp" onclick="submitDeescalation()" disabled>Submit application</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="m-mgmt" class="modal" style="display:none;">
+  <div class="modal-box" style="max-width:520px;width:95%;">
+    <div class="modal-hdr"><span id="md-title">⚖ Management decision</span><button class="modal-cls" onclick="cm('m-mgmt')">✕</button></div>
+    <div class="modal-body" style="padding:18px 20px;max-height:80vh;overflow-y:auto;">
+      <input type="hidden" id="md-company"><input type="hidden" id="md-decision">
+      <div style="background:#e8f1ff;border:1px solid #b9d0f5;color:#1f3f7a;border-radius:8px;padding:8px 12px;font-size:11px;margin-bottom:12px;">Decision after a Black band: <b id="md-decision-show"></b>. It is saved to the sheet (tab SC_MGMT_DECISION) and replaces any earlier decision for this company.</div>
+      <div id="md-row-pct" class="fg" style="margin-bottom:12px;display:none;"><label class="fl">Penalty — % of the PO value (0.80 to 1.00) *</label><input id="md-pct" type="number" step="0.01" min="0.8" max="1" class="fi" oninput="mdValidate()" placeholder="0.80 – 1.00"></div>
+      <div id="md-row-days" class="fg" style="margin-bottom:12px;display:none;"><label class="fl">Suspension period — days *</label><input id="md-days" type="number" min="1" max="365" class="fi" oninput="mdValidate()"><div style="font-size:10px;color:var(--t3);margin-top:3px;">Default by risk level: Medium 30, Medium-High 60, Critical 90. During the suspension the company cannot take part in new bids or be awarded new jobs.</div></div>
+      <div id="md-term-note" style="display:none;background:#fdecea;border:1px solid #e57373;color:#9b1c1c;border-radius:8px;padding:8px 12px;font-size:11px;margin-bottom:12px;">Termination and blacklisting is communicated to all stakeholders and to PDO. The company is reviewed after 12 months for eligibility to reapply.</div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Effective date *</label><input id="md-date" type="date" class="fi" oninput="mdValidate()"></div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Note (optional)</label><textarea id="md-note" class="fi" rows="2"></textarea></div>
+      <div id="md-msg" style="display:none;color:#c0392b;font-size:12px;margin-bottom:10px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;"><button class="btn bk" onclick="cm('m-mgmt')">Cancel</button><button id="md-submit-btn" class="btn bp" onclick="mdSubmit()">Record decision</button></div>
     </div>
   </div>
 </div>
@@ -1458,11 +1487,11 @@ body.gate-on #cnt > .view.active{display:none!important;}
           <span id="ri-g2-icon">⬜</span> Endorsed Reinstatement Report (PDF) uploaded to Drive
         </div>
         <div id="ri-gate-3" style="font-size:11px;color:#333;padding:4px 0;display:flex;gap:8px;align-items:center;">
-          <span id="ri-g3-icon">⬜</span> Document contains all 3 signatures (HSE GM + Contract Holder + Construction Manager)
+          <span id="ri-g3-icon">⬜</span> Document contains all 3 signatures (HSE GM + Contract Manager + Construction Manager)
         </div>
         <label style="display:flex;gap:8px;align-items:flex-start;font-size:11px;margin-top:8px;padding-left:2px;cursor:pointer;color:#333;">
           <input type="checkbox" id="ri-confirm-endorse" onchange="updateReinstatementGates()" style="margin-top:2px;">
-          <span>I confirm the uploaded report carries the endorsement of the HSE GM, Contract Holder and Construction Manager.</span>
+          <span>I confirm the uploaded report carries the endorsement of the Contract Manager, Construction Manager and HSE GM.</span>
         </label>
         <div style="font-size:9px;color:var(--t3);margin-top:4px;padding-left:24px;">The approver reads the document before accepting.</div>
       </div>
@@ -1473,7 +1502,7 @@ body.gate-on #cnt > .view.active{display:none!important;}
           Endorsed Reinstatement Report — All 3 Signatories on One Document
         </div>
         <div style="font-size:10px;color:var(--t3);margin-bottom:10px;">
-          Upload the PDF bearing endorsement signatures from HSE GM + Contract Holder + Construction Manager.
+          Upload the PDF bearing endorsement signatures from HSE GM + Contract Manager + Construction Manager.
           File will be saved to the Blacklist &amp; Reinstatement Drive folder automatically.
         </div>
 
@@ -1574,16 +1603,16 @@ body.gate-on #cnt > .view.active{display:none!important;}
 <div id="view-setup" class="view">
       <div style="max-width:860px;">
 
-        <!-- Scoring preview -->
-        <div id="scoring-preview-card" class="card" style="margin-bottom:14px;border-left:4px solid #e8c766;">
-          <div style="font-size:13px;font-weight:800;color:var(--navy);">🧪 Scoring preview — rolling 12 months</div>
-          <div style="font-size:11px;color:var(--t3);margin:4px 0 10px;">Try the new scoring rule on your real data before it goes live. The live rule (calendar year) stays the default. The preview never changes your live scores and never writes to the sheet.</div>
+        <!-- Scoring rule -->
+        <div id="scoring-preview-card" class="card" style="margin-bottom:14px;border-left:4px solid #1b7a3e;">
+          <div style="font-size:13px;font-weight:800;color:var(--navy);">📏 Scoring rule — rolling 12 months (LIVE)</div>
+          <div style="font-size:11px;color:var(--t3);margin:4px 0 10px;">The live rule is the same for every user: a violation counts from its instance date for 12 months and then drops out, counting from 1 January 2026. The controls below are for review only. They change what <b>you</b> see in this session, never the sheet, and are cleared when you reload the page.</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end;">
-            <div class="fg"><label class="fl">Scoring rule</label><select id="sp-mode" class="fi" onchange="scSetMode(this.value)"><option value="calendar">Live — calendar year</option><option value="rolling">Preview — rolling 12 months</option></select></div>
+            <div class="fg"><label class="fl">View</label><select id="sp-mode" class="fi" onchange="scSetMode(this.value)"><option value="rolling">Live — rolling 12 months</option><option value="calendar">Comparison — old calendar-year rule</option></select></div>
             <div class="fg"><label class="fl">What-if "as of" date</label><input type="date" id="sp-asof" class="fi" onchange="scSetAsOf(this.value)"></div>
             <label style="display:flex;gap:8px;align-items:center;font-size:12px;"><input type="checkbox" id="sp-runway" onchange="scSetRunway(this.checked)"> Runway: Black needs 3 new instances after a de-escalation</label>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button class="btn bp bsm" onclick="scLoadDemo()">Load demo scenario</button><button class="btn bk bsm" onclick="scResetPreview()">Remove demo scenario</button><button class="btn bk bsm" onclick="nav('deescalation')">Open De-escalation</button><button class="btn bk bsm" onclick="renderDataCheck()">🔎 Check my data</button></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button class="btn bp bsm" onclick="scLoadDemo()">Load demo scenario</button><button class="btn bk bsm" onclick="scResetPreview()">Remove demo scenario</button><button class="btn bk bsm" onclick="nav('deescalation')">Open De-escalation</button><button class="btn bk bsm" onclick="renderDataCheck()">🔍 Check my data</button></div>
           <div id="sp-status" style="font-size:11px;color:var(--t3);margin-top:8px;"></div>
           <div id="sp-datacheck" style="margin-top:10px;"></div>
         </div>
@@ -2874,6 +2903,9 @@ function probPill(pi){
 }
 function probTape(h){ return '<div class="prob-tape" style="height:'+h+'px;"></div>'; }
 function probCardTop(co){
+  return tenderStrip(co)+probCardTopCore(co);
+}
+function probCardTopCore(co){
   var pi=probInfo(co);
   if(pi) return probTape(9)+'<div style="background:#fff;text-align:center;padding:5px 6px;border-bottom:1px solid #f3d6d3;">'+probPill(pi)+'</div>';
   var di=deescInfo(co);
@@ -2956,7 +2988,7 @@ function renderProbationPanel(){
 var RI_DEPLOY_HINT = 'Check Apps Script: paste the latest .gs, then Deploy → Manage deployments → ✏️ → New version; it must run as "Me" and allow "Anyone".';
 function riPayload(rec){ var o={}; Object.keys(rec).forEach(function(k){ if(k.charAt(0)!=='_') o[k]=rec[k]; }); return o; }
 
-var RI_EXPECTED_GS = '2026-11-11-X';          // the Apps Script version this dashboard is built for
+var RI_EXPECTED_GS = '2026-11-16-A';          // the Apps Script version this dashboard is built for
 
 // Turn "no readable reply" into a specific cause
 function riClassifyReply(status, text){ return apiClassifyReply(status, text); }
@@ -3093,10 +3125,10 @@ function calcComplianceScoreCore(company){
     _instOverride = {};
     var _cc = {};
     ytd.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'')||String(a.id).localeCompare(String(b.id));})
-       .forEach(function(d){var k=d.category.trim(); _cc[k]=(_cc[k]||0)+1; _instOverride[d.id]=_cc[k];});
+       .forEach(function(d){var k=isRolling()?catKeyOf(d):d.category.trim(); _cc[k]=(_cc[k]||0)+1; _instOverride[d.id]=_cc[k];});     // live rule: by MATRIX category
   }
   ytd.forEach(function(d){
-    var cat = d.category.trim();
+    var cat = isRolling()?catKeyOf(d):d.category.trim();
     var inst = _instOverride ? _instOverride[d.id] : (parseInt(d.instances)||1);
     if(!catMap[cat]||inst>catMap[cat]) catMap[cat]=inst;
   });
@@ -3216,7 +3248,7 @@ function lookupRule(cat){
 //    "STAC - Escalation Closeout Evidences" and its evidence files are uploaded into it.
 //  • The rolling 12-month scoring is still only a PREVIEW (switch on from the banner / Setup). It never changes the live rule.
 // ════════════════════════════════════════════════════════════════════════════════
-var SCORING = { mode:'calendar', asOf:'', floor:'2026-01-01', runway:true };
+var SCORING = { mode:'rolling', asOf:'', floor:'2026-01-01', runway:true };      // LIVE RULE from 16 Nov 2026: a violation counts for 12 months from its instance date, then drops out (never before the floor)
 var SCORING_KEY = 'stac_scoring_preview_v1', DEMO_KEY = 'stac_demo_scenario_v1';
 var deData = [];                       // escalation close-out records (from the sheet)
 var deLoaded = false;
@@ -3225,14 +3257,11 @@ var DE_MAX_FILE_MB = 15;
 var BAND_STYLE = {green:['Green','#1b7a3e'], yellow:['Yellow','#c8960c'], orange:['Orange','#e07000'], red:['Red','#c0392b'], black:['Black','#1a1d24']};
 
 function scLoad(){
-  try{
-    var s=JSON.parse(localStorage.getItem(SCORING_KEY)||'null');
-    if(s){ SCORING.mode=(s.mode==='rolling')?'rolling':'calendar'; SCORING.asOf=s.asOf||''; SCORING.runway=(s.runway!==false); }
-  }catch(e){}
+  // The rolling 12-month rule is LIVE and the same for everyone. Nothing is restored from the browser any more:
+  // an old "preview" setting must never change what a user sees. The comparison view and the what-if date last for this session only.
+  try{ localStorage.removeItem(SCORING_KEY); }catch(e){}
 }
-function scSave(){
-  try{ localStorage.setItem(SCORING_KEY,JSON.stringify({mode:SCORING.mode,asOf:SCORING.asOf,runway:SCORING.runway})); }catch(e){}
-}
+function scSave(){ /* session only: the rule, the what-if date and the runway are never stored */ }
 
 // ───────── dates ─────────
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -3249,9 +3278,24 @@ function daysBetweenISO(a,b){ return Math.round((Date.parse(b+'T00:00:00Z')-Date
 function caseExpiry(d){ return addMonthsISO(d.date,12); }                   // the first day the case no longer counts
 
 // ───────── the window (rolling preview) ─────────
+// The instance number of a case under the LIVE rule: its place among the cases of the SAME company and category in the 12 months up to it
+// (never before the floor; a case drops out on its first anniversary; the count restarts at an accepted reinstatement; same date: ID order).
+// The category a case belongs to under the LIVE rule: the MATRIX category (PTW, Lifting & Hoisting and Excavation are all "LSR Violations"), as the
+// warning letters and the server count them. A category that is not in the matrix keeps the spelling it was entered with.
+function catKeyOf(d){ var s=String((d&&d.category)||'').trim(), r=s?lookupRule(s):null; return r?r.cat:s; }
+function rollingInstanceNo(company, sameCat, date, selfId){
+  var coN=wlNorm(company), from=riScoringFrom(company)||'', n=1;
+  stacData.forEach(function(x){
+    if(!x.date||x.id===selfId||!x.company||wlNorm(x.company)!==coN||!sameCat(x)) return;
+    if(x.date<SCORING.floor||!(date<addMonthsISO(x.date,12))) return;          // never before the floor; a case drops out on its first anniversary
+    if(from&&date>=from&&x.date<from) return;
+    if(x.date<date||(x.date===date&&String(x.id)<String(selfId))) n++;
+  });
+  return n;
+}
 function caseInWindow(d,asOf){
   if(!d||!d.date) return false;
-  return d.date>addMonthsISO(asOf,-12) && d.date<=asOf && d.date>=SCORING.floor;
+  return asOf<caseExpiry(d) && d.date<=asOf && d.date>=SCORING.floor;                 // counts until the day BEFORE its first anniversary (the same date caseExpiry gives)
 }
 function windowCasesFor(company,asOf){
   var k=(company||'').trim().toLowerCase(), from=riScoringFrom(company);
@@ -3316,7 +3360,7 @@ function deUpsertLocal(rec, noWindow){
 // A category is ESCALATED when it has 3+ cases in scope and a 3rd-or-later case is dated after the last de-escalation
 function escalatedCategories(company,asOf){
   var cases=deScopeCases(company,asOf).slice().sort(byDateId), by={}, out=[], deFrom=deFromDate(company);
-  cases.forEach(function(d){ var k=d.category.trim(); (by[k]=by[k]||[]).push(d); });
+  cases.forEach(function(d){ var k=isRolling()?catKeyOf(d):d.category.trim(); (by[k]=by[k]||[]).push(d); });
   Object.keys(by).forEach(function(cat){
     var l=by[cat]; if(l.length<3) return;
     var flagged=!deFrom || l.slice(2).some(function(d){return d.date>deFrom;});
@@ -3394,11 +3438,11 @@ function deescTape(h){ return '<div class="deesc-tape" style="height:'+h+'px;"><
 function scRefresh(){
   renderScoringBanner(); renderScoringSetup();
   if(dataLoaded){ try{ filteredData=getFiltered(); }catch(e){} renderAll(); }
-  renderExpiringPanel(); renderDeescalation();
+  renderExpiringPanel(); renderDeescalation(); try{ renderTenderBar(); }catch(e){}
 }
 function scSetMode(m){
-  SCORING.mode=(m==='rolling')?'rolling':'calendar'; scSave(); scRefresh();
-  toast(isRolling()?'🧪 Preview on — rolling 12-month scoring. Nothing is saved to the sheet by the preview.':'Back to live scoring (calendar year).',4000);
+  SCORING.mode=(m==='calendar')?'calendar':'rolling'; scSave(); scRefresh();
+  toast(isRolling()?'Back to the live rule: rolling 12 months.':'Comparison view: the OLD calendar-year rule. It is not the live rule, nothing is saved, and it is cleared when you reload.',4500);
 }
 function scSetAsOf(v){ SCORING.asOf=(v&&/^\d{4}-\d{2}-\d{2}$/.test(v))?v:''; scSave(); scRefresh(); }
 function scQuickDate(x){
@@ -3411,17 +3455,18 @@ function scSetRunway(on){ SCORING.runway=!!on; scSave(); scRefresh(); }
 
 function renderScoringBanner(){
   var el=document.getElementById('scoring-banner'); if(!el) return;
-  if(!isRolling()){ el.style.display='none'; el.innerHTML=''; return; }
+  var cmp=!isRolling(), whatIf=!!SCORING.asOf;
+  if(!cmp&&!whatIf){ el.style.display='none'; el.innerHTML=''; return; }               // the live rule, as of today: no banner
   var asOf=scoringAsOf();
   el.style.display='flex';
-  el.innerHTML='<span>🧪 <b>PREVIEW</b> — rolling 12-month scoring, as of <b>'+esc(fd(asOf))+'</b>'+(SCORING.asOf?' (what-if date)':' (today)')
-    +'. This preview does not change your live scores or the sheet; new cases are still numbered by the live calendar-year rule.</span>'
+  el.innerHTML='<span>'+(cmp?'⚖ <b>COMPARISON VIEW</b> — the OLD calendar-year rule, as of <b>'+esc(fd(asOf))+'</b>. It is not the live rule. Nothing is saved; reload the page to return to the live rule.'
+                            :'🕒 <b>WHAT-IF</b> — rolling 12-month scoring as of <b>'+esc(fd(asOf))+'</b>, not today. Nothing is saved.')+'</span>'
     +'<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
     +'<input type="date" class="fi" value="'+esc(asOf)+'" onchange="scSetAsOf(this.value)" style="width:150px;padding:3px 6px;font-size:11px;">'
     +'<button type="button" class="btn bk bsm" onclick="scQuickDate(\'today\')">Today</button>'
     +'<button type="button" class="btn bk bsm" onclick="scQuickDate(30)">+30 days</button>'
     +'<button type="button" class="btn bk bsm" onclick="scQuickDate(\'2027-01-01\')">1 Jan 2027</button>'
-    +'<button type="button" class="btn bp bsm" onclick="scSetMode(\'calendar\')">Back to live scoring</button></span>';
+    +'<button type="button" class="btn bp bsm" onclick="'+(cmp?'scSetMode(\'rolling\')':'scQuickDate(\'today\')')+'">'+(cmp?'Back to the live rule':'Back to today')+'</button></span>';
 }
 function renderScoringSetup(){
   var m=document.getElementById('sp-mode'); if(!m) return;
@@ -3430,7 +3475,7 @@ function renderScoringSetup(){
   var r=document.getElementById('sp-runway'); if(r) r.checked=!!SCORING.runway;
   var s=document.getElementById('sp-status'); if(s){
     var demo=false; try{ demo=localStorage.getItem(DEMO_KEY)==='1'; }catch(e){}
-    s.textContent=(isRolling()?'Preview ON — rolling 12 months as of '+fd(scoringAsOf()):'Live scoring (calendar year)')+' · window floor '+fd(SCORING.floor)+' · demo scenario '+(demo?'loaded':'off')+' · escalation records '+deData.filter(function(r){return !r._demo;}).length;
+    s.textContent=(isRolling()?'Live rule: rolling 12 months, as of '+fd(scoringAsOf())+(SCORING.asOf?' (what-if date)':' (today)'):'Comparison view: the old calendar-year rule (not live)')+' · counting from '+fd(SCORING.floor)+' · demo scenario '+(demo?'loaded':'off')+' · escalation records '+deData.filter(function(r){return !r._demo;}).length;
   }
 }
 
@@ -3518,7 +3563,7 @@ function deLinks(rec){
 function renderDeescalation(){
   var body=document.getElementById('de-body'); if(!body) return;
   var note=document.getElementById('de-notice'), main=document.getElementById('de-main');
-  if(note) note.style.display='none'; if(main) main.style.display='block';
+  if(note) note.style.display=isRolling()?'none':'block'; if(main) main.style.display='block';      // the comparison view says so; the screen still works
   var rows=[], k={esc:0,deesc:0,pend:0,re:0};
   deescCompanies().forEach(function(co){
     var r=calcComplianceScore(co), st=deescState(co,r);
@@ -3712,7 +3757,7 @@ function bandBothWays(co){
 function dataCheck(){
   var asOf=scoringAsOf(), rows=[], counter={};
   windowAllCases(asOf).slice().sort(byDateId).forEach(function(d){
-    var key=d.company.trim().toLowerCase()+'|||'+d.category.trim();
+    var key=d.company.trim().toLowerCase()+'|||'+catKeyOf(d);
     counter[key]=(counter[key]||0)+1;
     var stored=parseInt(d.instances)||1;
     if(stored!==counter[key]) rows.push({id:d.id,co:d.company.trim(),category:d.category.trim(),date:d.date,stored:stored,counted:counter[key]});
@@ -3735,9 +3780,9 @@ function renderDataCheck(){
   var r=dataCheck(), h='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 6px;">Data check as of '+esc(fd(r.asOf))+': '
     +r.companies.length+' of '+r.checked+' companies score differently, and '+r.cases.length+' case(s) carry a saved instance number that does not match the count.</div>';
   if(!r.cases.length&&!r.companies.length){ el.innerHTML=h+'<div style="font-size:11px;color:#1b7a3e;">Every saved instance number matches the count of cases. The two rules agree.</div>'; return; }
-  h+='<div style="font-size:11px;color:var(--t3);margin-bottom:6px;">The live score uses the number saved on each case. The rolling score counts the cases. Where they differ, the saved number is usually the one to check (an earlier case missing, deleted or in another year).</div>';
+  h+='<div style="font-size:11px;color:var(--t3);margin-bottom:6px;">The old calendar-year score uses the number saved on each case. The rolling score (the live rule) counts the cases. Where they differ, the saved number is usually the one to check (an earlier case missing, deleted or in another year).</div>';
   if(r.companies.length){
-    h+='<div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>Live band</th><th>Rolling band</th><th>Depth live → rolling</th><th>Score live → rolling</th></tr></thead><tbody>';
+    h+='<div class="tw"><table class="tbl"><thead><tr><th>Subcontractor</th><th>Calendar-year band</th><th>Rolling band (live)</th><th>Depth calendar → rolling</th><th>Score calendar → rolling</th></tr></thead><tbody>';
     r.companies.forEach(function(x){ h+='<tr><td style="font-weight:700;">'+esc(x.co)+'</td><td>'+bandChip(x.liveBand)+'</td><td>'+bandChip(x.rollBand)+'</td><td style="text-align:center;">'+x.liveDepth+' → '+x.rollDepth+'</td><td style="text-align:center;">'+x.liveScore+' → '+x.rollScore+'</td></tr>'; });
     h+='</tbody></table></div>';
   }
@@ -4427,7 +4472,12 @@ function resetF(){
 // ============================================================
 function getYTDInst(d){
   if(!d.date)return d.instances||1;
-  if(!d.date.startsWith(String(CY)))return d.instances||1;
+  if(isRolling()){                                              // the LIVE rule: cases in the 12 months up to this case, never before the floor
+    if(d.date<SCORING.floor)return d.instances||1;              // older than the rule's start: keep the number that was saved
+    const _key=catKeyOf(d);                                        // the MATRIX category, exactly as the scorecard engine and the letters group them
+    return rollingInstanceNo(d.company,x=>catKeyOf(x)===_key,d.date,d.id);
+  }
+  if(!d.date.startsWith(String(CY)))return d.instances||1;        // (comparison view: the old calendar-year count)
   const coL=d.company.trim().toLowerCase();
   const catL=d.category.trim().toLowerCase();
   const _from=riScoringFrom(d.company);
@@ -4994,13 +5044,16 @@ function calcYTDInst(co,cat,rule){
   const coN=wlNorm(co);const catLow=cat.trim().toLowerCase();
   const _from=riScoringFrom(co);
   const _dt=gv('fa-dt');                                  // cases up to the instance date being entered are the earlier ones
-  const existing=stacData.filter(d=>{
-    if(!d.date||!d.date.startsWith(String(CY)))return false;
-    if(_from && d.date<_from)return false;
-    if(_dt && d.date>_dt)return false;
-    if(wlNorm(d.company)!==coN)return false;
-    return rule ? lookupRule(d.category)===rule : d.category.trim().toLowerCase()===catLow;      // same CATEGORY, however its name is spelt
-  }).length;
+  const _sameCat=x=>rule ? lookupRule(x.category)===rule : x.category.trim().toLowerCase()===catLow;      // same CATEGORY, however its name is spelt
+  const existing=isRolling()
+    ? rollingInstanceNo(co,_sameCat,_dt||todayISO(),'\uffff')-1                         // the LIVE rule: the 12 months up to the instance date
+    : stacData.filter(d=>{                                                              // (comparison view: the old calendar-year count)
+        if(!d.date||!d.date.startsWith(String(CY)))return false;
+        if(_from && d.date<_from)return false;
+        if(_dt && d.date>_dt)return false;
+        if(wlNorm(d.company)!==coN)return false;
+        return _sameCat(d);
+      }).length;
   const thisInst=existing+1;
   let wlt='1st Warning Letter | Quarter Of Full Penalty | No Demerit';
   let pen=25;
@@ -5010,7 +5063,9 @@ function calcYTDInst(co,cat,rule){
     else if(thisInst===2){wlt=rule.l2;pen=rule.p2;}
     else{wlt=rule.l1;pen=rule.p1;}
   }
-  sv('fa-inst',("YTD Instance #"+(thisInst)+" ("+(existing)+" prior "+(CY)+" case"+(existing!==1?'s':'')+" for this company+category"+(_from?" — counting from reinstatement "+fd(_from):"")+")"));
+  sv('fa-inst',isRolling()
+    ? ("Instance #"+(thisInst)+" ("+(existing)+" earlier case"+(existing!==1?'s':'')+" in the last 12 months for this company+category"+(_from?" — counting from reinstatement "+fd(_from):"")+")")
+    : ("YTD Instance #"+(thisInst)+" ("+(existing)+" prior "+(CY)+" case"+(existing!==1?'s':'')+" for this company+category"+(_from?" — counting from reinstatement "+fd(_from):"")+")"));
   sv('fa-wlt',wlt);
   _wlCalc={inst:thisInst,wlt:wlt,pen:pen,rule:rule};
   const sel=document.getElementById('fa-pen');
@@ -5416,7 +5471,8 @@ function renderWLPreview(){
 // The penalty printed on a letter follows the violation-instance matrix (category + the case's TRUE instance), so it is right for every past
 // and every new case, whatever the sheet's Penalty cell says. Only a fine PDO imposed (quoted with its Safety Qube ID) keeps its own amount.
 function wlTrueInstance(d,rule){
-  var coN=wlNorm(d.company), yr=String(d.date||'').substring(0,4), from=riScoringFrom(d.company)||'', n=1;
+  if(isRolling()&&d.date&&d.date>=SCORING.floor) return rollingInstanceNo(d.company,function(x){return lookupRule(x.category||'')===rule;},d.date,d.id);   // the LIVE rule
+  var coN=wlNorm(d.company), yr=String(d.date||'').substring(0,4), from=riScoringFrom(d.company)||'', n=1;           // (comparison view / older than the rule's start)
   stacData.forEach(function(x){
     if(x===d||!x.date||wlNorm(x.company)!==coN||String(x.date).substring(0,4)!==yr) return;
     if(lookupRule(x.category||'')!==rule) return;                                   // the same category, however its name is spelt
@@ -6997,10 +7053,11 @@ function nav(v){
     renderBlacklist();
     if(!_actionsLoaded) loadActionData();
     loadBlacklistData();
+    loadDecisionData();
   }
   else if(v==='deescalation'){
-    renderDeescalation();
-    loadDeescalationData();
+    renderDeescalation(); renderTenderBar();
+    loadDeescalationData(); loadDecisionData();
     if(!_actionsLoaded) loadActionData();
   }
   else if(v==='hse-stats'){
@@ -7335,6 +7392,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     await loadData(true); // always fetch live on launch
     try{loadBlacklistData();}catch(e){console.warn('loadBlacklistData:',e);}
   try{loadDeescalationData();}catch(e){console.warn('loadDeescalationData:',e);}
+  try{loadDecisionData();}catch(e){console.warn('loadDecisionData:',e);}
     try{loadActionData();}catch(e){console.warn('loadActionData:',e);}
     updateDraftBadge();
     startHealthCheck();
@@ -8253,7 +8311,7 @@ function fetchBlacklistFromSheet(){
           blacklistedDate: gc('blacklisted date'),
           suspensionStacId: gc('stac id (trigger)'),
           hseGmLink:     gc('hse gm endorsement'),
-          chLink:        gc('contract holder endorsement'),
+          chLink:        gc('contract manager endorsement')||gc('contract holder endorsement'),          // the sheet's older header still works
           cmLink:        gc('construction manager endorsement'),
           ownershipNotes:gc('ownership notes'),
           reinstatedDate:gc('reinstated date'),
@@ -8351,11 +8409,11 @@ function renderBlacklist(){
   sk('bl-k-total',    blackBanded.length + reinstated.length);
   sk('bl-k-active',   blackBanded.filter(function(x){
     var rec = riEffectiveRecord(x.company);
-    return !rec || rec.status === 'Suspended' || rec.status === 'Returned';
+    return (!rec || rec.status === 'Suspended' || rec.status === 'Returned') && mdKind(mdCurrent(x.company)) !== 'penalty';
   }).length);
   sk('bl-k-process',  inProcess.length);
   sk('bl-k-probation',onProbation.length);
-  var totS = blackBanded.filter(function(x){var r=riEffectiveRecord(x.company);return !r||r.status==='Suspended'||r.status==='Returned';}).length;
+  var totS = blackBanded.filter(function(x){var r=riEffectiveRecord(x.company);return (!r||r.status==='Suspended'||r.status==='Returned')&&mdKind(mdCurrent(x.company))!=='penalty';}).length;
   var totEl = document.getElementById('bl-k-total-s');
   if(totEl) totEl.textContent = totS + ' currently suspended + ' + reinstated.length + ' previously reinstated';
 
@@ -8410,6 +8468,12 @@ function renderBlacklist(){
       statusColor = '#1a1d24;font-weight:700;';
     }
 
+    if(sc && !entry.resus && (!rec || rec.status === 'Suspended')){        // the badge follows management's decision
+      var _mk = mdKind(mdCurrent(co));
+      if(_mk === 'penalty'){ statusBadge = '💰 Penalty only — not suspended'; statusColor = '#8a5a00;font-weight:700;'; }
+      else if(_mk === 'terminated'){ statusBadge = '🚫 Terminated — blacklisted'; statusColor = '#1a1d24;font-weight:700;'; }
+      else if(_mk === 'pending'){ statusBadge = '⛔ Suspended (decision pending)'; }
+    }
     if(rec && rec._sheetStatusStale) statusBadge += ' <span title="The sheet\'s Status cell still says Pending Acceptance although this was accepted. Set it to Reinstated." style="font-size:9px;font-weight:700;color:#c0392b;">⚠ fix Status in sheet</span>';
 
     // Actions closed gate
@@ -8423,9 +8487,11 @@ function renderBlacklist(){
     // Endorsements
     var endorsements = '';
     if(rec){
-      endorsements += rec.hseGmLink ? '<a href="' + rec.hseGmLink + '" target="_blank" title="HSE GM" style="text-decoration:none;margin-right:4px;">📄 GM</a>' : '<span style="color:var(--t3);font-size:10px;">GM ⬜</span> ';
-      endorsements += rec.chLink    ? '<a href="' + rec.chLink    + '" target="_blank" title="Contract Holder" style="text-decoration:none;margin-right:4px;">📄 CH</a>' : '<span style="color:var(--t3);font-size:10px;">CH ⬜</span> ';
-      endorsements += rec.cmLink    ? '<a href="' + rec.cmLink    + '" target="_blank" title="Construction Manager" style="text-decoration:none;">📄 CM</a>' : '<span style="color:var(--t3);font-size:10px;">CM ⬜</span>';
+      // the three endorsers: HSE General Manager, Contract Manager, Construction Manager
+      [['HSE GM',rec.hseGmLink,'HSE General Manager'],['Contract Mgr',rec.chLink,'Contract Manager'],['Constr. Mgr',rec.cmLink,'Construction Manager']].forEach(function(e,i){
+        endorsements += e[1] ? '<a href="' + e[1] + '" target="_blank" title="' + e[2] + '" style="text-decoration:none;margin-right:6px;white-space:nowrap;">📄 ' + e[0] + '</a>'
+                             : '<span title="' + e[2] + ': not uploaded" style="color:var(--t3);font-size:10px;margin-right:6px;white-space:nowrap;">' + e[0] + ' ✗</span>';
+      });
     } else {
       endorsements = '<span style="color:var(--t3);font-size:10px;">Not started</span>';
     }
@@ -8453,7 +8519,7 @@ function renderBlacklist(){
     var totalInst = sc ? sc.totalInst : '—';
 
     html += '<tr>';
-    html += '<td style="font-weight:700;min-width:160px;">' + esc(co) + '</td>';
+    html += '<td style="font-weight:700;min-width:160px;">' + esc(co) + (sc ? tenderChip(co) : '') + '</td>';
     html += '<td><span class="bdg bgy" style="font-size:9px;">' + esc(cl) + '</span></td>';
     html += '<td style="font-size:11px;white-space:nowrap;">' + blDate + '</td>';
     html += '<td style="font-size:10px;max-width:140px;">' + trigCat + '</td>';
@@ -8461,6 +8527,7 @@ function renderBlacklist(){
     html += '<td style="text-align:center;">' + actBadge + '</td>';
     html += '<td style="white-space:nowrap;">' + endorsements + '</td>';
     html += '<td style="color:' + statusColor + '">' + statusBadge + '</td>';
+    html += '<td style="min-width:170px;">' + (sc ? mdCell(co) : '<span style="color:var(--t3);">—</span>') + '</td>';
     html += '<td>' + probCell + '</td>';
     html += '<td style="white-space:nowrap;">';
     if((!rec || rec.status === 'Suspended' || rec.status === 'Returned') && actCheck.allClosed){
@@ -8473,7 +8540,7 @@ function renderBlacklist(){
     html += '</tr>';
   });
 
-  tbody.innerHTML = html || '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--t3);">No blacklisted subcontractors found. ⚫ Black band triggers when Max Instance ≥3 AND Total Instances >5.</td></tr>';
+  tbody.innerHTML = html || '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--t3);">No blacklisted subcontractors found. ⚫ Black band triggers when Max Instance ≥3 AND Total Instances >5.</td></tr>';
 
   // Reinstatement history
   var histBody = document.getElementById('bl-hist-body');
@@ -8898,6 +8965,14 @@ function openBlacklistDetail(company){
     + '<div style="font-size:12px;opacity:.85;">' + (rec ? 'Status: ' + rec.status : 'Suspended — no reinstatement filed') + '</div>'
     + '</div>';
 
+  // Management decision
+  var _md = mdCurrent(company);
+  html += '<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;">Management decision</div>'
+    + '<div style="padding:8px 12px;background:var(--bg);border-radius:var(--r);font-size:11px;">' + mdPill(_md)
+    + (_md ? ' <span style="margin-left:6px;">' + mdDetailText(_md) + '</span><div style="margin-top:4px;color:var(--t3);">Recorded by ' + esc(_md.decidedBy || '—') + ' on ' + esc(fd(_md.decidedDate)) + (_md.note ? ' · ' + esc(_md.note) : '') + '</div>'
+           : '<div style="margin-top:4px;color:var(--t3);">Management has not yet chosen: penalty only, suspension only, penalty with suspension, or termination.</div>')
+    + '</div></div>';
+
   // Category breakdown
   if(cs.catBreakdown && Object.keys(cs.catBreakdown).length){
     html += '<div style="margin-bottom:14px;">';
@@ -8948,7 +9023,7 @@ function openBlacklistDetail(company){
     html += '<div style="margin-top:10px;">';
     [
       ['HSE GM Endorsement', rec.hseGmLink],
-      ['Contract Holder Endorsement', rec.chLink],
+      ['Contract Manager Endorsement', rec.chLink],
       ['Construction Manager Endorsement', rec.cmLink],
     ].forEach(function(row){
       html += '<div style="padding:5px 0;font-size:11px;">'
@@ -9008,7 +9083,7 @@ function openBlacklistDetail(company){
 function exportBlacklistCSV(){
   var bb = getBlackBandedSubcons();
   var hdrs = ['Company','Cluster','Blacklisted Date','Max Instance','Total Instances',
-              'All Actions Closed','Status','Reinstated Date','Probation Ends','Accepted By'];
+              'All Actions Closed','Status','Management Decision','Penalty % of PO','Suspension Days','Tender Bar','Reinstated Date','Probation Ends','Accepted By'];
   var q = function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
   var csv = hdrs.map(q).join(',') + String.fromCharCode(13,10);
   bb.forEach(function(x){
@@ -9019,6 +9094,10 @@ function exportBlacklistCSV(){
       x.maxCatInst, x.totalInst,
       act.allClosed?'Yes':'No (' + act.open + ' open)',
       rec ? rec.status : 'Suspended',
+      (function(){var d=mdCurrent(x.company);return d?d.decision:'Decision pending';})(),
+      (function(){var d=mdCurrent(x.company);return d&&d.penaltyPct!==''?d.penaltyPct:'';})(),
+      (function(){var d=mdCurrent(x.company);return d&&d.suspensionDays?d.suspensionDays:'';})(),
+      'Yes',
       rec ? (rec.reinstatedDate||'—') : '—',
       rec ? (rec.probationEnds||'—') : '—',
       rec ? (rec.acceptedBy||'Pending') : '—'
@@ -9537,6 +9616,210 @@ function runDiagnostics(){
 
 
 
+// ═══════════════════════════════════════════════════════════════
+// MANAGEMENT DECISION after a Black band  +  TENDER BAR
+//  - Penalty only / Suspension only / Penalty + Suspension / Termination, chosen from a dropdown in the Blacklist & Reinstatement Register.
+//  - Saved to the tab SC_MGMT_DECISION (Apps Script writeMgmtDecision, approver only). A new decision supersedes the company's earlier one.
+//  - Tender bar: an escalated (Red) or Black company cannot take part in future tenders. The flag shows on scorecards and the register, and
+//    the Subcon De-escalation screen lists every barred company with a CSV for the Contract Manager.
+// ═══════════════════════════════════════════════════════════════
+var MD_OPTIONS=['Penalty only','Suspension only','Penalty + Suspension','Termination'];
+var MD_SUSP_DEFAULT={'Medium':30,'Medium-High':60,'Critical':90};           // suspension period by risk level (original STAC procedure)
+var mdData=[], mdLoaded=false, mdBusy=false;
+
+function mdNormStatus(s){ return String(s||'').trim().toLowerCase()==='superseded'?'Superseded':'Active'; }
+function mdHasPenalty(dec){ return dec==='Penalty only'||dec==='Penalty + Suspension'; }
+function mdHasSuspension(dec){ return dec==='Suspension only'||dec==='Penalty + Suspension'; }
+function mdDefaultDays(company){
+  var sub=findSubcon(company), rl=(sub&&sub.riskLevel)?String(sub.riskLevel).trim():'';
+  if(!MD_SUSP_DEFAULT[rl]){
+    var coL=(company||'').trim().toLowerCase();
+    var l=stacData.filter(function(d){return d.riskLevel&&d.company.trim().toLowerCase()===coL&&MD_SUSP_DEFAULT[String(d.riskLevel).trim()];}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    rl=l.length?String(l[0].riskLevel).trim():'Medium-High';
+  }
+  return MD_SUSP_DEFAULT[rl]||60;
+}
+
+// The company's CURRENT decision: the latest active one, and only if it was made after its last accepted reinstatement (a reinstatement ends the episode).
+function mdCurrent(company){
+  var k=wlNorm(company), from=riScoringFrom(company)||'';
+  var l=mdData.filter(function(r){return wlNorm(r.company)===k&&r.status==='Active'&&(!from||(r.decidedDate||'')>=from);});
+  l.sort(function(a,b){return (b.decidedDate||'').localeCompare(a.decidedDate||'')||String(b.id).localeCompare(String(a.id));});
+  return l[0]||null;
+}
+function mdKind(rec){ if(!rec) return 'pending'; if(rec.decision==='Penalty only') return 'penalty'; if(rec.decision==='Termination') return 'terminated'; return 'suspended'; }
+function mdSuspEnd(rec){
+  if(!rec||!mdHasSuspension(rec.decision)||!parseInt(rec.suspensionDays,10)) return '';
+  var from=rec.effectiveDate||rec.decidedDate; return from?addDaysISO(from,parseInt(rec.suspensionDays,10)):'';
+}
+function mdDetailText(rec){
+  if(!rec) return '';
+  var p=[]; if(mdHasPenalty(rec.decision)&&rec.penaltyPct!=='') p.push(esc(String(rec.penaltyPct))+'% of PO value');
+  if(mdHasSuspension(rec.decision)&&rec.suspensionDays){ var e=mdSuspEnd(rec); p.push(esc(String(rec.suspensionDays))+' days'+(e?' (to '+esc(fd(e))+')':'')); }
+  if(rec.effectiveDate) p.push('from '+esc(fd(rec.effectiveDate)));
+  return p.join(' · ');
+}
+function mdPill(rec){
+  var k=mdKind(rec), st={pending:['#fff3cd','#6b4e00','⏳ Decision pending'],penalty:['#fdf2e0','#8a5a00','💰 Penalty only'],suspended:['#fdecea','#9b1c1c','⛔ '+(rec&&rec.decision)],terminated:['#1a1d24','#fff','🚫 Termination']}[k];
+  return '<span style="display:inline-block;background:'+st[0]+';color:'+st[1]+';border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap;">'+st[2]+'</span>';
+}
+
+// ───────── the dropdown cell in the register ─────────
+function mdCell(company){
+  var cur=mdCurrent(company), detail=mdDetailText(cur);
+  if(!canAcceptReinstatement()) return mdPill(cur)+(detail?'<div style="font-size:10px;color:var(--t3);margin-top:3px;">'+detail+'</div>':'');
+  var h='<select class="fi md-pick" data-co="'+esc(company)+'" onchange="mdPick(this)" style="font-size:11px;padding:3px 6px;min-width:150px;"><option value="">'+(cur?'Change decision…':'— Decide —')+'</option>';
+  MD_OPTIONS.forEach(function(o){ h+='<option value="'+esc(o)+'"'+(cur&&cur.decision===o?' selected':'')+'>'+esc(o)+'</option>'; });
+  h+='</select>';
+  return h+(cur?'<div style="font-size:10px;color:var(--t3);margin-top:3px;">'+detail+' <a href="javascript:void(0)" data-co="'+esc(company)+'" onclick="mdOpen(this.dataset.co,\''+esc(cur.decision)+'\')" style="font-size:10px;">edit</a></div>':'<div style="font-size:10px;color:#8b6504;margin-top:3px;">⏳ pending</div>');
+}
+function mdPick(sel){
+  var co=sel.dataset.co, v=sel.value, cur=mdCurrent(co); sel.value=cur?cur.decision:'';       // the select only changes once the decision is SAVED
+  if(v) mdOpen(co,v);
+}
+
+// ───────── the form ─────────
+function mdOpen(company,decision){
+  if(!canAcceptReinstatement()){ toast(adminEmail?'Only the designated approver can record a management decision':'Identify yourself first: Setup → Admin Identity',3500,'warn'); return; }
+  var cur=mdCurrent(company), same=cur&&cur.decision===decision;
+  sv('md-company',company); sv('md-decision',decision);
+  var t=document.getElementById('md-title'); if(t) t.textContent='⚖ Management decision — '+company;
+  var d=document.getElementById('md-decision-show'); if(d) d.textContent=decision;
+  var pr=document.getElementById('md-row-pct'), dr=document.getElementById('md-row-days'), tn=document.getElementById('md-term-note');
+  if(pr) pr.style.display=mdHasPenalty(decision)?'block':'none';
+  if(dr) dr.style.display=mdHasSuspension(decision)?'block':'none';
+  if(tn) tn.style.display=decision==='Termination'?'block':'none';
+  sv('md-pct',same&&cur.penaltyPct!==''?String(cur.penaltyPct):'');
+  sv('md-days',same&&cur.suspensionDays?String(cur.suspensionDays):String(mdDefaultDays(company)));
+  sv('md-date',same&&cur.effectiveDate?cur.effectiveDate:todayISO());
+  sv('md-note',same?(cur.note||''):'');
+  mdValidate(); openModal('m-mgmt');
+}
+function mdValidate(){
+  var dec=gv('md-decision'), msg='', ok=true;
+  if(mdHasPenalty(dec)){ var p=parseFloat(gv('md-pct')); if(!(p>=0.8&&p<=1)){ ok=false; msg='The penalty must be between 0.80% and 1.00% of the PO value.'; } }
+  if(ok&&mdHasSuspension(dec)){ var n=parseInt(gv('md-days'),10); if(!(n>=1&&n<=365)){ ok=false; msg='Give the suspension period in days (1 to 365).'; } }
+  if(ok&&!gv('md-date')){ ok=false; msg='Give the effective date.'; }
+  var m=document.getElementById('md-msg'); if(m){ m.textContent=msg; m.style.display=msg?'block':'none'; }
+  var b=document.getElementById('md-submit-btn'); if(b) b.disabled=!ok||mdBusy;
+  return {ok:ok,msg:msg};
+}
+function mdUpsertLocal(rec,noWindow){
+  if(noWindow) delete rec._localAt; else rec._localAt=Date.now();
+  var i=mdData.findIndex(function(r){return r.id===rec.id;}); if(i>=0) mdData[i]=rec; else mdData.push(rec);
+}
+function mdVerifyInSheet(id,cb,tries){
+  tries=tries||0;
+  function retry(){ if(tries<API_RETRIES-1) setTimeout(function(){ mdVerifyInSheet(id,cb,tries+1); },API_RETRY_MS); else cb(false); }
+  fetchGvizData(CFG.sheetId,null,'SC_MGMT_DECISION',1).then(function(raw){
+    var hit=false;
+    if(raw&&raw.table){
+      var labels=(raw.table.cols||[]).map(function(c){return String(c.label||'').trim().toLowerCase();}), iId=labels.indexOf('decision id');
+      function cell(r,i){ var x=r.c&&r.c[i]; return x?String(x.f!=null?x.f:(x.v!=null?x.v:'')).trim():''; }
+      if(iId>=0) (raw.table.rows||[]).forEach(function(r){ if(r&&r.c&&cell(r,iId)===String(id).trim()) hit=true; });
+    }
+    if(hit) cb(true); else retry();
+  }).catch(retry);
+}
+function mdSubmit(){
+  if(mdBusy) return;
+  if(!canAcceptReinstatement()){ toast('Only the designated approver can record a management decision',3500,'warn'); return; }
+  var v=mdValidate(); if(!v.ok){ toast(v.msg,4000,'warn'); return; }
+  var co=gv('md-company'), dec=gv('md-decision'), b=getBlackBandedSubcons().find(function(x){return x.company===co;});
+  var rec={id:'MD-'+Date.now(),company:co,cluster:b?b.cluster:'',decision:dec,
+    penaltyPct:mdHasPenalty(dec)?parseFloat(gv('md-pct')):'',suspensionDays:mdHasSuspension(dec)?parseInt(gv('md-days'),10):'',
+    effectiveDate:gv('md-date'),note:(gv('md-note')||'').trim(),decidedBy:(adminEmail||'').trim().toLowerCase(),decidedDate:todayISO(),status:'Active'};
+  var k=wlNorm(co), superseded=mdData.filter(function(r){return wlNorm(r.company)===k&&r.status==='Active';});
+  superseded.forEach(function(r){ r.status='Superseded'; });
+  mdUpsertLocal(rec); cm('m-mgmt'); mdRefresh();
+  if(isDemoCo(co)){ toast('Demo decision recorded in memory only.',4000); return; }
+  mdBusy=true; toast('⏳ Saving to the sheet…',4000);
+  apiSave({
+    body:{action:'writeMgmtDecision',data:rec},
+    onOk:function(){ mdBusy=false; rec._localAt=Date.now(); mdRefresh(); toast('✅ Decision recorded and saved to the sheet — '+co+': '+dec,7000); },
+    onFail:function(why){
+      mdBusy=false; mdData=mdData.filter(function(r){return r.id!==rec.id;}); superseded.forEach(function(r){ r.status='Active'; }); mdRefresh();
+      toast('❌ NOT recorded — '+why+' The sheet was not changed, so you can try again. '+RI_DEPLOY_HINT,14000,'warn');
+    },
+    verify:function(cb){ mdVerifyInSheet(rec.id,function(found){ cb(found,{}); }); }
+  });
+}
+function mdRefresh(){
+  try{ renderBlacklist(); }catch(e){}
+  try{ renderTenderBar(); }catch(e){}
+  try{ var v=document.getElementById('view-scorecards'); if(v&&v.classList.contains('active')&&typeof renderScores==='function') renderScores(); }catch(e){}
+}
+
+// ───────── loading the decisions from the sheet ─────────
+function loadDecisionData(){
+  fetchGvizData(CFG.sheetId,null,'SC_MGMT_DECISION',1).then(function(raw){
+    if(!raw||!raw.table) return;                                                          // unreadable: keep what we have, never wipe
+    var fresh=[], cols=(raw.table.cols||[]).map(function(c){return String(c.label||'').trim().toLowerCase();});
+    // The tab may not exist yet, and Google then answers with ANOTHER tab: only trust a table that has our own header.
+    if(cols.indexOf('decision id')>=0){
+      fresh=(raw.table.rows||[]).filter(function(r){return r&&r.c;}).map(function(r){
+        function gc(col){ var i=cols.indexOf(col); if(i<0) return ''; var c=r.c[i]; if(!c) return ''; return c.f!=null?String(c.f):(c.v!=null?String(c.v):''); }
+        return {id:gc('decision id'),company:gc('company'),cluster:gc('cluster'),decision:gc('decision'),penaltyPct:gc('penalty % of po value'),
+          suspensionDays:gc('suspension days'),effectiveDate:gc('effective date'),note:gc('note'),decidedBy:gc('decided by'),decidedDate:gc('decided date'),status:mdNormStatus(gc('status'))};
+      }).filter(function(r){return r.id&&r.company&&MD_OPTIONS.indexOf(r.decision)>=0;});
+    }
+    // keep a decision saved in the last 2 minutes (the sheet read may not show it yet); after that the sheet wins
+    mdData.filter(function(r){return r._localAt&&Date.now()-r._localAt<120000&&!r._demo;}).forEach(function(k){
+      var i=fresh.findIndex(function(r){return r.id===k.id;}); if(i>=0) fresh[i]=k; else fresh.push(k);
+    });
+    mdData=fresh.concat(mdData.filter(function(r){return r._demo;})); mdLoaded=true; mdRefresh();
+  }).catch(function(){});
+}
+
+// ───────── TENDER BAR ─────────
+function tenderBarOf(company){
+  var cs=calcComplianceScore(company);
+  if(cs.band==='black'){ var cur=mdCurrent(company); return {kind:'black',band:'Black',label:cur?cur.decision:'Black band — decision pending',cats:Object.keys(cs.catBreakdown||{}).filter(function(c){return cs.catBreakdown[c]>=3;})}; }
+  if(cs.band==='red'&&cs.escalatedCats&&cs.escalatedCats.length) return {kind:'red',band:'Red',label:'Escalated',cats:cs.escalatedCats.map(function(x){return x.category;})};
+  return null;                                   // not escalated (or the escalation was closed out): free to tender
+}
+function tenderBarList(){
+  var out=[];
+  scopeCompanies(scoringAsOf()).forEach(function(co){
+    var tb=tenderBarOf(co); if(!tb) return;
+    var cases=deScopeCases(co,scoringAsOf()).slice().sort(byDateId), last=cases.length?cases[cases.length-1]:null, cur=mdCurrent(co);
+    out.push({company:co,cluster:last?last.cluster:'',band:tb.band,kind:tb.kind,reason:tb.label,cats:tb.cats,latest:last?last.date:'',decision:cur,demo:isDemoCo(co)});
+  });
+  out.sort(function(a,b){return (a.kind==='black'?0:1)-(b.kind==='black'?0:1)||a.company.localeCompare(b.company);});
+  return out;
+}
+function tenderStrip(co){
+  var tb=tenderBarOf(co); if(!tb) return '';
+  return '<div style="background:#1a1d24;color:#fff;text-align:center;padding:4px 6px;font-size:10px;font-weight:800;letter-spacing:.5px;" title="An escalated (Red) or Black company cannot take part in future tenders">🚫 TENDER BAR — NO FUTURE TENDERS</div>';
+}
+function tenderChip(co){
+  return tenderBarOf(co)?' <span class="bdg" style="background:#1a1d24;color:#fff;font-size:9px;white-space:nowrap;" title="Cannot take part in future tenders">🚫 TENDER BAR</span>':'';
+}
+function renderTenderBar(){
+  var body=document.getElementById('tb-body'); if(!body||!dataLoaded) return;
+  var rows=tenderBarList(), c=document.getElementById('tb-count'); if(c) c.textContent=rows.length+' compan'+(rows.length===1?'y':'ies')+' barred from future tenders';
+  var h='';
+  rows.forEach(function(r){
+    h+='<tr><td style="font-weight:700;">'+esc(r.company)+(r.demo?' <span style="font-size:9px;color:var(--t3);">(demo)</span>':'')+'</td><td><span class="bdg bgy" style="font-size:9px;">'+esc(r.cluster||'—')+'</span></td>'
+      +'<td>'+bandChip(r.kind)+'</td><td style="font-size:11px;">'+esc(r.cats.map(function(x){return x.length>34?x.substring(0,34)+'…':x;}).join(', ')||'—')+'</td>'
+      +'<td>'+(r.kind==='black'?mdPill(r.decision):'<span style="font-size:10px;color:var(--t3);">Escalation only</span>')+'</td>'
+      +'<td style="font-size:11px;">'+esc(r.latest?fd(r.latest):'—')+'</td></tr>';
+  });
+  body.innerHTML=h||'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3);">No company is barred from tenders today.</td></tr>';
+}
+function tbExportCSV(){
+  var rows=tenderBarList().filter(function(r){return !r.demo;}), q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';};
+  var hdr=['Company','Cluster','Band','Why barred','Escalated categories','Management decision','Penalty % of PO value','Suspension days','Suspension ends','Latest case date','As of'];
+  var csv=hdr.map(q).join(',')+'\r\n';
+  rows.forEach(function(r){
+    var d=r.decision;
+    csv+=[r.company,r.cluster,r.band,r.kind==='black'?'Black band':'Escalated (Red)',r.cats.join('; '),d?d.decision:(r.kind==='black'?'Decision pending':''),d&&d.penaltyPct!==''?d.penaltyPct:'',d&&d.suspensionDays?d.suspensionDays:'',d?mdSuspEnd(d):'',r.latest,scoringAsOf()].map(q).join(',')+'\r\n';
+  });
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='ATNM-Tender-Bar-'+todayISO()+'.csv'; a.style.display='none'; document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); },1000);
+  toast('📄 Tender bar list exported ('+rows.length+' companies)',3500);
+}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
